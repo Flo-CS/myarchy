@@ -14,3 +14,14 @@ alias gp="git push"
 alias gd="git diff"
 
 alias reboot-to-windows='reboot_to_windows'
+
+alias cd="zd"
+
+#alias ls='eza -lh --group-directories-first --icons=auto'
+#alias lsa='ls -a'
+#alias lt='eza --tree --level=2 --long --icons --git'
+#alias lta='lt -a'
+
+open() {
+	xdg-open "$@" >/dev/null 2>&1 &
+}

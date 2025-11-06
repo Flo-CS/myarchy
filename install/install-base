@@ -86,6 +86,10 @@ install_hyprlandia() {
     install_packages python-pywayland
 }
 
+install_osd() {
+    install_packages swayosd
+}
+
 install_terminal() {
     install_packages alacritty
     remove_packages xterm || echo "xterm is already uninstalled, skipping"
@@ -160,6 +164,10 @@ install_backup_tools() {
     install_packages snapper snap-pac inotify-tools grub-btrfs
 }
 
+install_eza {
+    install_packages eza
+}
+
 install_gum
 install_flatpak
 install_git
@@ -170,6 +178,7 @@ install_files_searching
 install_files_manipulation
 install_nvm
 install_hyprlandia
+install_osd
 install_terminal
 install_waybar
 install_wofi
@@ -185,3 +194,4 @@ install_clipboard
 install_disks
 install_multimedia
 install_backup_tools
+install_eza
