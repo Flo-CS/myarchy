@@ -2,54 +2,20 @@
 
 set -eEo pipefail
 
-show_section() {
-	gum style --border double " $1 "
-}
+# VARS
+export MYARCHY_DIR=${MYARCHY_DIR:-$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" &>/dev/null && pwd)}
+export MYARCHY_INSTANCE_ID=${MYARCHY_INSTANCE_ID:-$(gum input --header "Enter your myarchy instance ID used to identify specific local configurations (e.g. 'desktop', 'laptop')")}
+export DEV_TOOLS_PATH=~/dev/tools # TODO: move this
 
-# Define myarchy location
-export MYARCHY_PATH=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" &>/dev/null && pwd)
-export MYARCHY_INSTALL="$MYARCHY_PATH/install"
-export PATH=$MYARCHY_PATH/bin:$PATH
-
-show_section "Installation of base packages"
-$MYARCHY_INSTALL/install-base
-
-show_section "Deployment of system wide binaries"
-$MYARCHY_INSTALL/deploy-system-bins
-
-show_section "Configuration of myarchy"
-source $MYARCHY_INSTALL/configure-myarchy
-
-show_section "Update of system packages"
+# GLOBAL SYSTEM INSTALLATION WITH PACKAGES & CONFIG
+sudo cp $MYARCHY_DIR/bin/myarchy-lib /usr/local/bin/myarchy-lib
 sudo pacman -Syu --noconfirm
+source $MYARCHY_DIR/install/packages/all
+source $MYARCHY_DIR/install/sysconfig/all
 
-show_section "Installation of additional packages"
-$MYARCHY_INSTALL/install-additional
-
-show_section "Installation of development packages"
-$MYARCHY_INSTALL/install-dev
-
-show_section "Setup of system backups"
-$MYARCHY_INSTALL/setup-system-backups
-
-show_section "Setup of grub"
-$MYARCHY_INSTALL/setup-grub
-
-show_section "Updating sudoers configuration"
-$MYARCHY_INSTALL/configure-sudoers
-
-show_section "Deployment of user files (config, applications, ...)"
-$MYARCHY_INSTALL/deploy-user-files
-
-show_section "Installation complete !"
-gum confirm "Do you want to reboot now? It may be absolutely necessary for some programs to work correctly" && {
-	sudo reboot
-}
-
-# Install
-source "$OMARCHY_INSTALL/helpers/all.sh"
-source "$OMARCHY_INSTALL/preflight/all.sh"
-source "$OMARCHY_INSTALL/packaging/all.sh"
-source "$OMARCHY_INSTALL/config/all.sh"
-source "$OMARCHY_INSTALL/login/all.sh"
-source "$OMARCHY_INSTALL/post-install/all.sh"
+# USER CONFIGURATION
+export PATH=$MYARCHY_DIR/bin:$PATH
+myarchy-hyprland-plugins install hyprexpo
+# myarchy-theme init
+# myarchy-wallpaper init
+# myarchy-deploy all

@@ -1,0 +1,62 @@
+#!/usr/bin/env bash
+
+install_packages() {
+	pkg_to_install=$(
+		pacman -Slq | fzf --multi \
+			--preview 'pacman -Sii {1}' \
+			--preview-window 'down:65%:wrap' \
+			--bind 'alt-d:preview-half-page-down,alt-u:preview-half-page-up' \
+			--bind 'alt-k:preview-up,alt-j:preview-down' \
+			--color 'pointer:green,marker:green'
+	)
+
+	if [[ -n "$pkg_to_install" ]]; then
+		echo "$pkg_to_install" | tr '\n' ' ' | xargs sudo pacman -S --noconfirm
+	fi
+}
+
+install_yay_packages() {
+	pkg_to_install=$(
+		yay -Slqa | fzf --multi \
+			--preview 'yay -Sii {1}' \
+			--preview-window 'down:65%:wrap' \
+			--bind 'alt-d:preview-half-page-down,alt-u:preview-half-page-up' \
+			--bind 'alt-k:preview-up,alt-j:preview-down' \
+			--color 'pointer:green,marker:green'
+	)
+
+	if [[ -n "$pkg_to_install" ]]; then
+		echo "$pkg_to_install" | tr '\n' ' ' | xargs yay -S --noconfirm --answerclean None --answerdiff All
+	fi
+}
+
+remove_packages() {
+	pkg_to_remove=$(
+		yay -Qqe | fzf --multi \
+			--preview 'yay -Qi {1}' \
+			--preview-window 'down:65%:wrap' \
+			--bind 'alt-d:preview-half-page-down,alt-u:preview-half-page-up' \
+			--bind 'alt-k:preview-up,alt-j:preview-down' \
+			--color 'pointer:red,marker:red'
+	)
+
+	if [[ -n "$pkg_to_remove" ]]; then
+		echo "$pkg_to_remove" | tr '\n' ' ' | xargs sudo pacman -Rns --noconfirm
+	fi
+}
+
+case "$1" in
+install)
+	install_packages
+	;;
+yay-install)
+	install_yay_packages
+	;;
+remove)
+	remove_packages
+	;;
+*)
+	echo "Usage: $0 {install|yay-install|remove}"
+	exit 1
+	;;
+esac

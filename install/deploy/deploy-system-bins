@@ -1,9 +1,0 @@
-#!/usr/bin/env bash
-
-set -euo pipefail
-
-files=$(ls $MYARCHY_DIR/bin-system)
-for file in $files; do
-	sudo cp -rf $MYARCHY_DIR/bin-system/$file /usr/local/bin
-	sudo chmod +x /usr/local/bin/$file
-done

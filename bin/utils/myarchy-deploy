@@ -1,0 +1,142 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+deploy_file_by_link() {
+	target="$MYARCHY_DIR/$1"
+	link_name="$2"
+
+	local_target="$target#$MYARCHY_INSTANCE_ID"
+	if [[ -f "$local_target" ]]; then
+		target=${local_target}
+		echo "Using local file: $target"
+	fi
+
+	myarchy-file-robust-link $target $link_name
+}
+
+deploy_template_by_link() {
+	template="$MYARCHY_DIR/$1"
+	link_name=$2
+
+	myarchy-render-template "$template" "${template%.j2}"
+	myarchy-file-robust-link "${template%.j2}" "$link_name"
+}
+
+deploy_applications() {
+	mkdir -p "$HOME/.local/share/applications" "$HOME/.local/share/applications/icons"
+
+	shopt -s nullglob
+
+	# Copy desktop files
+	desktop_files=("$MYARCHY_DIR/files/applications"/*.desktop)
+	if [ ${#desktop_files[@]} -gt 0 ]; then
+		echo "Copying desktop files..."
+		for file in "${desktop_files[@]}"; do
+			filename=$(basename "$file")
+			dest="$HOME/.local/share/applications/$filename"
+			if [ ! -f "$dest" ]; then
+				cp "$file" "$dest"
+				chmod +x "$dest"
+				echo "  Copied $filename"
+			else
+				echo "  $filename already exists, skipping"
+			fi
+		done
+	else
+		echo "No desktop files found"
+	fi
+
+	# Copy icon files
+	icon_files=("$MYARCHY_DIR/files/applications/icons"/*)
+	if [ ${#icon_files[@]} -gt 0 ]; then
+		echo "Copying icon files..."
+		for file in "${icon_files[@]}"; do
+			filename=$(basename "$file")
+			dest="$HOME/.local/share/applications/icons/$filename"
+			if [ ! -f "$dest" ]; then
+				cp "$file" "$dest"
+				echo "  Copied $filename"
+			else
+				echo "  $filename already exists, skipping"
+			fi
+		done
+	else
+		echo "No icon files found"
+	fi
+
+	shopt -u nullglob
+}
+
+deploy_config() {
+	deploy-file-by-link files/config/.bashrc ~/.bashrc
+
+	deploy-file-by-link files/config/.bash_profile ~/.bash_profile
+
+	deploy-file-by-link files/config/.gitconfig ~/.gitconfig
+
+	bat_dir="$(bat --config-dir)"
+	deploy-file-by-link files/config/bat "${bat_dir}/config"
+	deploy-file-by-link files/themes/current/bat.tmTheme "${bat_dir}/themes/current.tmTheme"
+	bat cache --build || echo "bat cache build failed" >&2
+
+	deploy-file-by-link files/themes/current/cursor-icons ~/.local/share/icons/cursor
+
+	deploy-file-by-link files/config/hypr/hyprland.conf ~/.config/hypr/hyprland.conf
+	deploy-file-by-link files/config/hypr/hyprlock.conf ~/.config/hypr/hyprlock.conf
+	deploy-file-by-link files/config/hypr/hypridle.conf ~/.config/hypr/hypridle.conf
+	deploy-file-by-link files/config/hypr/hyprpaper.conf ~/.config/hypr/hyprpaper.conf
+
+	deploy-file-by-link files/config/btop.conf ~/.config/btop/btop.conf
+	deploy-file-by-link files/themes/current/btop.theme ~/.config/btop/current.theme
+
+	deploy-file-by-link files/config/kvantum.kvconfig ~/.config/Kvantum/kvantum.kvconfig
+	deploy-file-by-link files/themes/current/kvantum ~/.config/Kvantum/current-theme
+
+	deploy-file-by-link files/config/waybar.jsonc ~/.config/waybar/config.jsonc
+	deploy-file-by-link files/themes/current/waybar.css ~/.config/waybar/style.css
+
+	deploy-file-by-link files/config/wofi ~/.config/wofi/config
+	deploy-file-by-link files/themes/current/wofi.css ~/.config/wofi/style.css
+
+	deploy-file-by-link files/config/nvim ~/.config/nvim
+	deploy-file-by-link files/themes/current/nvim.theme ~/.config/nvim/.theme
+
+	deploy-file-by-link files/config/atuin.toml ~/.config/atuin/config.toml
+
+	deploy-file-by-link files/config/alacritty.toml ~/.config/alacritty/alacritty.toml
+	deploy-file-by-link files/themes/current/alacritty.toml ~/.config/alacritty/current-theme.toml
+
+	deploy-template-by-link files/config/starship.toml.j2 ~/.config/starship.toml
+
+	deploy-file-by-link files/config/user-dirs.dirs ~/.config/user-dirs.dirs
+
+	deploy-file-by-link files/config/mimeapps.list ~/.config/mimeapps.list
+
+	deploy-file-by-link files/themes/current/mako.ini ~/.config/mako/config
+
+	myarchy-refresh all
+}
+
+deploy_all() {
+	deploy_config
+	deploy_applications
+}
+
+command="$1"
+
+case $command in
+all)
+	deploy_all
+	;;
+config)
+	deploy_config
+	;;
+applications)
+	deploy_applications
+	;;
+*)
+	echo "Usage: myarchy-deploy {all|config|applications}"
+	exit 1
+	;;
+esac

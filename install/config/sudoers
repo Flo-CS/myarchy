@@ -1,3 +1,0 @@
-#!/usr/bin/env bash
-
-sudo -E myarchy-file-robust-copy $MYARCHY_DIR/files/config-system/sudoers /etc/sudoers.d/sudoers-default

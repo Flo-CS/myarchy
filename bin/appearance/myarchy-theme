@@ -1,0 +1,48 @@
+#!/usr/bin/env bash
+
+THEMES_DIR="$MYARCHY_DIR/files/themes"
+
+init_theme() {
+	if [[ ! -d "$THEMES_DIR/current" ]]; then
+		echo "Setting default theme"
+		set_theme $(list_themes | head -n 1)
+	fi
+}
+
+get_theme() {
+	theme_path=$(readlink -f "$THEMES_DIR/current")
+	theme_name=$(basename $theme_path)
+
+	echo "$theme_name"
+}
+
+list_themes() {
+	fd --glob "*" "$THEMES_DIR" --format {/} --max-depth 1
+}
+
+set_theme() {
+	ln -sfT "$THEMES_DIR/$1" "$THEMES_DIR/current"
+
+	myarchy-wallpaper theme-pref-apply
+
+	myarchy-refresh all
+}
+
+case "$1" in
+init)
+	init_theme
+	;;
+get)
+	get_theme
+	;;
+list)
+	list_themes
+	;;
+set)
+	set_theme "$2"
+	;;
+*)
+	echo "Usage: myarchy-theme {init|get|list|set <theme_name>}" >&2
+	exit 1
+	;;
+esac

@@ -1,4 +1,0 @@
-#!/usr/bin/env bash
-
-cmd="$*"
-setsid uwsm app -- alacritty --class Myarchy.App -e $cmd

@@ -1,3 +1,0 @@
-#!/usr/bin/env bash
-
-fc-list $1 -f "%{family[0]}\n" | sort -u

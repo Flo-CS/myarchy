@@ -1,0 +1,72 @@
+#!/usr/bin/env bash
+
+WALLPAPERS_DIR="$MYARCHY_DIR/files/wallpapers"
+CURRENT_THEME_DIR="$MYARCHY_DIR/files/themes/current"
+
+init_wallpaper() {
+	if [[ ! -f "$WALLPAPERS_DIR/current" ]]; then
+		echo "Setting default wallpaper"
+		set_wallpaper $(list_wallpapers | head -n 1)
+	fi
+}
+
+get_wallpaper() {
+	current_wallpaper_path=$(readlink -f "$WALLPAPERS_DIR/current")
+	current_wallpaper_name=$(basename "$current_wallpaper_path")
+
+	echo "$wallpaper_name"
+}
+
+list_wallpapers() {
+	fd --glob "*" "$WALLPAPERS_DIR" --format {/}
+}
+
+set_wallpaper() {
+	ln -sfT "$WALLPAPERS_DIR/$1" "$WALLPAPERS_DIR/current"
+
+	hyprctl hyprpaper reload , "$WALLPAPERS_DIR/current"
+
+	theme_pref_save
+}
+
+theme_pref_apply() {
+	wallpaper_name=$(cat "$CURRENT_THEME_DIR/wallpaper.theme")
+
+	if [ -z "$wallpaper_name" ]; then
+		echo "No wallpaper name found in the current theme."
+		exit 1
+	fi
+
+	set_wallpaper "$wallpaper_name"
+}
+
+theme_pref_save() {
+	wallpaper_name=$(get_wallpaper)
+
+	echo "$wallpaper_name" >"$CURRENT_THEME_DIR/wallpaper.theme"
+}
+
+case "$1" in
+init)
+	init_wallpaper
+	;;
+get)
+	get_wallpaper
+	;;
+list)
+	list_wallpapers
+	;;
+set)
+	set_wallpaper "$2"
+	;;
+theme-pref-apply)
+	theme_pref_apply
+	;;
+theme-pref-save)
+	theme_pref_save
+	;;
+*)
+	echo "Usage: $0 {get|list|set <wallpaper_name>|theme-pref-apply|theme-pref-save|init}" >&2
+	exit 1
+	;;
+esac

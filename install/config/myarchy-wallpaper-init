@@ -1,6 +1,0 @@
-#!/usr/bin/env bash
-
-if [[ ! -f $MYARCHY_DIR/files/wallpapers/current ]]; then
-	echo "Setting default wallpaper"
-	myarchy-wallpaper-set $(myarchy-wallpaper-list | head -n 1)
-fi

@@ -1,4 +1,0 @@
-#!/usr/bin/env bash
-
-cmd="$*"
-alacritty --class Myarchy.Menu -e bash -i -c "myarchy-show-logo; $cmd; myarchy-show-done"

@@ -1,0 +1,132 @@
+#!/usr/bin/env bash
+
+BIN_DIR="$HOME/.local/bin"
+DESKTOP_DIR="$HOME/.local/share/applications"
+ICON_DIR="$DESKTOP_DIR/icons"
+mkdir -p "$BIN_DIR" "$DESKTOP_DIR" "$ICON_DIR"
+
+install_appimage() {
+	# Get AppImage file
+	if [ "$#" -eq 0 ]; then
+		appimage_file=$(gum file --file --directory=false)
+	else
+		appimage_file="$1"
+	fi
+
+	# Validate AppImage file exists
+	if [ ! -f "$appimage_file" ]; then
+		echo "AppImage file not found."
+		exit 1
+	fi
+
+	# Get user input
+	app_name=$(gum input --header "Application name" --value "$(basename "${appimage_file%.AppImage}")")
+	app_comment=$(gum input --header "Description (optional)")
+
+	if [ -z "$app_name" ]; then
+		echo "Application name is required."
+		exit 1
+	fi
+
+	# Setup file paths
+	binary_path="$BIN_DIR/$app_name"
+	desktop_file="$DESKTOP_DIR/$app_name.desktop"
+	icon_path="$ICON_DIR/$app_name.png"
+
+	# Install AppImage
+	cp "$appimage_file" "$binary_path"
+	chmod +x "$binary_path"
+	echo "Binary copied to $binary_path"
+
+	# Extract and choose icon
+	temp_dir=$(mktemp -d)
+	cd "$temp_dir" || exit 1
+
+	"$binary_path" --appimage-extract >/dev/null 2>&1
+	icon_files=$(fd '.*(svg|png)' --base-directory squashfs-root/usr/share)
+	icon_file=squashfs-root/usr/share/$(gum filter --header "Icon file" $icon_files)
+
+	if [ -f "$icon_file" ]; then
+		cp "$icon_file" "$icon_path"
+		echo "Icon extracted successfully"
+	else
+		echo "No icon found in AppImage"
+	fi
+
+	cd - >/dev/null
+	rm -rf "$temp_dir"
+
+	# Create desktop file
+	cat >"$desktop_file" <<EOF
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=$app_name
+Comment=$app_comment
+Exec=$binary_path
+Icon=$icon_path
+Terminal=false
+StartupNotify=true
+EOF
+
+	chmod +x "$desktop_file"
+	echo "Successfully installed $app_name!"
+}
+
+remove_appimage() {
+	if [ "$#" -eq 0 ]; then
+		# Find all AppImages by looking for desktop files with BIN_DIR in Exec line
+		appimages=$(find "$DESKTOP_DIR" -name '*.desktop' -print0 |
+			while read -r -d '' file; do
+				exec_line=$(grep "^Exec=" "$file" | cut -d= -f2)
+				if echo "$exec_line" | grep -q "$BIN_DIR"; then
+					basename "${file%.desktop}"
+				fi
+			done | sort)
+
+		if [ -z "$appimages" ]; then
+			echo "No AppImages to remove."
+			exit 1
+		fi
+
+		selected=$(echo "$appimages" | gum choose --no-limit --header "Select AppImage to remove..." --selected-prefix="✗ ")
+
+		if [ -z "$selected" ]; then
+			echo "No AppImage selected."
+			exit 1
+		fi
+
+		# Remove selected AppImages
+		echo "$selected" | while read -r app; do
+			if [ -n "$app" ]; then
+				rm -f "$BIN_DIR/$app"
+				rm -f "$DESKTOP_DIR/$app.desktop"
+				rm -f "$ICON_DIR/$app.png"
+				echo "Removed $app"
+			fi
+		done
+	else
+		# Remove specified AppImages
+		for app in "$@"; do
+			rm -f "$BIN_DIR/$app"
+			rm -f "$DESKTOP_DIR/$app.desktop"
+			rm -f "$ICON_DIR/$app.png"
+			echo "Removed $app"
+		done
+	fi
+}
+
+case "$1" in
+install)
+	shift
+	install_appimage "$@"
+	;;
+remove)
+	shift
+	remove_appimage "$@"
+	;;
+*)
+	echo "Usage: $0 {install|remove} [AppImage file or application name]"
+	exit 1
+	;;
+esac

@@ -1,7 +1,0 @@
-#!/usr/bin/env bash
-
-template="$MYARCHY_DIR/$1"
-link_name=$2
-
-myarchy-render-template "$template" "${template%.j2}"
-myarchy-file-robust-link "${template%.j2}" "$link_name"

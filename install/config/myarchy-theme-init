@@ -1,6 +1,0 @@
-#!/usr/bin/env bash
-
-if [[ ! -d "$MYARCHY_DIR/files/themes/current" ]]; then
-	echo "Setting default theme"
-	myarchy-theme-set $(myarchy-theme-list | head -n 1)
-fi

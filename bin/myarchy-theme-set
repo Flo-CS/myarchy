@@ -1,7 +1,0 @@
-#!/usr/bin/env bash
-
-ln -sfT "$MYARCHY_DIR/files/themes/$1" "$MYARCHY_DIR/files/themes/current"
-
-myarchy-wallpaper-theme-pref-apply
-
-myarchy-refresh-all

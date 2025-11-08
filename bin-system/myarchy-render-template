@@ -1,6 +1,0 @@
-#!/usr/bin/env bash
-
-template_file="$1"
-output_file="$2"
-
-j2 "$template_file" >"$output_file" && echo "rendered template $template_file to $output_file"

@@ -1,0 +1,116 @@
+#!/usr/bin/env bash
+
+DESKTOP_DIR="$HOME/.local/share/applications"
+ICON_DIR="$DESKTOP_DIR/icons"
+mkdir -p "$DESKTOP_DIR" "$ICON_DIR"
+
+launch_webapp() {
+	browser=$(xdg-settings get default-web-browser)
+
+	case $browser in
+	google-chrome* | brave-browser* | microsoft-edge* | opera* | vivaldi*) ;;
+	*) browser="chromium.desktop" ;;
+	esac
+
+	exec setsid uwsm app -- $(sed -n 's/^Exec=\([^ ]*\).*/\1/p' {~/.local,~/.nix-profile,/usr}/share/applications/$browser 2>/dev/null | head -1) --app="$1" "${@:2}"
+}
+
+install_webapp() {
+	# Get user input
+	app_name=$(gum input --header "Name" --placeholder "e.g., YouTube, Gmail, etc.")
+	app_url=$(gum input --header "URL" --placeholder "e.g. https://example.com")
+	icon_url=$(gum input --header "Icon URL" --placeholder "See https://dashboardicons.com (must use PNG!)")
+
+	# Validate required fields
+	if [ -z "$app_name" ] || [ -z "$app_url" ]; then
+		echo "All fields are required."
+		exit 1
+	fi
+
+	# Setup file paths
+	desktop_file="$DESKTOP_DIR/$app_name.desktop"
+	icon_path="$ICON_DIR/$app_name.png"
+
+	# Download icon
+	if ! curl -sL -o "$icon_path" "$icon_url"; then
+		echo "Failed to download icon."
+	fi
+
+	# Create desktop file
+	cat >"$desktop_file" <<EOF
+[Desktop Entry]
+Version=1.0
+Name=$app_name
+Comment=$app_name
+Exec=myarchy-launch-webapp $app_url
+Terminal=false
+Type=Application
+Icon=$icon_path
+StartupNotify=true
+EOF
+
+	chmod +x "$desktop_file"
+	echo "Application '$app_name' created successfully!"
+
+	if [ -n "$MYARCHY_DIR" ] && gum confirm "Do you also want to copy it in myarchy files ?"; then
+		cp "$desktop_file" "$MYARCHY_DIR/assets/applications/"
+		cp "$icon_path" "$MYARCHY_DIR/assets/applications/icons/"
+	fi
+}
+
+remove_webapp() {
+	if [ "$#" -eq 0 ]; then
+		# Find all webapps by looking for desktop files with myarchy-launch-webapp pattern
+		webapps=$(find "$DESKTOP_DIR" -name '*.desktop' -print0 |
+			while read -r -d '' file; do
+				if grep -q '^Exec=.*myarchy-launch-webapp.*' "$file"; then
+					basename "${file%.desktop}"
+				fi
+			done | sort)
+
+		if [ -z "$webapps" ]; then
+			echo "No web apps to remove."
+			exit 1
+		fi
+
+		selected=$(echo "$webapps" | gum choose --no-limit --header "Select web app to remove..." --selected-prefix="✗ ")
+
+		if [ -z "$selected" ]; then
+			echo "You must provide web app names."
+			exit 1
+		fi
+
+		# Remove selected webapps
+		echo "$selected" | while read -r app; do
+			if [ -n "$app" ]; then
+				rm -f "$DESKTOP_DIR/$app.desktop"
+				rm -f "$ICON_DIR/$app.png"
+				echo "Removed $app"
+			fi
+		done
+	else
+		# Remove specified webapps
+		for app in "$@"; do
+			rm -f "$DESKTOP_DIR/$app.desktop"
+			rm -f "$ICON_DIR/$app.png"
+			echo "Removed $app"
+		done
+	fi
+}
+
+case "$1" in
+launch)
+	shift
+	launch_webapp "$@"
+	;;
+install)
+	install_webapp
+	;;
+remove)
+	remove_webapp
+	;;
+*)
+	echo "Usage: $0 {launch <url>|install|remove [app_name...]}"
+	exit 1
+	;;
+esac

@@ -1,0 +1,146 @@
+#!/usr/bin/env bash
+
+dmenu() {
+	local prompt=$1
+
+	pkill -x wofi
+	wofi --dmenu --prompt "$prompt" --insensitive
+}
+
+show_select_theme_menu() {
+	selected=$(myarchy-theme list | dmenu "Select theme")
+
+	if [[ -z "$selected" ]]; then
+		show_main_menu
+	else
+		myarchy-theme set "$selected"
+	fi
+}
+
+show_select_wallpaper_menu() {
+	selected=$(myarchy-wallpaper list | dmenu "Select wallpaper")
+
+	if [[ -z "$selected" ]]; then
+		show_main_menu
+	else
+		myarchy-wallpaper set "$selected"
+	fi
+}
+
+show_applications_menu() {
+	if wofi --show drun; then
+		exit 0
+	else
+		show_main_menu
+	fi
+}
+
+show_system_menu() {
+	selected=$(printf '  Reboot
+⏻  Shutdown' | dmenu "System menu")
+
+	if [[ -z "$selected" ]]; then
+		show_main_menu
+	else
+		case "$selected" in
+		*"Reboot"*) systemctl reboot ;;
+		*"Shutdown"*) systemctl poweroff ;;
+		esac
+	fi
+}
+
+show_screenshot_menu() {
+	selected=$(printf '󰍹  Fullscreen
+󰍺  Area
+󰍻  Window' | dmenu "Screenshot menu")
+
+	if [[ -z "$selected" ]]; then
+		show_main_menu
+	else
+		case "$selected" in
+		*"Fullscreen"*) myarchy-screenshot output ;;
+		*"Area"*) myarchy-screenshot region ;;
+		*"Window"*) myarchy-screenshot window ;;
+		esac
+	fi
+}
+
+show_install_menu() {
+	selected=$(printf '󰏖  TUI
+󰏖  Webapp
+󰏖  Appimage
+󰏖  Package
+󰏖  AUR Package
+󰏖  Flatpak user
+󰏖  Flatpak system' | dmenu "Install menu")
+
+	if [[ -z "$selected" ]]; then
+		show_main_menu
+	else
+		case "$selected" in
+		*"TUI"*) myarchy-tui launch-menu myarchy-tui install ;;
+		*"Webapp"*) myarchy-tui launch-menu myarchy-webapp install ;;
+		*"Appimage"*) myarchy-tui launch-menu myarchy-appimage install ;;
+		*"AUR Package"*) myarchy-tui launch-menu myarchy-pkg yay-install ;;
+		*"Package"*) myarchy-tui launch-menu myarchy-pkg install ;;
+		*"Flatpak user"*) myarchy-tui launch-menu myarchy-flatpak install user ;;
+		*"Flatpak system"*) myarchy-tui launch-menu myarchy-flatpak install system ;;
+		esac
+	fi
+}
+
+show_remove_menu() {
+	selected=$(printf '󰏘  TUI
+󰏘  Webapp
+󰏘  Appimage
+󰏘  Package
+󰏘  Flatpak user
+󰏘  Flatpak system' | dmenu "Remove menu")
+	if [[ -z "$selected" ]]; then
+		show_main_menu
+	else
+		case "$selected" in
+		*"TUI"*) myarchy-tui launch-menu myarchy-tui remove ;;
+		*"Webapp"*) myarchy-tui launch-menu myarchy-webapp remove ;;
+		*"Appimage"*) myarchy-tui launch-menu myarchy-appimage remove ;;
+		*"Package"*) myarchy-tui launch-menu myarchy-pkg remove ;;
+		*"Flatpak user"*) myarchy-tui launch-menu myarchy-flatpak remove user ;;
+		*"Flatpak system"*) myarchy-tui launch-menu myarchy-flatpak remove system ;;
+		esac
+	fi
+}
+
+show_main_menu() {
+	selected=$(printf '  Theme
+󰸉  Wallpaper
+󰇄  System
+  Bluetooth
+󰀂  Network
+  Audio
+󰹑  Screenshot
+󰣆  Applications
+󰟌  Monitor
+  Info
+󰁯  Snapshot system
+  Install
+  Remove' | dmenu "Myarchy menu")
+
+	case "$selected" in
+	*"Theme"*) show_select_theme_menu ;;
+	*"Wallpaper"*) show_select_wallpaper_menu ;;
+	*"System"*) show_system_menu ;;
+	*"Screenshot"*) show_screenshot_menu ;;
+	*"Bluetooth"*) myarchy-tui launch bluetuith --no-warning ;;
+	*"Network"*) myarchy-tui launch nmtui ;;
+	*"Audio"*) myarchy-tui launch wiremix ;;
+	*"Applications"*) show_applications_menu ;;
+	*"Monitor"*) myarchy-tui launch-big btop ;;
+	*"Info"*) myarchy-tui launch-menu fastfetch ;;
+	*"Snapshot system"*) myarchy-tui launch-menu myarchy-snapshot-system ;;
+	*"Install"*) show_install_menu ;;
+	*"Remove"*) show_remove_menu ;;
+	*) exit 0 ;;
+	esac
+}
+
+show_main_menu

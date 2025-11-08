@@ -1,9 +1,0 @@
-#!/usr/bin/env bash
-
-target="$1"
-link_name="$2"
-
-myarchy-backup-file "$link_name"
-rm -rf "$link_name" && echo "removed $link_name"
-mkdir -p "$(dirname "$link_name")"
-ln -sT "$target" "$link_name" && echo "symlinked $link_name -> $target"

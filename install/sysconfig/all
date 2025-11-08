@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+
+$MYARCHY_DIR/install/sysconfig/sudoers
+$MYARCHY_DIR/install/sysconfig/battery-and-power
+$MYARCHY_DIR/install/sysconfig/bluetooth
+$MYARCHY_DIR/install/sysconfig/docker
+$MYARCHY_DIR/install/sysconfig/firewall
+$MYARCHY_DIR/install/sysconfig/faillock
+$MYARCHY_DIR/install/sysconfig/system-backups
+$MYARCHY_DIR/install/sysconfig/terminal
+$MYARCHY_DIR/install/sysconfig/alternative-boot-options

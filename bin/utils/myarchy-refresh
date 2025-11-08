@@ -1,0 +1,41 @@
+#!/usr/bin/env bash
+
+refresh_terminal() {
+	myarchy-render-template config/starship.toml.j2 &>/dev/null
+
+	touch ~/.config/alacritty/alacritty.toml # Trigger alacritty config reload
+}
+
+refresh_desktop() {
+	# Waybar
+	pkill -x waybar
+	setsid uwsm app -- waybar >/dev/null 2>&1 &
+
+	# Mako
+	makoctl reload
+
+	hyprctl reload &>/dev/null &
+}
+
+refresh_all() {
+	refresh_desktop
+	refresh_terminal
+}
+
+command="$1"
+
+case $command in
+"desktop")
+	refresh_desktop
+	;;
+"terminal")
+	refresh_terminal
+	;;
+"all")
+	refresh_all
+	;;
+*)
+	echo "Usage: $0 {desktop|terminal|all}"
+	exit 1
+	;;
+esac

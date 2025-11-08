@@ -1,9 +1,0 @@
-#!/usr/bin/env bash
-
-source="$1"
-target="$2"
-
-myarchy-backup-file "$target"
-rm -rf "$target" && echo "removed $target"
-mkdir -p "$(dirname "$target")"
-cp -rf $source $target && echo "copied $source -> $target"

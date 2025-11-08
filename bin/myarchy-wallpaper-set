@@ -1,7 +1,0 @@
-#!/usr/bin/env bash
-
-ln -sfT "$MYARCHY_DIR/files/wallpapers/$1" $MYARCHY_DIR/files/wallpapers/current
-
-hyprctl hyprpaper reload , $MYARCHY_DIR/files/wallpapers/current
-
-myarchy-wallpaper-theme-pref-save

@@ -1,6 +1,0 @@
-#!/usr/bin/env bash
-
-wallpaper_path=$(readlink -f $MYARCHY_DIR/files/wallpapers/current)
-wallpaper_name=$(basename "$wallpaper_path")
-
-echo "$wallpaper_name"

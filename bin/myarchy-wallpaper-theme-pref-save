@@ -1,4 +1,0 @@
-#!/usr/bin/env bash
-
-wallpaper_name=$(myarchy-wallpaper-get)
-echo "$wallpaper_name" >$MYARCHY_DIR/files/themes/current/wallpaper.theme

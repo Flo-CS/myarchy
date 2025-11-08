@@ -1,4 +1,0 @@
-#!/usr/bin/env bash
-
-git -C "$MYARCHY_DIR" pull || gum confirm "Pull failed. Continue installation ?" || exit 1
-$MYARCHY_DIR/install.sh

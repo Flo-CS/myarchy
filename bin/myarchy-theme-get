@@ -1,6 +1,0 @@
-#!/usr/bin/env bash
-
-theme_path=$(readlink -f $MYARCHY_DIR/files/themes/current)
-theme_name=$(basename $theme_path)
-
-echo "$theme_name"

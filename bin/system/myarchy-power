@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+
+list_power_profiles() {
+  powerprofilesctl list |
+    awk '/^\s*[* ]\s*[a-zA-Z0-9\-]+:$/ { gsub(/^[*[:space:]]+|:$/,""); print }' |
+    tac
+}
+
+case "$1" in
+profiles-list)
+  list_power_profiles
+  ;;
+*)
+  echo "Usage: $0 {list}"
+  exit 1
+  ;;
+esac
