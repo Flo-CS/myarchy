@@ -4,6 +4,7 @@ source $MYARCHY_DIR/install/lib.sh
 
 export MYARCHY_CONFIG_DIR=$XDG_CONFIG_HOME/myarchy
 mkdir -p $MYARCHY_CONFIG_DIR
+
 export MYARCHY_SETTINGS_FILE=$MYARCHY_CONFIG_DIR/settings.env
 
 if [[ -f $MYARCHY_SETTINGS_FILE ]]; then
