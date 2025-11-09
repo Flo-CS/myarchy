@@ -155,7 +155,7 @@ install_flutter() {
 
 	mkdir -p "$DEV_TOOLS_PATH"
 
-	installed_version=$(flutter --version | grep -oP 'Flutter \K[0-9.]+')
+	installed_version=$(command -v flutter &>/dev/null && flutter --version | grep -oP 'Flutter \K[0-9.]+' || echo "0.0.0")
 
 	if myarchy-lib version-ge "$installed_version" "$target_version"; then
 		echo "Flutter $installed_version is already installed, skipping installation"

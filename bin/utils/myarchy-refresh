@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 refresh_terminal() {
-	myarchy-render-template config/starship.toml.j2 &>/dev/null
+	myarchy-lib render-template config/starship.toml.j2 &>/dev/null
 
 	touch ~/.config/alacritty/alacritty.toml # Trigger alacritty config reload
 }
