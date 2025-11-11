@@ -16,9 +16,6 @@ export QT_STYLE_OVERRIDE=Kvantum
 export LIBVA_DRIVER_NAME=nvidia
 export __GLX_VENDOR_LIBRARY_NAME=nvidia
 
-source ~/.config/fzf/fzf.sh
-source ~/.config/gum/gum.sh
-
 export PATH="$HOME/.local/bin:$PATH"
 
 if uwsm check may-start; then

@@ -2,6 +2,7 @@
 
 source ~/.config/rc/functions.sh
 source ~/.config/rc/aliases.sh
+source ~/.config/rc/theming.sh
 
 if command -v starship &>/dev/null; then
 	eval "$(starship init bash)"
