@@ -1,0 +1,3 @@
+#!/usr/bin/env bash
+
+$MYARCHY_DIR/install/sysconfig/battery-and-power

@@ -10,9 +10,11 @@ export MYARCHY_INSTANCE_ID=${MYARCHY_INSTANCE_ID:-$(gum input --header "Enter yo
 export DEV_TOOLS_PATH="$HOME/dev/tools"
 mkdir -p $DEV_TOOLS_PATH
 
-# GLOBAL SYSTEM INSTALLATION WITH PACKAGES & CONFIG
+# DEPLOY BINARIES
 
-sudo cp -f $MYARCHY_DIR/bin/myarchy-lib /usr/local/bin/myarchy-lib
+source $MYARCHY_DIR/install/deploy-bin
+
+# SYSTEM CONFIGURATION
 
 sudo pacman -Syu --noconfirm
 
@@ -21,8 +23,7 @@ source $MYARCHY_DIR/install/sysconfig/all
 
 # USER CONFIGURATION
 
-find $MYARCHY_DIR/bin -type f -exec cp -f -t $HOME/.local/bin {} +
-export PATH=$HOME/.local/bin:$PATH
+source $MYARCHY_DIR/install/usrconfig/all
 
 myarchy-hyprland-plugins install hyprexpo
 myarchy-theme init

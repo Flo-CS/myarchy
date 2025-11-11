@@ -39,7 +39,7 @@ deploy_file_by_link themes/current/hypr/hyprland-theme.conf ~/.config/hypr/hyprl
 deploy_file_by_link themes/current/hypr/hyprlock-theme.conf ~/.config/hypr/hyprlock-theme.conf
 
 deploy_file_by_link config/btop/btop.conf ~/.config/btop/btop.conf
-deploy_file_by_link themes/current/btop/theme.tmTheme ~/.config/btop/theme.theme
+deploy_file_by_link themes/current/btop/theme.theme ~/.config/btop/theme.theme
 
 deploy_file_by_link config/kvantum/kvantum.kvconfig ~/.config/Kvantum/kvantum.kvconfig
 deploy_file_by_link themes/current/kvantum ~/.config/Kvantum/theme
@@ -53,8 +53,8 @@ deploy_file_by_link themes/current/wofi/style.css ~/.config/wofi/style.css
 deploy_file_by_link config/nvim ~/.config/nvim
 deploy_file_by_link themes/current/nvim/.theme ~/.config/nvim/.theme
 
-deploy_file_by_link config/mako/config.ini ~/.config/mako/config.j2
-deploy_file_by_link themes/current/mako/theme.ini ~/.config/mako/theme.ini
+deploy_file_by_link config/mako/config.ini.j2 ~/.config/mako/config.j2
+deploy_file_by_link themes/current/mako/theme.ini ~/.config/mako/theme
 
 deploy_file_by_link config/user-dirs.dirs ~/.config/user-dirs.dirs
 

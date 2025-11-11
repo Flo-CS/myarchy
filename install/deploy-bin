@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+
+sudo cp -f $MYARCHY_DIR/bin/myarchy-lib /usr/local/bin/myarchy-lib
+
+find $MYARCHY_DIR/bin -type f -exec cp -f -t ~/.local/bin {} +
+
+export PATH=~/.local/bin:$PATH

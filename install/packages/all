@@ -200,5 +200,5 @@ install_docs
 install_docker
 install_rust
 install_android_studio
-# install_flutter "3.35.1" FIXME:
+install_flutter "3.35.1"
 install_python
