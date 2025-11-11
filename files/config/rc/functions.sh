@@ -121,7 +121,7 @@ nvf() {
 }
 
 # TODO: move to bin
-reboot_to_windows() {
+reboot-to-windows() {
 	windows_title=$(sudo grep -i windows /boot/grub/grub.cfg | cut -d "'" -f 2)
 	sudo grub-reboot "$windows_title" && sudo reboot
 }

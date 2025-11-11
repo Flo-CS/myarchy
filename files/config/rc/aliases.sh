@@ -13,8 +13,6 @@ alias gc="git commit"
 alias gp="git push"
 alias gd="git diff"
 
-alias reboot-to-windows='reboot_to_windows'
-
 alias cd="z"
 
 #alias ls='eza -lh --group-directories-first --icons=auto'
