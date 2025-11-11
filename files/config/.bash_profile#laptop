@@ -3,9 +3,7 @@
 export MYARCHY_DIR="~/.local/share/myarchy"
 export MYARCHY_INSTANCE_ID="laptop"
 
-source ~/.config/rc/env.sh
-
 . "$HOME/.atuin/bin/env"
 . "$HOME/.cargo/env"
 
-source ~/.config/rc/myarchy.sh
+source ~/.config/rc/profile.sh

@@ -1,7 +1,5 @@
 #!/usr/bin/env bash
 
-source ~/.config/rc/myarchy.sh
-source ~/.config/rc/env.sh
 source ~/.config/rc/functions.sh
 source ~/.config/rc/aliases.sh
 
