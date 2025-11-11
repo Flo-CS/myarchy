@@ -23,6 +23,11 @@
 	defaultBranch = main
 [core]
 	editor = nvim
+	pager = delta
 [merge]
 	tool = nvimdiff
-
+	conflictStyle = zdiff3
+[interactive]
+	diffFilter = delta --color-only
+[delta]
+	navigate = true

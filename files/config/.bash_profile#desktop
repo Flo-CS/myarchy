@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 
+export MYARCHY_DIR="~/.local/share/myarchy"
 export MYARCHY_INSTANCE_ID="desktop"
 
 source ~/.config/rc/myarchy.sh

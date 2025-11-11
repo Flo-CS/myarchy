@@ -21,8 +21,11 @@ eval "$(atuin init bash)"
 
 . /usr/share/nvm/init-nvm.sh
 
-export PATH="$HOME/development/flutter/bin:$PATH"
+export DEV_TOOLS_PATH="$HOME/dev/tools"
+
+export PATH="$DEV_TOOLS_PATH/flutter/bin:$PATH"
+
 export ANDROID_AVD_HOME="$HOME/.config/.android/avd"
-export ANDROID_SDK_HOME="$HOME/development/android/sdk"
+export ANDROID_SDK_HOME="$DEV_TOOLS_PATH/android/sdk"
 
 eval "$(direnv hook bash)"
