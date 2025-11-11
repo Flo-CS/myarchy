@@ -10,7 +10,7 @@ install_yay_pkgs() {
 
 install_terminal() {
 	install_pkgs alacritty starship neovim gum zoxide eza direnv tmux
-	curl --proto '=https' --tlsv1.2 -sSf https://setup.atuin.sh | sh
+	# curl --proto '=https' --tlsv1.2 -sSf https://setup.atuin.sh | sh # FIXME: security should be added
 }
 
 install_flatpak() {
@@ -139,7 +139,7 @@ install_docker() {
 }
 
 install_rust() {
-	curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+	curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y # TODO: security should be added
 }
 
 # TODO: Make a full installation

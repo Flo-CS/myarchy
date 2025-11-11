@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-WALLPAPERS_DIR="$MYARCHY_DIR/files/wallpapers"
+WALLPAPERS_DIR="$MYARCHY_DIR/files/wallpapers/"
 CURRENT_THEME_DIR="$MYARCHY_DIR/files/themes/current"
 
 init_wallpaper() {

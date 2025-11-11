@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-THEMES_DIR="$MYARCHY_DIR/files/themes"
+THEMES_DIR="$MYARCHY_DIR/files/themes/"
 
 init_theme() {
 	if [[ ! -d "$THEMES_DIR/current" ]]; then
