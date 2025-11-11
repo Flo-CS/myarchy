@@ -15,7 +15,7 @@ alias gd="git diff"
 
 alias reboot-to-windows='reboot_to_windows'
 
-alias cd="zd"
+alias cd="z"
 
 #alias ls='eza -lh --group-directories-first --icons=auto'
 #alias lsa='ls -a'

@@ -13,6 +13,8 @@ deploy_file_by_link() {
 	myarchy-lib robust-link $target $link_name
 }
 
+deploy_file_by_link config/systemd ~/.config/systemd
+
 deploy_file_by_link config/alacritty/alacritty.toml ~/.config/alacritty/alacritty.toml
 deploy_file_by_link themes/current/alacritty/theme.toml ~/.config/alacritty/theme.toml
 
@@ -66,3 +68,24 @@ deploy_file_by_link config/.bash_profile ~/.bash_profile
 
 deploy_file_by_link config/.gitconfig-default ~/.gitconfig-default
 deploy_file_by_link config/.gitconfig ~/.gitconfig
+
+### REFRESH ###
+
+# Alacritty
+touch ~/.config/alacritty/alacritty.toml # Trigger reload
+
+# Starship template
+myarchy-lib render-template ~/.config/starship.toml.j2 ~/.config/starship.toml
+
+# Bat
+bat cache --build
+
+# Waybar
+pkill -x waybar && setsid uwsm app -- waybar &
+
+# Mako
+myarchy-lib render-template ~/.config/mako/config.j2 ~/.config/mako/config
+makoctl reload &
+
+# Hyprland
+hyprctl reload &

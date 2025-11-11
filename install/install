@@ -23,9 +23,10 @@ source $MYARCHY_DIR/install/sysconfig/all
 
 # USER CONFIGURATION
 
+source $MYARCHY_DIR/install/deploy-config
+source $MYARCHY_DIR/install/deploy-applications
+
 source $MYARCHY_DIR/install/usrconfig/all
 
-myarchy-hyprland-plugins install hyprexpo
 myarchy-theme init
 myarchy-wallpaper init
-myarchy-deploy all

@@ -1,3 +1,4 @@
 #!/usr/bin/env bash
 
-$MYARCHY_DIR/install/sysconfig/battery-and-power
+$MYARCHY_DIR/install/usrconfig/battery-and-power
+$MYARCHY_DIR/install/usrconfig/hyprland-plugins
