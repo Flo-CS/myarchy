@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+set -eEo pipefail
+
 deploy_file_by_link() {
 	target="$MYARCHY_DIR/files/$1"
 	link_name="$2"
