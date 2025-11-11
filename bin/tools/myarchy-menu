@@ -78,13 +78,13 @@ show_install_menu() {
 		show_main_menu
 	else
 		case "$selected" in
-		*"TUI"*) myarchy-tui launch-menu myarchy-tui install ;;
-		*"Webapp"*) myarchy-tui launch-menu myarchy-webapp install ;;
-		*"Appimage"*) myarchy-tui launch-menu myarchy-appimage install ;;
-		*"AUR Package"*) myarchy-tui launch-menu myarchy-pkg yay-install ;;
-		*"Package"*) myarchy-tui launch-menu myarchy-pkg install ;;
-		*"Flatpak user"*) myarchy-tui launch-menu myarchy-flatpak install user ;;
-		*"Flatpak system"*) myarchy-tui launch-menu myarchy-flatpak install system ;;
+		*"TUI"*) myarchy-terminal launch-menu myarchy-tui install ;;
+		*"Webapp"*) myarchy-terminal launch-menu myarchy-webapp install ;;
+		*"Appimage"*) myarchy-terminal launch-menu myarchy-appimage install ;;
+		*"AUR Package"*) myarchy-terminal launch-menu myarchy-pkg yay-install ;;
+		*"Package"*) myarchy-terminal launch-menu myarchy-pkg install ;;
+		*"Flatpak user"*) myarchy-terminal launch-menu myarchy-flatpak install user ;;
+		*"Flatpak system"*) myarchy-terminal launch-menu myarchy-flatpak install system ;;
 		esac
 	fi
 }
@@ -100,12 +100,12 @@ show_remove_menu() {
 		show_main_menu
 	else
 		case "$selected" in
-		*"TUI"*) myarchy-tui launch-menu myarchy-tui remove ;;
-		*"Webapp"*) myarchy-tui launch-menu myarchy-webapp remove ;;
-		*"Appimage"*) myarchy-tui launch-menu myarchy-appimage remove ;;
-		*"Package"*) myarchy-tui launch-menu myarchy-pkg remove ;;
-		*"Flatpak user"*) myarchy-tui launch-menu myarchy-flatpak remove user ;;
-		*"Flatpak system"*) myarchy-tui launch-menu myarchy-flatpak remove system ;;
+		*"TUI"*) myarchy-terminal launch-menu myarchy-terminal remove ;;
+		*"Webapp"*) myarchy-terminal launch-menu myarchy-webapp remove ;;
+		*"Appimage"*) myarchy-terminal launch-menu myarchy-appimage remove ;;
+		*"Package"*) myarchy-terminal launch-menu myarchy-pkg remove ;;
+		*"Flatpak user"*) myarchy-terminal launch-menu myarchy-flatpak remove user ;;
+		*"Flatpak system"*) myarchy-terminal launch-menu myarchy-flatpak remove system ;;
 		esac
 	fi
 }
@@ -130,13 +130,13 @@ show_main_menu() {
 	*"Wallpaper"*) show_select_wallpaper_menu ;;
 	*"System"*) show_system_menu ;;
 	*"Screenshot"*) show_screenshot_menu ;;
-	*"Bluetooth"*) myarchy-tui launch bluetuith --no-warning ;;
-	*"Network"*) myarchy-tui launch nmtui ;;
-	*"Audio"*) myarchy-tui launch wiremix ;;
+	*"Bluetooth"*) myarchy-terminal launch bluetuith --no-warning ;;
+	*"Network"*) myarchy-terminal launch nmtui ;;
+	*"Audio"*) myarchy-terminal launch wiremix ;;
 	*"Applications"*) show_applications_menu ;;
-	*"Monitor"*) myarchy-tui launch-big btop ;;
-	*"Info"*) myarchy-tui launch-menu fastfetch ;;
-	*"Snapshot system"*) myarchy-tui launch-menu myarchy-snapshot-system ;;
+	*"Monitor"*) myarchy-terminal launch-big btop ;;
+	*"Info"*) myarchy-terminal launch-menu fastfetch ;;
+	*"Snapshot system"*) myarchy-terminal launch-menu myarchy-snapshot-system ;;
 	*"Install"*) show_install_menu ;;
 	*"Remove"*) show_remove_menu ;;
 	*) exit 0 ;;

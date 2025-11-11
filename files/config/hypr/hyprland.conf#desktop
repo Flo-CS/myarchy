@@ -1,4 +1,4 @@
-source=~/.local/share/myarchy/files/default/hypr/hyprland.conf
+source=./default/hyprland.conf
 
 input {
     sensitivity = -0.5 # -1.0 - 1.0, 0 means no modification.

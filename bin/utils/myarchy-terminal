@@ -1,0 +1,51 @@
+#!/usr/bin/env bash
+
+show_done() {
+	gum spin --spinner "pulse" --title "Press any key to close..." -- bash -c 'read -n 1 -s'
+}
+
+show_logo() {
+	echo ""
+	cat $MYARCHY_DIR/logo.txt
+	echo ""
+}
+
+launch_tui() {
+	cmd="$*"
+	setsid uwsm app -- alacritty --class Myarchy.App -e $cmd
+}
+
+launch_big_tui() {
+	cmd="$*"
+	setsid uwsm app -- alacritty --class Myarchy.BigApp -e $cmd
+}
+
+launch_menu_tui() {
+	cmd="$*"
+	setsid uwsm app -- alacritty --class Myarchy.Menu -e bash -i -c "myarchy-terminal show-logo; $cmd; myarchy-terminal show-done"
+}
+
+case "$1" in
+show-done)
+	show_done
+	;;
+show-logo)
+	show_logo
+	;;
+launch)
+	shift
+	launch_tui "$@"
+	;;
+launch-big)
+	shift
+	launch_big_tui "$@"
+	;;
+launch-menu)
+	shift
+	launch_menu_tui "$@"
+	;;
+*)
+	echo "Usage: $0 {show-done|show-logo|launch|launch-big|launch-menu} [command]"
+	exit 1
+	;;
+esac

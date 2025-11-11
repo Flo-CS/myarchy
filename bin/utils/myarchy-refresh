@@ -1,20 +1,26 @@
 #!/usr/bin/env bash
 
 refresh_terminal() {
-	myarchy-lib render-template config/starship.toml.j2 &>/dev/null
+	# Alacritty
+	touch ~/.config/alacritty/alacritty.toml # Trigger reload
 
-	touch ~/.config/alacritty/alacritty.toml # Trigger alacritty config reload
+	# Starship template
+	myarchy-lib render-template ~/.config/starship.toml.j2 ~/.config/starship.toml
+
+	# Bat
+	bat cache --build
 }
 
 refresh_desktop() {
 	# Waybar
-	pkill -x waybar
-	setsid uwsm app -- waybar >/dev/null 2>&1 &
+	pkill -x waybar && setsid uwsm app -- waybar &
 
 	# Mako
-	makoctl reload
+	myarchy-lib render-template ~/.config/mako/config.j2 ~/.config/mako/config
+	makoctl reload &
 
-	hyprctl reload &>/dev/null &
+	# Hyprland
+	hyprctl reload &
 }
 
 refresh_all() {

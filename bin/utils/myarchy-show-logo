@@ -1,5 +1,0 @@
-#!/usr/bin/env bash
-
-echo ""
-cat $MYARCHY_DIR/logo.txt
-echo ""

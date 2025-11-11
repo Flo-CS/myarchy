@@ -16,11 +16,11 @@ backup_file() {
 	file="$1"
 
 	if test -L "$file"; then
-		exit 0
+		return 0
 	fi
 
 	if ! test -e "$file"; then
-		exit 0
+		return 0
 	fi
 
 	timestamp=$(date +%Y%m%d_%H%M%S)
@@ -48,7 +48,7 @@ robust_link() {
 	backup_file "$link_name"
 	rm -rf "$link_name" && echo "removed $link_name"
 	mkdir -p "$(dirname "$link_name")"
-	ln -sT "$target" "$link_name" && echo "symlinked $link_name -> $target"
+	ln -sT "$target" "$link_name" && echo "symlinked $link_name -> $target" || echo "failed to create symlink $target $link_name"
 }
 
 robust_insert_with_marker() {
@@ -95,11 +95,6 @@ render_template() {
 
 	j2 "$template_file" >"$output_file" && echo "rendered template $template_file to $output_file"
 }
-
-# Only run if executed directly
-if [[ "${BASH_SOURCE[0]}" != "${0}" ]]; then
-	return
-fi
 
 case "$1" in
 version-ge)

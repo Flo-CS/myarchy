@@ -4,22 +4,6 @@ DESKTOP_DIR="$HOME/.local/share/applications"
 ICON_DIR="$DESKTOP_DIR/icons"
 mkdir -p "$DESKTOP_DIR" "$ICON_DIR"
 
-# FIXME: maube launch should be moved elsewhere
-launch_tui() {
-	cmd="$*"
-	setsid uwsm app -- alacritty --class Myarchy.App -e $cmd
-}
-
-launch_big_tui() {
-	cmd="$*"
-	setsid uwsm app -- alacritty --class Myarchy.BigApp -e $cmd
-}
-
-launch_menu_tui() {
-	cmd="$*"
-	setsid uwsm app -- alacritty --class Myarchy.Menu -e bash -i -c "myarchy-show-logo; $cmd; myarchy-show-done"
-}
-
 install_tui() {
 
 	# Get user input
@@ -115,15 +99,6 @@ remove_tui() {
 }
 
 case "$1" in
-launch)
-	launch_tui "${@:2}"
-	;;
-launch-big)
-	launch_big_tui "${@:2}"
-	;;
-launch-menu)
-	launch_menu_tui "${@:2}"
-	;;
 install)
 	install_tui
 	;;
@@ -131,7 +106,7 @@ remove)
 	remove_tui
 	;;
 *)
-	echo "Usage: $0 {launch|launch-big|launch-menu|install|remove}"
+	echo "Usage: $0 {install|remove}"
 	exit 1
 	;;
 esac

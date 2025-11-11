@@ -9,7 +9,7 @@ install_yay_pkgs() {
 }
 
 install_terminal() {
-	install_pkgs alacritty starship neovim gum zoxide eza direnv
+	install_pkgs alacritty starship neovim gum zoxide eza direnv tmux
 	curl --proto '=https' --tlsv1.2 -sSf https://setup.atuin.sh | sh
 }
 
@@ -28,7 +28,7 @@ install_net_tools() {
 }
 
 install_files_tools() {
-	install_pkgs bat fd ripgrep fzf jq go-yq python-j2cli unzip xz zip thunar yazi ranger nnn
+	install_pkgs bat fd ripgrep fzf jq go-yq python-j2cli unzip xz zip thunar yazi
 }
 
 install_sync_tools() {
@@ -153,8 +153,6 @@ install_android_studio() {
 install_flutter() {
 	target_version=$1
 
-	mkdir -p "$DEV_TOOLS_PATH"
-
 	installed_version=$(command -v flutter &>/dev/null && flutter --version | grep -oP 'Flutter \K[0-9.]+' || echo "0.0.0")
 
 	if myarchy-lib version-ge "$installed_version" "$target_version"; then
@@ -162,8 +160,6 @@ install_flutter() {
 	else
 		curl --proto '=https' --tlsv1.2 -sSf https://storage.googleapis.com/flutter_infra_release/releases/stable/linux/flutter_linux_$target_version-stable.tar.xz -o /tmp/flutter.tar.xz
 		tar -xf /tmp/flutter.tar.xz -C "$DEV_TOOLS_PATH"
-
-		myarchy-lib robust-insert-with-marker ~/.bash_profile "Flutter SDK" 'export PATH="$DEV_TOOLS_PATH/flutter/bin:$PATH"'
 	fi
 }
 
@@ -204,5 +200,5 @@ install_docs
 install_docker
 install_rust
 install_android_studio
-install_flutter "3.35.1"
+# install_flutter "3.35.1" FIXME:
 install_python

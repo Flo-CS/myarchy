@@ -1,0 +1,68 @@
+#!/usr/bin/env bash
+
+deploy_file_by_link() {
+	target="$MYARCHY_DIR/files/$1"
+	link_name="$2"
+
+	local_target="$target#$MYARCHY_INSTANCE_ID"
+	if [[ -f "$local_target" ]]; then
+		target=${local_target}
+		echo "Using local file: $target"
+	fi
+
+	myarchy-lib robust-link $target $link_name
+}
+
+deploy_file_by_link config/alacritty/alacritty.toml ~/.config/alacritty/alacritty.toml
+deploy_file_by_link themes/current/alacritty/theme.toml ~/.config/alacritty/theme.toml
+
+deploy_file_by_link config/atuin/config.toml ~/.config/atuin/config.toml
+
+deploy_file_by_link config/bat/bat ~/.config/bat/config/bat
+deploy_file_by_link themes/current/bat/theme.tmTheme ~/.config/bat/themes/theme.tmTheme
+
+deploy_file_by_link config/starship/starship.toml.j2 ~/.config/starship.toml.j2
+deploy_file_by_link themes/current/starship/theme.toml ~/.config/starship/theme.toml
+
+deploy_file_by_link config/fzf/fzf.sh ~/.config/fzf/fzf.sh
+deploy_file_by_link themes/current/fzf/theme.sh ~/.config/fzf/theme.sh
+
+deploy_file_by_link config/gum/gum.sh ~/.config/gum/gum.sh
+deploy_file_by_link themes/current/gum/theme.sh ~/.config/gum/theme.sh
+
+deploy_file_by_link config/hypr/default ~/.config/hypr/default
+deploy_file_by_link config/hypr/hypridle.conf ~/.config/hypr/hypridle.conf
+deploy_file_by_link config/hypr/hyprpaper.conf ~/.config/hypr/hyprpaper.conf
+deploy_file_by_link config/hypr/hyprland.conf ~/.config/hypr/hyprland.conf
+deploy_file_by_link config/hypr/hyprlock.conf ~/.config/hypr/hyprlock.conf
+deploy_file_by_link themes/current/hypr/hyprland-theme.conf ~/.config/hypr/hyprland-theme.conf
+deploy_file_by_link themes/current/hypr/hyprlock-theme.conf ~/.config/hypr/hyprlock-theme.conf
+
+deploy_file_by_link config/btop/btop.conf ~/.config/btop/btop.conf
+deploy_file_by_link themes/current/btop/theme.tmTheme ~/.config/btop/theme.theme
+
+deploy_file_by_link config/kvantum/kvantum.kvconfig ~/.config/Kvantum/kvantum.kvconfig
+deploy_file_by_link themes/current/kvantum ~/.config/Kvantum/theme
+
+deploy_file_by_link config/waybar/config.jsonc ~/.config/waybar/config.jsonc
+deploy_file_by_link themes/current/waybar/style.css ~/.config/waybar/style.css
+
+deploy_file_by_link config/wofi/wofi ~/.config/wofi/config/wofi
+deploy_file_by_link themes/current/wofi/style.css ~/.config/wofi/style.css
+
+deploy_file_by_link config/nvim ~/.config/nvim
+deploy_file_by_link themes/current/nvim/.theme ~/.config/nvim/.theme
+
+deploy_file_by_link config/mako/config.ini ~/.config/mako/config.j2
+deploy_file_by_link themes/current/mako/theme.ini ~/.config/mako/theme.ini
+
+deploy_file_by_link config/user-dirs.dirs ~/.config/user-dirs.dirs
+
+deploy_file_by_link config/mimeapps.list ~/.config/mimeapps.list
+
+deploy_file_by_link config/rc ~/.config/rc
+deploy_file_by_link config/.bashrc ~/.bashrc
+deploy_file_by_link config/.bash_profile ~/.bash_profile
+
+deploy_file_by_link config/.gitconfig-default ~/.gitconfig-default
+deploy_file_by_link config/.gitconfig ~/.gitconfig

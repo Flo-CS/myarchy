@@ -3,19 +3,28 @@
 set -eEo pipefail
 
 # VARS
-export MYARCHY_DIR=${MYARCHY_DIR:-$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" &>/dev/null && pwd)}
+
+export MYARCHY_DIR="$HOME/.local/share/myarchy"
 export MYARCHY_INSTANCE_ID=${MYARCHY_INSTANCE_ID:-$(gum input --header "Enter your myarchy instance ID used to identify specific local configurations (e.g. 'desktop', 'laptop')")}
-export DEV_TOOLS_PATH=~/dev/tools # TODO: move this
+
+export DEV_TOOLS_PATH="$HOME/dev/tools"
+mkdir -p $DEV_TOOLS_PATH
 
 # GLOBAL SYSTEM INSTALLATION WITH PACKAGES & CONFIG
-sudo cp $MYARCHY_DIR/bin/myarchy-lib /usr/local/bin/myarchy-lib
+
+sudo cp -f $MYARCHY_DIR/bin/myarchy-lib /usr/local/bin/myarchy-lib
+
 sudo pacman -Syu --noconfirm
+
 source $MYARCHY_DIR/install/packages/all
 source $MYARCHY_DIR/install/sysconfig/all
 
 # USER CONFIGURATION
-export PATH=$MYARCHY_DIR/bin:$PATH
+
+find $MYARCHY_DIR/bin -type f -exec cp -f -t $HOME/.local/bin {} +
+export PATH=$HOME/.local/bin:$PATH
+
 myarchy-hyprland-plugins install hyprexpo
-# myarchy-theme init
-# myarchy-wallpaper init
-# myarchy-deploy all
+myarchy-theme init
+myarchy-wallpaper init
+myarchy-deploy all

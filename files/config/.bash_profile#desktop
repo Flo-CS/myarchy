@@ -1,8 +1,9 @@
-#!/bin/bash/env bash
+#!/usr/bin/env bash
 
-source ~/.local/share/myarchy/files/default/bash/myarchy-env.sh
-source ~/.local/share/myarchy/files/default/bash/myarchy-profile.sh
-source ~/.local/share/myarchy/files/default/bash/env.sh
+export MYARCHY_INSTANCE_ID="desktop"
+
+source ~/.config/rc/myarchy.sh
+source ~/.config/rc/env.sh
 
 . "$HOME/.atuin/bin/env"
 . "$HOME/.cargo/env"

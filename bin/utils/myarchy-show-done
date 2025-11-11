@@ -1,3 +1,0 @@
-#!/usr/bin/env bash
-
-gum spin --spinner "pulse" --title "Press any key to close..." -- bash -c 'read -n 1 -s'
