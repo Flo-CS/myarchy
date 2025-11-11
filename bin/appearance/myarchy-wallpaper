@@ -11,8 +11,8 @@ init_wallpaper() {
 }
 
 get_wallpaper() {
-	current_wallpaper_path=$(readlink -f "$WALLPAPERS_DIR/current")
-	current_wallpaper_name=$(basename "$current_wallpaper_path")
+	wallpaper_path=$(readlink -f "$WALLPAPERS_DIR/current")
+	wallpaper_name=$(basename "$wallpaper_path")
 
 	echo "$wallpaper_name"
 }
