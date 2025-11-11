@@ -49,7 +49,7 @@ deploy_file_by_link themes/current/kvantum ~/.config/Kvantum/theme
 deploy_file_by_link config/waybar/config.jsonc ~/.config/waybar/config.jsonc
 deploy_file_by_link themes/current/waybar/style.css ~/.config/waybar/style.css
 
-deploy_file_by_link config/wofi/wofi ~/.config/wofi/config/wofi
+deploy_file_by_link config/wofi/config ~/.config/wofi/config
 deploy_file_by_link themes/current/wofi/style.css ~/.config/wofi/style.css
 
 deploy_file_by_link config/nvim ~/.config/nvim
