@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-THEMES_DIR="$MYARCHY_DIR/files/themes/"
+THEMES_DIR="$MYARCHY_DIR/files/themes"
 
 init_theme() {
 	if [[ ! -d "$THEMES_DIR/current" ]]; then
@@ -17,7 +17,7 @@ get_theme() {
 }
 
 list_themes() {
-	fd --glob "*" "$THEMES_DIR" --format {/} --max-depth 1
+	fd --glob "*" "$THEMES_DIR/" --format {/} --max-depth 1
 }
 
 set_theme() {
@@ -25,7 +25,7 @@ set_theme() {
 
 	myarchy-wallpaper theme-pref-apply
 
-	myarchy-refresh all
+	myarchy-refresh all # FIXME: script has been removed
 }
 
 case "$1" in
