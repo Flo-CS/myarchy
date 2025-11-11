@@ -1,3 +1,5 @@
+# TODO: rename and split
+
 # Can also be set using hyprctl setcursor
 export HYPRCURSOR_THEME=BreezeX-RoséPineDawn
 export HYPRCURSOR_SIZE=24
