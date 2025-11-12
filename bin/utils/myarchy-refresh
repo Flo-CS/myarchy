@@ -1,0 +1,32 @@
+#!/usr/bin/env bash
+
+refresh_all() {
+	# Alacritty
+	touch ~/.config/alacritty/alacritty.toml # Trigger reload
+
+	# Starship template
+	myarchy-lib render-template ~/.config/starship.toml.j2 ~/.config/starship.toml
+
+	# Bat
+	bat cache --build
+
+	# Waybar
+	pkill -x waybar && setsid uwsm app -- waybar &
+
+	# Mako
+	myarchy-lib render-template ~/.config/mako/config.j2 ~/.config/mako/config
+	makoctl reload &
+
+	# Hyprland
+	hyprctl reload &
+}
+
+case "$1" in
+all)
+	refresh_all
+	;;
+*)
+	echo "Usage: $0 all"
+	exit 1
+	;;
+esac
