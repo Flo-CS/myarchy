@@ -34,22 +34,22 @@ list_plugins() {
 install_plugins() {
 	plugins_to_install=$(echo "$1" | sort -u)
 
-	hyprpm reload || echo "failed to reload hyprpm"
-
 	enabled_plugins=$(list_plugins | jq '[.[] | select(.enabled == true)]' | jq -r '.[] | "\(.plugin)"' | sort -u)
 	installed_repos=$(list_plugins | jq -r '.[] | "\(.repo)"' | sort -u)
 
 	plugins_to_enable=$(comm -13 <(echo "$enabled_plugins") <(echo "$plugins_to_install"))
 	repos_to_install=$(comm -13 <(echo "$installed_repos") <(echo "$plugins_to_install"))
 
+	if [[ -n "$repos_to_install" ]] || [[ -n "$plugins_to_enable" ]]; then
+		hyprpm update || echo "failed to update hyprpm"
+	fi
+
+	hyprpm reload || echo "failed to reload hyprpm"
+
 	for repo in $repos_to_install; do
 		local url="${REPOS[$repo]}"
 		hyprpm add "$url" || echo "failed to add repo $repo with $url"
 	done
-
-	if [[ -n "$repos_to_install" ]] || [[ -n "$plugins_to_enable" ]]; then
-		hyprpm update || echo "failed to update hyprpm"
-	fi
 
 	for plugin in $plugins_to_enable; do
 		hyprpm enable "$plugin" || echo "failed to enable plugin $plugin"
