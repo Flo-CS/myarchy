@@ -2,6 +2,9 @@
 
 set -eEo pipefail
 
+# TODO: move this, do this better
+sudo chmod g+rwx /var/backups/
+
 # VARS
 
 export MYARCHY_DIR="$HOME/.local/share/myarchy"
