@@ -4,6 +4,6 @@ set -eEo pipefail
 
 sudo cp -f "$MYARCHY_DIR/bin/myarchy-lib" "/usr/local/bin/myarchy-lib"
 
-find "$MYARCHY_DIR/bin" -type f -exec cp -f -t ~/.local/bin {} +
+find "$MYARCHY_DIR/bin" -type f -exec cp -f -t $HOME/.local/bin {} +
 
-export PATH="~/.local/bin:$PATH"
+export PATH="$HOME/.local/bin:$PATH"
