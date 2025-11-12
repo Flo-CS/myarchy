@@ -38,7 +38,7 @@ install_plugins() {
 	installed_repos=$(list_plugins | jq -r '.[] | "\(.repo)"' | sort -u)
 
 	plugins_to_enable=$(comm -13 <(echo "$enabled_plugins") <(echo "$plugins_to_install"))
-	repos_to_install=$(comm -13 <(echo "$installed_repos") <(echo "$plugins_to_install"))
+	repos_to_install=$(comm -13 <(echo "$installed_repos") <(echo "$REQUIRED_REPOS"))
 
 	if [[ -n "$repos_to_install" ]] || [[ -n "$plugins_to_enable" ]]; then
 		hyprpm update || echo "failed to update hyprpm"
