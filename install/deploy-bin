@@ -2,8 +2,8 @@
 
 set -eEo pipefail
 
-sudo cp -f "$MYARCHY_DIR/bin/myarchy-lib" "/usr/local/bin/myarchy-lib"
+sudo cp -f --remove-destination "$MYARCHY_DIR/bin/myarchy-lib" "/usr/local/bin/myarchy-lib"
 
-find "$MYARCHY_DIR/bin" -type f -exec cp -f -t $HOME/.local/bin {} +
+find "$MYARCHY_DIR/bin" -type f -exec cp -f --remove-destination -t $HOME/.local/bin {} +
 
 export PATH="$HOME/.local/bin:$PATH"
