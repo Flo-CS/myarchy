@@ -9,6 +9,8 @@ border-radius=0
 max-icon-size=32
 outer-margin=5
 
+{% include env("HOME") + "/.config/mako/theme" %}
+
 [app-name=Spotify]
 invisible=1
 
@@ -20,5 +22,3 @@ invisible=false
 
 [urgency=critical]
 default-timeout=0
-
-{% include env("HOME") + "/.config/mako/theme" %}
