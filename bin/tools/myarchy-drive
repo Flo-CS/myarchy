@@ -1,4 +1,4 @@
 #!/usr/bin/env bash
 
-list_mountable_devices() {
+list_mountable_drives() {
 }

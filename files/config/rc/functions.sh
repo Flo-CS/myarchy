@@ -58,33 +58,15 @@ fzff() {
 # Ripgrep with fzf for content search
 # TODO: behavior is not very user friendly
 rgf() {
-	local query="$1"
-
-	if [ -z "$query" ]; then
-		query=$(gum input --placeholder "Enter search query")
-		if [ -z "$query" ]; then
-			echo "No query provided."
-			return 1
-		fi
-	fi
-
-	local result=$(rg --line-number --no-heading --color=always --smart-case --hidden "$query" |
+	rg --line-number --no-heading --color=always --smart-case --hidden "${*:-}" |
 		fzf --ansi \
 			--style full \
 			--height 60% \
 			--reverse \
 			--delimiter : \
-			--preview "bat --color=always --highlight-line {2} {1} 2>/dev/null || cat {1}" \
-			--preview-window=right:60%)
-
-	if [ -n "$result" ]; then
-		local file_path=$(echo "$result" | cut -d: -f1)
-		local line_number=$(echo "$result" | cut -d: -f2)
-		nvim +$line_number "$file_path"
-		return 0
-	else
-		return 1
-	fi
+			--preview 'bat --color=always {1} --highlight-line {2}' \
+			--preview-window "right:60%" \
+			--bind 'enter:become(nvim {1} +{2})'
 }
 
 # Change directory using fzf
