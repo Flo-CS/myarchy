@@ -25,6 +25,7 @@ deploy_file_by_link themes/current/bat/theme.tmTheme ~/.config/bat/themes/theme.
 
 deploy_file_by_link config/starship/starship.toml.j2 ~/.config/starship.toml.j2
 deploy_file_by_link themes/current/starship/theme.toml ~/.config/starship/theme.toml
+myarchy-lib render-template ~/.config/starship.toml.j2 ~/.config/starship.toml
 
 deploy_file_by_link config/fzf/fzf.sh ~/.config/fzf/fzf.sh
 deploy_file_by_link themes/current/fzf/theme.sh ~/.config/fzf/theme.sh
@@ -57,6 +58,7 @@ deploy_file_by_link themes/current/nvim/.theme ~/.config/nvim/.theme
 
 deploy_file_by_link config/mako/config.ini.j2 ~/.config/mako/config.j2
 deploy_file_by_link themes/current/mako/theme.ini ~/.config/mako/theme
+myarchy-lib render-template ~/.config/mako/config.j2 ~/.config/mako/config
 
 deploy_file_by_link config/mpv ~/.config/mpv
 
