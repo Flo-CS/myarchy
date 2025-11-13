@@ -5,15 +5,15 @@ source ~/.config/rc/aliases.sh
 source ~/.config/rc/theming.sh
 source ~/.config/rc/settings.sh
 
-if command -v starship &>/dev/null; then
-	eval "$(starship init bash)"
-fi
-
-if command -v zoxide &>/dev/null; then
-	eval "$(zoxide init bash)"
-fi
-
 [[ -f ~/.bash-preexec.sh ]] && source ~/.bash-preexec.sh
+
+eval "$(starship init bash)"
+
+eval "$(zoxide init bash)"
+
+eval "$(direnv hook bash)"
+
+eval "$(fzf --bash)"
 
 . "$HOME/.cargo/env"
 
@@ -25,5 +25,3 @@ export PATH="$DEV_TOOLS_PATH/flutter/bin:$PATH"
 
 export ANDROID_AVD_HOME="$HOME/.config/.android/avd"
 export ANDROID_SDK_HOME="$DEV_TOOLS_PATH/android/sdk"
-
-eval "$(direnv hook bash)"
