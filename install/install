@@ -15,7 +15,7 @@ mkdir -p $DEV_TOOLS_PATH
 
 # DEPLOY BINARIES
 
-source $MYARCHY_DIR/install/deploy-bin
+source $MYARCHY_DIR/install/deploy/deploy-bin
 
 # SYSTEM CONFIGURATION
 
@@ -26,8 +26,8 @@ source $MYARCHY_DIR/install/sysconfig/all
 
 # USER CONFIGURATION
 
-source $MYARCHY_DIR/install/deploy-config
-source $MYARCHY_DIR/install/deploy-applications
+source $MYARCHY_DIR/install/deploy/deploy-config
+source $MYARCHY_DIR/install/deploy/deploy-applications
 
 source $MYARCHY_DIR/install/usrconfig/all
 
