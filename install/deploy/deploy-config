@@ -20,8 +20,6 @@ deploy_file_by_link config/systemd ~/.config/systemd
 deploy_file_by_link config/alacritty/alacritty.toml ~/.config/alacritty/alacritty.toml
 deploy_file_by_link themes/current/alacritty/theme.toml ~/.config/alacritty/theme.toml
 
-deploy_file_by_link config/atuin/config.toml ~/.config/atuin/config.toml
-
 deploy_file_by_link config/bat/bat ~/.config/bat/config/bat
 deploy_file_by_link themes/current/bat/theme.tmTheme ~/.config/bat/themes/theme.tmTheme
 
