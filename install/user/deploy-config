@@ -55,6 +55,8 @@ myarchy-lib robust-link $SOURCE/config/swayosd/config.toml ~/.config/swayosd/con
 myarchy-lib robust-link $SOURCE/config/swayosd/style.css ~/.config/swayosd/style.css
 myarchy-lib robust-link $SOURCE/themes/current/swayosd/theme.css ~/.config/swayosd/theme.css
 
+myarchy-lib robust-link $SOURCE/config/wireplumber ~/.config/wireplumber/wireplumber.conf.d
+
 myarchy-lib robust-link $SOURCE/config/user-dirs.dirs ~/.config/user-dirs.dirs
 
 myarchy-lib robust-link $SOURCE/config/mimeapps.list ~/.config/mimeapps.list
