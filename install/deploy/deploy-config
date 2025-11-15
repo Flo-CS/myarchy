@@ -62,6 +62,10 @@ myarchy-lib render-template ~/.config/mako/config.j2 ~/.config/mako/config
 
 deploy_file_by_link config/mpv ~/.config/mpv
 
+deploy_file_by_link config/swayosd/config.toml ~/.config/swayosd/config.toml
+deploy_file_by_link config/swayosd/style.css ~/.config/swayosd/style.css
+deploy_file_by_link themes/current/swayosd/theme.css ~/.config/swayosd/theme.css
+
 deploy_file_by_link config/user-dirs.dirs ~/.config/user-dirs.dirs
 
 deploy_file_by_link config/mimeapps.list ~/.config/mimeapps.list
