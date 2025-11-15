@@ -1,4 +1,0 @@
-#!/usr/bin/env bash
-
-sudo -E myarchy-lib robust-copy "$MYARCHY_DIR/install/sysconfig/files/sudoers" "/etc/sudoers.d/sudoers-custom"
-sudo chmod 440 /etc/sudoers.d/sudoers-custom

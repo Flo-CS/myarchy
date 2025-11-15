@@ -76,5 +76,3 @@ deploy_file_by_link config/.bash_profile ~/.bash_profile
 
 deploy_file_by_link config/.gitconfig-default ~/.gitconfig-default
 deploy_file_by_link config/.gitconfig ~/.gitconfig
-
-myarchy-refresh all

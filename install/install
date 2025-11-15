@@ -2,9 +2,6 @@
 
 set -eEo pipefail
 
-# TODO: move this, do this better
-sudo chmod g+rwx /var/backups/
-
 # VARS
 
 export MYARCHY_DIR="$HOME/.local/share/myarchy"
@@ -13,23 +10,33 @@ export MYARCHY_INSTANCE_ID=${MYARCHY_INSTANCE_ID:-$(gum input --header "Enter yo
 export DEV_TOOLS_PATH="$HOME/dev/tools"
 mkdir -p $DEV_TOOLS_PATH
 
-# DEPLOY BINARIES
+# GLOBAL / SYSTEM
 
-source $MYARCHY_DIR/install/deploy/deploy-bin
-
-# SYSTEM CONFIGURATION
+source $MYARCHY_DIR/install/global/deploy-myarchy-lib
+myarchy-lib init
 
 sudo pacman -Syu --noconfirm
+source $MYARCHY_DIR/install/global/packages # TODO: packages also contains some packages for user environment (like flutter)
 
-source $MYARCHY_DIR/install/packages/all
-source $MYARCHY_DIR/install/sysconfig/all
+source $MYARCHY_DIR/install/global/config-sudoers
+source $MYARCHY_DIR/install/global/config-bluetooth
+source $MYARCHY_DIR/install/global/config-docker
+source $MYARCHY_DIR/install/global/config-firewall
+source $MYARCHY_DIR/install/global/config-faillock
+source $MYARCHY_DIR/install/global/config-system-backups
+source $MYARCHY_DIR/install/global/config-terminal
+source $MYARCHY_DIR/install/global/config-alternative-boot-options
 
-# USER CONFIGURATION
+# USER
 
-source $MYARCHY_DIR/install/deploy/deploy-config
-source $MYARCHY_DIR/install/deploy/deploy-applications
+source $MYARCHY_DIR/install/user/deploy-bin
+source $MYARCHY_DIR/install/user/deploy-config
+source $MYARCHY_DIR/install/user/deploy-applications
 
-source $MYARCHY_DIR/install/usrconfig/all
+source $MYARCHY_DIR/install/user/config-battery-and-power
+source $MYARCHY_DIR/install/user/config-hyprland-plugins
 
 myarchy-theme init
 myarchy-wallpaper init
+
+myarchy-refresh all

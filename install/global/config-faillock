@@ -1,0 +1,3 @@
+#!/usr/bin/env bash
+
+sudo -E myarchy-lib robust-copy "$MYARCHY_DIR/install/global/files/faillock.conf" "/etc/security/faillock.conf"
