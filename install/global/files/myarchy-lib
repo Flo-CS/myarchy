@@ -3,8 +3,8 @@
 BACKUPS_DIR="/var/backups"
 
 init() {
-	mkdir -p $BACKUPS_DIR
-	chmod 777 $BACKUPS_DIR
+	sudo mkdir -p $BACKUPS_DIR
+	sudo chmod 777 $BACKUPS_DIR
 }
 
 version_ge() {
