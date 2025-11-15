@@ -58,7 +58,7 @@ fzff() {
 # Ripgrep with fzf for content search
 # TODO: behavior is not very user friendly
 rgf() {
-	rg --line-number --no-heading --color=always --smart-case --hidden "${*:-}" |
+	rg --line-number --no-heading --color=always --smart-case --hidden --glob '!.git' "${*:-}" |
 		fzf --ansi \
 			--style full \
 			--height 60% \
