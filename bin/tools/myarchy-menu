@@ -110,6 +110,21 @@ show_remove_menu() {
 	fi
 }
 
+show_drives_menu() {
+	selected=$(myarchy-drive list | dmenu "Drives menu")
+
+	if [[ -z "$selected" ]]; then
+		show_main_menu
+	else
+		mount_point=$(myarchy-drive mountpoint $selected)
+		if [[ -z "$mount_point" ]]; then
+			myarchy-drive mount $selected
+		else
+			myarchy-drive unmount $selected
+		fi
+	fi
+}
+
 show_main_menu() {
 	selected=$(printf '  Theme
 󰸉  Wallpaper
@@ -124,7 +139,8 @@ show_main_menu() {
 󰁯  Snapshot system
   Install
   Remove
-Refresh' | dmenu "Myarchy menu")
+🗘 Refresh
+🖪 Drives' | dmenu "Myarchy menu")
 
 	case "$selected" in
 	*"Theme"*) show_select_theme_menu ;;
@@ -141,6 +157,7 @@ Refresh' | dmenu "Myarchy menu")
 	*"Install"*) show_install_menu ;;
 	*"Remove"*) show_remove_menu ;;
 	*"Refresh"*) myarchy-refresh all ;;
+	*"Drives"*) show_drives_menu ;;
 	*) exit 0 ;;
 	esac
 }
