@@ -65,3 +65,5 @@ myarchy-lib robust-link $SOURCE/config/.bash_profile#$MYARCHY_INSTANCE_ID ~/.bas
 
 myarchy-lib robust-link $SOURCE/config/.gitconfig-default ~/.gitconfig-default
 myarchy-lib robust-link $SOURCE/config/.gitconfig#$MYARCHY_INSTANCE_ID ~/.gitconfig
+
+myarchy-lib robust-link $SOURCE/config/.inputrc ~/.inputrc

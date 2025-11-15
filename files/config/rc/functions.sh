@@ -10,7 +10,7 @@ f() {
 		--preview-window=right:60%)
 
 	if [ -n "$file" ]; then
-		echo "$file"
+		realpath "$file"
 		return 0
 	else
 		return 1
@@ -29,7 +29,7 @@ fzfd() {
 		--preview-window=right:60%)
 
 	if [ -n "$dir" ]; then
-		echo "$dir"
+		realpath "$dir"
 		return 0
 	else
 		return 1
@@ -48,7 +48,7 @@ fzff() {
 		--preview-window=right:60%)
 
 	if [ -n "$file" ]; then
-		echo "$file"
+		realpath "$file"
 		return 0
 	else
 		return 1
@@ -76,6 +76,7 @@ cdf() {
 	if [ -n "$dir" ]; then
 		cd "$dir"
 	fi
+	history -s "cd $dir"
 }
 
 # View file with bat using fzf
@@ -85,6 +86,7 @@ batf() {
 	if [ -n "$file" ]; then
 		bat "$file"
 	fi
+	history -s "bat $file"
 }
 
 # Open file with nvim using fzf
@@ -96,9 +98,10 @@ nvf() {
 		cd "$file"
 		nvim .
 		cd "$before"
-		return
+		history -s "cd $file && nvim . && cd $before"
 	elif [ -n "$file" ]; then
 		nvim "$file"
+		history -s "nvim $file"
 	fi
 }
 

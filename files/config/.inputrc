@@ -1,0 +1,42 @@
+# Enable direct use of 8-bit characters (UTF-8 friendliness)
+set meta-flag on
+set input-meta on
+set output-meta on
+set convert-meta off
+
+# Case-insensitive tab completion
+set completion-ignore-case on
+
+# Shorten displayed common prefix in completion lists
+set completion-prefix-display-length 2
+
+# Show all completions immediately when ambiguous
+set show-all-if-ambiguous on
+set show-all-if-unmodified on
+
+# Arrow keys search history by current prefix
+"\e[A": history-search-backward
+"\e[B": history-search-forward
+"\e[C": forward-char
+"\e[D": backward-char
+
+# Add slash after completing symlinked directories
+set mark-symlinked-directories on
+
+# Don't match hidden files unless pattern starts with '.'
+set match-hidden-files off
+
+# Show all completions without paging
+set page-completions off
+
+# Ask before listing huge completion sets (>200)
+set completion-query-items 200
+
+# Show file-type indicators (like ls -F)
+set visible-stats on
+
+# Consider text after cursor when completing
+set skip-completed-text on
+
+# Enable colored completion info (Bash 4+)
+set colored-stats on
