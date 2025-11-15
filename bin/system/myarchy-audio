@@ -56,3 +56,13 @@ switch() {
     --custom-message "$next_sink_description" \
     --custom-icon "$next_sink_volume_icon"
 }
+
+case "$1" in
+switch)
+  switch
+  ;;
+*)
+  echo "Usage: $0 switch"
+  exit 1
+  ;;
+esac
