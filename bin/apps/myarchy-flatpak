@@ -3,11 +3,12 @@
 REMOTE="flathub"
 
 install_flatpak_pkg() {
-  scope=${1:-user} # or "system"
-  case $scope in
-  user) SCOPE_ARGS="--user" ;;
-  system) SCOPE_ARGS="--system" ;;
-  esac
+  SCOPE_ARGS=$(
+    case $1 in
+    user) echo "--user" ;;
+    system) echo "--system" ;;
+    esac
+  )
 
   pkg_to_install=$(
     flatpak remote-ls $SCOPE_ARGS "$REMOTE" --app --columns=application,name |
@@ -26,11 +27,12 @@ install_flatpak_pkg() {
 }
 
 remove_flatpak_pkg() {
-  scope=${1:-user} # or "system"
-  case $scope in
-  user) SCOPE_ARGS="--user" ;;
-  system) SCOPE_ARGS="--system" ;;
-  esac
+  SCOPE_ARGS=$(
+    case $1 in
+    user) echo "--user" ;;
+    system) echo "--system" ;;
+    esac
+  )
 
   pkg_to_remove=$(
     flatpak list $SCOPE_ARGS --app --columns=application,name |
@@ -51,12 +53,12 @@ remove_flatpak_pkg() {
   fi
 }
 
-case "$1" in
+case "$2" in
 install)
-  install_flatpak_pkg "${2:-user}"
+  install_flatpak_pkg "${1:-user}"
   ;;
 remove)
-  remove_flatpak_pkg "${2:-user}"
+  remove_flatpak_pkg "${1:-user}"
   ;;
 *)
   echo "Usage: $0 {install|remove} [user|system]"

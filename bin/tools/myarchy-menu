@@ -89,14 +89,14 @@ show_packages_menu() {
 		*"Install Appimage"*) myarchy-terminal launch-menu myarchy-appimage install ;;
 		*"Install AUR Package"*) myarchy-terminal launch-menu myarchy-pkg yay-install ;;
 		*"Install Package"*) myarchy-terminal launch-menu myarchy-pkg install ;;
-		*"Install Flatpak user"*) myarchy-terminal launch-menu myarchy-flatpak install --user ;;
-		*"Install Flatpak system"*) myarchy-terminal launch-menu myarchy-flatpak install --system ;;
+		*"Install Flatpak user"*) myarchy-terminal launch-menu myarchy-flatpak user install ;;
+		*"Install Flatpak system"*) myarchy-terminal launch-menu myarchy-flatpak system install ;;
 		*"Remove TUI"*) myarchy-terminal launch-menu myarchy-tui remove ;;
 		*"Remove Webapp"*) myarchy-terminal launch-menu myarchy-webapp remove ;;
 		*"Remove Appimage"*) myarchy-terminal launch-menu myarchy-appimage remove ;;
 		*"Remove Package"*) myarchy-terminal launch-menu myarchy-pkg remove ;;
-		*"Remove Flatpak user"*) myarchy-terminal launch-menu myarchy-flatpak remove --user ;;
-		*"Remove Flatpak system"*) myarchy-terminal launch-menu myarchy-flatpak remove --system ;;
+		*"Remove Flatpak user"*) myarchy-terminal launch-menu myarchy-flatpak user remove ;;
+		*"Remove Flatpak system"*) myarchy-terminal launch-menu myarchy-flatpak system remove ;;
 		esac
 	fi
 }
