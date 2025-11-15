@@ -3,6 +3,7 @@ f() {
 	local starting_dir="${1:-.}"
 
 	local file=$(fd -H . "$starting_dir" | fzf \
+		--scheme=path \
 		--style full \
 		--height 60% \
 		--reverse \
@@ -11,9 +12,6 @@ f() {
 
 	if [ -n "$file" ]; then
 		realpath "$file"
-		return 0
-	else
-		return 1
 	fi
 }
 
@@ -22,6 +20,7 @@ fzfd() {
 	local starting_dir="${1:-.}"
 
 	local dir=$(fd --type d -H . "$starting_dir" | fzf \
+		--scheme=path \
 		--style full \
 		--height 60% \
 		--reverse \
@@ -30,9 +29,6 @@ fzfd() {
 
 	if [ -n "$dir" ]; then
 		realpath "$dir"
-		return 0
-	else
-		return 1
 	fi
 }
 
@@ -40,18 +36,18 @@ fzfd() {
 fzff() {
 	local starting_dir="${1:-.}"
 
-	local file=$(fd --type f -H . "$starting_dir" | fzf \
-		--style full \
-		--height 60% \
-		--reverse \
-		--preview "bat --style=numbers --color=always {} 2>/dev/null || cat {}" \
-		--preview-window=right:60%)
+	local file=$(
+		fd --type f -H . "$starting_dir" | fzf \
+			--scheme=path \
+			--style full \
+			--height 60% \
+			--reverse \
+			--preview "bat --style=numbers --color=always {} 2>/dev/null || cat {}" \
+			--preview-window=right:60%
+	)
 
 	if [ -n "$file" ]; then
 		realpath "$file"
-		return 0
-	else
-		return 1
 	fi
 }
 
@@ -60,6 +56,7 @@ fzff() {
 rgf() {
 	rg --line-number --no-heading --color=always --smart-case --hidden --glob '!.git' "${*:-}" |
 		fzf --ansi \
+			--scheme=default \
 			--style full \
 			--height 60% \
 			--reverse \
@@ -71,8 +68,7 @@ rgf() {
 
 # Change directory using fzf
 cdf() {
-	local dir
-	dir=$(fzfd "$1")
+	local dir=$(fzfd "$1")
 	if [ -n "$dir" ]; then
 		cd "$dir"
 	fi
@@ -81,8 +77,7 @@ cdf() {
 
 # View file with bat using fzf
 batf() {
-	local file
-	file=$(fzff "$1")
+	local file=$(fzff "$1")
 	if [ -n "$file" ]; then
 		bat "$file"
 	fi
@@ -91,8 +86,7 @@ batf() {
 
 # Open file with nvim using fzf
 nvf() {
-	local file
-	file=$(f "$1")
+	local file=$(f "$1")
 	if [ -d "$file" ]; then
 		local before=$(pwd)
 		cd "$file"
@@ -103,6 +97,22 @@ nvf() {
 		nvim "$file"
 		history -s "nvim $file"
 	fi
+}
+
+# Search zoxide history with fzf
+zf() {
+	local dir=$(zoxide query -l "$1" | fzf \
+		--scheme=path \
+		--style full \
+		--height 60% \
+		--reverse \
+		--preview "tree -C {} 2>/dev/null || ls -la {}" \
+		--preview-window=right:60%)
+
+	if [ -n "$dir" ]; then
+		cd "$dir"
+	fi
+	history -s "cd $dir"
 }
 
 # TODO: move to bin
