@@ -123,7 +123,8 @@ show_main_menu() {
   Info
 󰁯  Snapshot system
   Install
-  Remove' | dmenu "Myarchy menu")
+  Remove
+Refresh' | dmenu "Myarchy menu")
 
 	case "$selected" in
 	*"Theme"*) show_select_theme_menu ;;
@@ -139,6 +140,7 @@ show_main_menu() {
 	*"Snapshot system"*) myarchy-terminal launch-menu myarchy-snapshot-system ;;
 	*"Install"*) show_install_menu ;;
 	*"Remove"*) show_remove_menu ;;
+	*"Refresh"*) myarchy-refresh all ;;
 	*) exit 0 ;;
 	esac
 }

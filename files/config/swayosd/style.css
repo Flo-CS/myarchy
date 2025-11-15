@@ -2,15 +2,14 @@
 
 window {
   border-radius: 0;
-  opacity: 0.97;
+  opacity: 0.95;
   border: 2px solid @border-color;
-
   background-color: @background-color;
 }
 
 label {
   font-family: 'FiraCode Nerd Font';
-  font-size: 11pt;
+  font-size: 12pt;
 
   color: @label;
 }

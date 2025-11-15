@@ -1,3 +1,5 @@
 #!/usr/bin/env bash
 
-source ~/.config/fzf/theme.sh
+theme_opts=$(~/.config/fzf/theme.sh)
+
+export FZF_DEFAULT_OPTS="$theme_opts"
