@@ -15,6 +15,9 @@ refresh_all() {
 
 	# Hyprland
 	hyprctl reload &
+
+	# Swayosd
+	pkill -x swayosd-server && setsid uwsm app -- swayosd-server &
 }
 
 case "$1" in
