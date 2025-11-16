@@ -27,7 +27,7 @@ install_net_tools() {
 }
 
 install_files_tools() {
-	install_pkgs bat fd ripgrep fzf jq go-yq python-j2cli unzip xz zip thunar yazi
+	install_pkgs bat fd ripgrep fzf jq go-yq python-j2cli unzip xz zip yazi
 }
 
 install_sync_tools() {
