@@ -73,7 +73,7 @@ install_waybar() {
 }
 
 install_launcher() {
-	install_pkgs wofi
+	install_pkgs rofi
 }
 
 install_picture_tools() {

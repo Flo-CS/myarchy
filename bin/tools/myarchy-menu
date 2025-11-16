@@ -3,8 +3,8 @@
 dmenu() {
 	local prompt=$1
 
-	pkill -x wofi
-	wofi --dmenu --prompt "$prompt" --insensitive
+	pkill -x rofi
+	rofi -dmenu -p "$prompt" -i
 }
 
 show_select_theme_menu() {
@@ -24,14 +24,6 @@ show_select_wallpaper_menu() {
 		show_main_menu
 	else
 		myarchy-wallpaper set "$selected"
-	fi
-}
-
-show_applications_menu() {
-	if wofi --show drun; then
-		exit 0
-	else
-		show_main_menu
 	fi
 }
 
@@ -124,7 +116,6 @@ show_main_menu() {
 󰀂  Network
   Audio
 󰹑  Screenshot
-󰣆  Applications
 󰟌  Monitor
   Info
 󰁯  Snapshot system
@@ -140,7 +131,6 @@ show_main_menu() {
 	*"Bluetooth"*) myarchy-terminal launch bluetuith --no-warning ;;
 	*"Network"*) myarchy-terminal launch nmtui ;;
 	*"Audio"*) myarchy-terminal launch wiremix ;;
-	*"Applications"*) show_applications_menu ;;
 	*"Monitor"*) myarchy-terminal launch-big btop ;;
 	*"Info"*) myarchy-terminal launch-menu fastfetch ;;
 	*"Snapshot system"*) myarchy-terminal launch-menu myarchy-snapshot create ;;
