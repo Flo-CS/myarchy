@@ -14,7 +14,8 @@ rgf() {
   fi
   echo "+search:$fzf_pat"
 '
-	fzf --ansi \
+	local result=$(fzf --ansi \
+		--print-query \
 		--scheme=default \
 		--style full \
 		--height 60% \
@@ -25,11 +26,17 @@ rgf() {
 		--with-shell 'bash -c' \
 		--bind "start,change:transform:$TRANSFORMER" \
 		--color "hl:-1:underline,hl+:-1:underline:reverse" \
-		--preview 'bat --color=always {1} --highlight-line {2}' \
-		--preview-window 'up,60%,border-line,+{2}+3/3,~3' \
-		--bind 'enter:become(vim {1} +{2})'
+		--preview 'bat --color=always {1} --highlight-line {2}')
 
-	history -s "rgf $*"
+	local query=$(echo "$result" | sed -n '1p')
+	local file=$(echo "$result" | sed -n '2p' | cut -d: -f1)
+	local line=$(echo "$result" | sed -n '2p' | cut -d: -f2)
+
+	if [ -n "$file" ]; then
+		nvim "$file" +"$line"
+	fi
+
+	history -s "rgf '$query'"
 }
 
 # Change directory using fzf
@@ -52,8 +59,9 @@ cdf() {
 
 	if [ -n "$dir" ]; then
 		cd "$dir"
-		history -s "cdf '$query' $root"
 	fi
+
+	history -s "cdf '$query' $root"
 }
 
 # View file with bat using fzf
@@ -76,8 +84,9 @@ batf() {
 
 	if [ -n "$file" ]; then
 		bat "$file"
-		history -s "batf '$query' $root"
 	fi
+
+	history -s "batf '$query' $root"
 }
 
 # Open file or directory in nvim using fzf
@@ -103,11 +112,11 @@ nvf() {
 		cd "$file"
 		nvim .
 		cd "$before"
-		history -s "nvf '$query' $root"
 	elif [ -n "$file" ]; then
 		nvim "$file"
-		history -s "nvf '$query' $root"
 	fi
+
+	history -s "nvf '$query' $root"
 }
 
 # Search zoxide history with fzf
