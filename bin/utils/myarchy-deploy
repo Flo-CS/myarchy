@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+
+deploy_all() {
+	$MYARCHY_DIR/install/user/deploy-bin
+	$MYARCHY_DIR/install/user/deploy-config
+	$MYARCHY_DIR/install/user/deploy-applications
+}
+
+case "$1" in
+all)
+	deploy_all
+	;;
+*)
+	echo "Usage: $0 all"
+	exit 1
+	;;
+esac

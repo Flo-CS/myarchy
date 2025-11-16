@@ -133,6 +133,7 @@ Info
 Snapshot system
 Packages
 Refresh
+Deploy
 Drives' | dmenu "Myarchy menu")
 
 	case "$selected" in
@@ -148,7 +149,8 @@ Drives' | dmenu "Myarchy menu")
 	*"Info"*) myarchy-terminal launch-menu fastfetch ;;
 	*"Snapshot system"*) myarchy-terminal launch-menu myarchy-snapshot create ;;
 	*"Packages"*) show_packages_menu ;;
-	*"Refresh"*) myarchy-refresh all ;;
+	*"Refresh"*) myarchy-terminal launch-menu myarchy-refresh all ;;
+	*"Deploy"*) myarchy-terminal launch-menu myarchy-deploy all ;;
 	*"Drives"*) show_drives_menu ;;
 	*) exit 0 ;;
 	esac
