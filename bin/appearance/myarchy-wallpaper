@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 
 WALLPAPERS_DIR="$MYARCHY_DIR/files/wallpapers"
-CURRENT_THEME_DIR="$MYARCHY_DIR/files/themes/current"
+
+PREFERRED_WALLPAPER_FILE="$MYARCHY_DIR/files/themes/current/preferred-wallpaper"
 
 init_wallpaper() {
 	if [[ ! -f "$WALLPAPERS_DIR/current" ]]; then
@@ -26,11 +27,11 @@ set_wallpaper() {
 
 	hyprctl hyprpaper reload , "$WALLPAPERS_DIR/current"
 
-	theme_pref_save
+	save_preferred
 }
 
-theme_pref_apply() {
-	wallpaper_name=$(cat "$CURRENT_THEME_DIR/wallpaper.theme")
+apply_preferred() {
+	wallpaper_name=$(cat "$PREFERRED_WALLPAPER_FILE")
 
 	if [ -z "$wallpaper_name" ]; then
 		echo "No wallpaper name found in the current theme."
@@ -40,10 +41,10 @@ theme_pref_apply() {
 	set_wallpaper "$wallpaper_name"
 }
 
-theme_pref_save() {
+save_preferred() {
 	wallpaper_name=$(get_wallpaper)
 
-	echo "$wallpaper_name" >"$CURRENT_THEME_DIR/wallpaper.theme"
+	echo "$wallpaper_name" >"$PREFERRED_WALLPAPER_FILE"
 }
 
 case "$1" in
@@ -59,14 +60,14 @@ list)
 set)
 	set_wallpaper "$2"
 	;;
-theme-pref-apply)
-	theme_pref_apply
+apply-preferred)
+	apply_preferred
 	;;
-theme-pref-save)
-	theme_pref_save
+save-preferred)
+	save_preferred
 	;;
 *)
-	echo "Usage: $0 {get|list|set <wallpaper_name>|theme-pref-apply|theme-pref-save|init}" >&2
+	echo "Usage: $0 {get|list|set <wallpaper_name>|apply-preferred|save-preferred|init}" >&2
 	exit 1
 	;;
 esac

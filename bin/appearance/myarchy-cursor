@@ -1,0 +1,34 @@
+#!/usr/bin/env bash
+
+DEFAULT_CURSOR="$MYARCHY_DIR/files/default-cursor"
+
+list() {
+	find /usr/share/icons ~/.local/share/icons ~/.icons \
+		-type d -name "cursors" -print 2>/dev/null |
+		sed 's|/cursors$||' | xargs -n 1 basename
+}
+
+apply_default() {
+	local cursor=$(cat $DEFAULT_CURSOR)
+
+	set_cursor $cursor
+}
+
+set_cursor() {
+	hyprctl setcursor "$1" "$2"
+}
+
+case "$1" in
+list)
+	list
+	;;
+apply-default)
+	apply_default
+	;;
+set)
+	set_cursor "$2" "$3"
+	;;
+*)
+	echo "Usage: $0 {list|apply-default|set <cursor-name> <size>}"
+	;;
+esac

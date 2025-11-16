@@ -48,6 +48,10 @@ install_wayland() {
 	install_pkgs qt6-wayland qt5-wayland python-pywayland
 }
 
+install_cursors() {
+	install_pkgs capitaine-cursors
+}
+
 install_qt() {
 	install_pkgs kvantum kvantum-qt5
 }
@@ -174,6 +178,7 @@ install_files_tools
 install_sync_tools
 install_nodejs
 install_wayland
+install_cursors
 install_qt
 install_uwsm
 install_build_tools

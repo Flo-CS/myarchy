@@ -29,10 +29,16 @@ window {
 }
 
 inputbar {
-    font:       "Rubik 14";
+    font:       "Rubik 13";
     padding:    12px 16px;
     spacing:    12px;
-    children:   [ entry ];
+    children:   [ prompt, entry ];
+}
+
+
+prompt {
+    text-color: @fg0;
+    // padding: 0 8px 0 0;
 }
 
 icon-search {
@@ -47,8 +53,7 @@ icon-search, entry, element-icon, element-text {
 
 entry {
     font:   inherit;
-
-    placeholder         : "Search";
+    placeholder         : "";
     placeholder-color   : @fg1;
 }
 
