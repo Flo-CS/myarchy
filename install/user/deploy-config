@@ -66,6 +66,8 @@ myarchy-lib robust-link $SOURCE/config/user-dirs.dirs ~/.config/user-dirs.dirs
 
 myarchy-lib robust-link $SOURCE/config/mimeapps.list ~/.config/mimeapps.list
 
+myarchy-lib robust-link $SOURCE/config/.ideavimrc ~/.ideavimrc
+
 myarchy-lib robust-link $SOURCE/config/rc ~/.config/rc
 myarchy-lib robust-link $SOURCE/config/.bashrc#$MYARCHY_INSTANCE_ID ~/.bashrc
 myarchy-lib robust-link $SOURCE/config/.bash_profile#$MYARCHY_INSTANCE_ID ~/.bash_profile
