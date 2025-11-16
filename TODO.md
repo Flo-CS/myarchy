@@ -1,5 +1,6 @@
 # TODO
 
+- Split packages and applications from menu
 - Move user deploy of install folder
 - Only put borders on choosen floating windows
 - Remove extra hyprland animations
