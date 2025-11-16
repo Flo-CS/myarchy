@@ -1,16 +1,35 @@
-# Ripgrep with fzf for content search
-# TODO: behavior is not very user friendly
+# Ripgrep + fzf integration
 rgf() {
-	rg --line-number --no-heading --color=always --smart-case --hidden --glob '!.git' "${*:-}" |
-		fzf --ansi \
-			--scheme=default \
-			--style full \
-			--height 60% \
-			--reverse \
-			--delimiter : \
-			--preview 'bat --color=always {1} --highlight-line {2}' \
-			--preview-window "right:60%" \
-			--bind 'enter:become(nvim {1} +{2})'
+	export TEMP=$(mktemp -u)
+	trap 'rm -f "$TEMP"' EXIT
+
+	INITIAL_QUERY="${*:-}"
+	TRANSFORMER='
+  rg_pat={q:1}      # The first word is passed to ripgrep
+  fzf_pat={q:2..}   # The rest are passed to fzf
+
+  if ! [[ -r "$TEMP" ]] || [[ $rg_pat != $(cat "$TEMP") ]]; then
+    echo "$rg_pat" > "$TEMP"
+    printf "reload:sleep 0.1; rg --column --line-number --no-heading --color=always --smart-case --hidden --glob "!.git" %q || true" "$rg_pat"
+  fi
+  echo "+search:$fzf_pat"
+'
+	fzf --ansi \
+		--scheme=default \
+		--style full \
+		--height 60% \
+		--reverse \
+		--delimiter : \
+		--disabled \
+		--query "$INITIAL_QUERY" \
+		--with-shell 'bash -c' \
+		--bind "start,change:transform:$TRANSFORMER" \
+		--color "hl:-1:underline,hl+:-1:underline:reverse" \
+		--preview 'bat --color=always {1} --highlight-line {2}' \
+		--preview-window 'up,60%,border-line,+{2}+3/3,~3' \
+		--bind 'enter:become(vim {1} +{2})'
+
+	history -s "rgf $*"
 }
 
 # Change directory using fzf
@@ -61,6 +80,7 @@ batf() {
 	fi
 }
 
+# Open file or directory in nvim using fzf
 nvf() {
 	local query=${1}
 	local root=${2:-$(pwd)}
