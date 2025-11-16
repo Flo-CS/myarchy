@@ -28,8 +28,8 @@ show_select_wallpaper_menu() {
 }
 
 show_system_menu() {
-	selected=$(printf '  Reboot
-⏻  Shutdown' | dmenu "System menu")
+	selected=$(printf 'Reboot
+Shutdown' | dmenu "System menu")
 
 	if [[ -z "$selected" ]]; then
 		show_main_menu
@@ -42,9 +42,9 @@ show_system_menu() {
 }
 
 show_screenshot_menu() {
-	selected=$(printf '󰍹  Fullscreen
-󰍺  Area
-󰍻  Window' | dmenu "Screenshot menu")
+	selected=$(printf 'Fullscreen
+Area
+Window' | dmenu "Screenshot menu")
 
 	if [[ -z "$selected" ]]; then
 		show_main_menu
@@ -58,19 +58,19 @@ show_screenshot_menu() {
 }
 
 show_packages_menu() {
-	selected=$(printf '  Install TUI
-  Install Webapp
-  Install Appimage
-  Install Package
-  Install AUR Package
-  Install Flatpak user
-  Install Flatpak system
-  Remove TUI
-  Remove Webapp
-  Remove Appimage
-  Remove Package
-  Remove Flatpak user
-  Remove Flatpak system' | dmenu "Packages menu")
+	selected=$(printf 'Install TUI
+Install Webapp
+Install Appimage
+Install Package
+Install AUR Package
+Install Flatpak user
+Install Flatpak system
+Remove TUI
+Remove Webapp
+Remove Appimage
+Remove Package
+Remove Flatpak user
+Remove Flatpak system' | dmenu "Packages menu")
 
 	if [[ -z "$selected" ]]; then
 		show_main_menu
@@ -109,19 +109,19 @@ show_drives_menu() {
 }
 
 show_main_menu() {
-	selected=$(printf '  Theme
-󰸉  Wallpaper
-󰇄  System
-  Bluetooth
-󰀂  Network
-  Audio
-󰹑  Screenshot
-󰟌  Monitor
-  Info
-󰁯  Snapshot system
-󰏖  Packages
-🗘 Refresh
-🖪 Drives' | dmenu "Myarchy menu")
+	selected=$(printf 'Theme
+Wallpaper
+System
+Bluetooth
+Network
+Audio
+Screenshot
+Monitor
+Info
+Snapshot system
+Packages
+Refresh
+Drives' | dmenu "Myarchy menu")
 
 	case "$selected" in
 	*"Theme"*) show_select_theme_menu ;;
