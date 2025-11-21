@@ -54,6 +54,8 @@ myarchy-lib render-template ~/.config/mako/config.j2 ~/.config/mako/config
 
 myarchy-lib robust-link $SOURCE/config/mpv ~/.config/mpv
 
+myarchy-lib robust-link $SOURCE/config/fastfetch ~/.config/fastfetch
+
 myarchy-lib robust-link $SOURCE/config/swayosd/config.toml ~/.config/swayosd/config.toml
 myarchy-lib robust-link $SOURCE/config/swayosd/style.css ~/.config/swayosd/style.css
 myarchy-lib robust-link $SOURCE/themes/current/swayosd/theme.css ~/.config/swayosd/theme.css
