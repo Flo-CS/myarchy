@@ -70,16 +70,10 @@ Window' | dmenu "Screenshot menu")
 }
 
 show_packages_menu() {
-	selected=$(printf 'Install TUI
-Install Webapp
-Install Appimage
-Install Package
+	selected=$(printf 'Install Package
 Install AUR Package
 Install Flatpak user
 Install Flatpak system
-Remove TUI
-Remove Webapp
-Remove Appimage
 Remove Package
 Remove Flatpak user
 Remove Flatpak system' | dmenu "Packages menu")
@@ -88,19 +82,35 @@ Remove Flatpak system' | dmenu "Packages menu")
 		show_main_menu
 	else
 		case "$selected" in
-		*"Install TUI"*) myarchy-terminal launch-menu myarchy-tui install ;;
-		*"Install Webapp"*) myarchy-terminal launch-menu myarchy-webapp install ;;
-		*"Install Appimage"*) myarchy-terminal launch-menu myarchy-appimage install ;;
 		*"Install AUR Package"*) myarchy-terminal launch-menu myarchy-pkg yay-install ;;
 		*"Install Package"*) myarchy-terminal launch-menu myarchy-pkg install ;;
 		*"Install Flatpak user"*) myarchy-terminal launch-menu myarchy-flatpak user install ;;
 		*"Install Flatpak system"*) myarchy-terminal launch-menu myarchy-flatpak system install ;;
-		*"Remove TUI"*) myarchy-terminal launch-menu myarchy-tui remove ;;
-		*"Remove Webapp"*) myarchy-terminal launch-menu myarchy-webapp remove ;;
-		*"Remove Appimage"*) myarchy-terminal launch-menu myarchy-appimage remove ;;
 		*"Remove Package"*) myarchy-terminal launch-menu myarchy-pkg remove ;;
 		*"Remove Flatpak user"*) myarchy-terminal launch-menu myarchy-flatpak user remove ;;
 		*"Remove Flatpak system"*) myarchy-terminal launch-menu myarchy-flatpak system remove ;;
+		esac
+	fi
+}
+
+show_apps_menu() {
+	selected=$(printf 'Install Webapp
+Install Appimage
+Install TUI
+Remove TUI
+Remove Appimage
+Remove Webapp' | dmenu "Apps menu")
+
+	if [[ -z "$selected" ]]; then
+		show_main_menu
+	else
+		case "$selected" in
+		*"Install TUI"*) myarchy-terminal launch-menu myarchy-tui install ;;
+		*"Install Webapp"*) myarchy-terminal launch-menu myarchy-webapp install ;;
+		*"Install Appimage"*) myarchy-terminal launch-menu myarchy-appimage install ;;
+		*"Remove TUI"*) myarchy-terminal launch-menu myarchy-tui remove ;;
+		*"Remove Webapp"*) myarchy-terminal launch-menu myarchy-webapp remove ;;
+		*"Remove Appimage"*) myarchy-terminal launch-menu myarchy-appimage remove ;;
 		esac
 	fi
 }
@@ -133,6 +143,7 @@ Monitor
 Info
 Snapshot system
 Packages
+Apps
 Refresh
 Deploy
 Drives' | dmenu "Myarchy menu")
@@ -150,6 +161,7 @@ Drives' | dmenu "Myarchy menu")
 	*"Info"*) myarchy-terminal launch-menu fastfetch ;;
 	*"Snapshot system"*) myarchy-terminal launch-menu myarchy-snapshot create ;;
 	*"Packages"*) show_packages_menu ;;
+	*"Apps"*) show_apps_menu ;;
 	*"Refresh"*) myarchy-terminal launch-menu myarchy-refresh all ;;
 	*"Deploy"*) myarchy-terminal launch-menu myarchy-deploy all ;;
 	*"Drives"*) show_drives_menu ;;
