@@ -40,9 +40,6 @@ myarchy-lib robust-link $SOURCE/config/waybar/config.jsonc ~/.config/waybar/conf
 myarchy-lib robust-link $SOURCE/config/waybar/style.css ~/.config/waybar/style.css
 myarchy-lib robust-link $SOURCE/themes/current/waybar/theme.css ~/.config/waybar/theme.css
 
-myarchy-lib robust-link $SOURCE/config/wofi/config ~/.config/wofi/config
-myarchy-lib robust-link $SOURCE/themes/current/wofi/style.css ~/.config/wofi/style.css
-
 myarchy-lib robust-link $SOURCE/config/rofi/config.rasi ~/.config/rofi/config.rasi
 myarchy-lib robust-link $SOURCE/themes/current/rofi/theme.rasi ~/.config/rofi/theme.rasi
 
