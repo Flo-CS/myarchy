@@ -24,8 +24,6 @@ set_theme() {
 	ln -sfT "$THEMES_DIR/$1" "$THEMES_DIR/current"
 
 	myarchy-wallpaper apply-preferred
-
-	myarchy-refresh all # FIXME: script has been removed
 }
 
 case "$1" in

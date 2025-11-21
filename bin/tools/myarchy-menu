@@ -14,6 +14,7 @@ show_select_theme_menu() {
 		show_main_menu
 	else
 		myarchy-theme set "$selected"
+		myarchy-refresh all
 	fi
 }
 

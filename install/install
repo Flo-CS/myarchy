@@ -33,10 +33,10 @@ source $MYARCHY_DIR/install/user/deploy-bin
 source $MYARCHY_DIR/install/user/deploy-config
 source $MYARCHY_DIR/install/user/deploy-applications
 
-source $MYARCHY_DIR/install/user/config-battery-and-power
-source $MYARCHY_DIR/install/user/config-hyprland-plugins
-
 myarchy-theme init
 myarchy-wallpaper init
+
+source $MYARCHY_DIR/install/user/config-battery-and-power
+source $MYARCHY_DIR/install/user/config-hyprland-plugins
 
 myarchy-refresh all
