@@ -11,19 +11,19 @@
     "memory",
     "bluetooth",
     "network",
-    "pulseaudio",
+    "pulseaudio"
   ],
   "modules-center": [
     "hyprland/window",
     "hyprland/workspaces",
-    "hyprland/submap",
+    "hyprland/submap"
   ],
   "modules-right": [
     "privacy",
     "idle_inhibitor",
     "battery",
     "backlight",
-    "clock#time",
+    "clock#time"
   ],
   "cpu": {
     "interval": 5,
@@ -37,7 +37,18 @@
   },
   "backlight": {
     "format": "{icon}",
-    "format-icons": ["", "", "", "", "", "", "", "", "", ""],
+    "format-icons": [
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      ""
+    ],
   },
   "battery": {
     "format": "{capacity}% {icon}",
@@ -45,8 +56,30 @@
     "format-charging": "{icon}",
     "format-plugged": "",
     "format-icons": {
-      "charging": ["󰢜", "󰂆", "󰂇", "󰂈", "󰢝", "󰂉", "󰢞", "󰂊", "󰂋", "󰂅"],
-      "default": ["󰁺", "󰁻", "󰁼", "󰁽", "󰁾", "󰁿", "󰂀", "󰂁", "󰂂", "󰁹"]
+      "charging": [
+        "󰢜",
+        "󰂆",
+        "󰂇",
+        "󰂈",
+        "󰢝",
+        "󰂉",
+        "󰢞",
+        "󰂊",
+        "󰂋",
+        "󰂅"
+      ],
+      "default": [
+        "󰁺",
+        "󰁻",
+        "󰁼",
+        "󰁽",
+        "󰁾",
+        "󰁿",
+        "󰂀",
+        "󰂁",
+        "󰂂",
+        "󰁹"
+      ]
     },
     "format-full": "󰂅",
     "tooltip-format-discharging": "{power:>1.0f}W↓ {capacity}%",
@@ -135,23 +168,33 @@
     "on-click": "myarchy-terminal launch wiremix",
     "tooltip-format": "Playing at {volume}%",
     "scroll-step": 5,
-    "format-muted": "󰝟",
+    "format-muted": "",
     "format-icons": {
-      "default": ["", "", ""]
+      "default": [
+        "",
+        "",
+        ""
+      ]
     }
   },
   "bluetooth": {
     "format": "",
     "format-off": "󰂲",
-    "format-offline":"󰂲",
+    "format-offline": "󰂲",
     "format-disabled": "󰂲",
-    "format-no-controller":"󰂲",
+    "format-no-controller": "󰂲",
     "format-connected": "",
     "tooltip-format": "{num_connections} device(s): {device_alias}",
     "on-click": "myarchy-terminal launch bluetuith --no-warning",
   },
   "network": {
-    "format-icons": ["󰤯", "󰤟", "󰤢", "󰤥", "󰤨"],
+    "format-icons": [
+      "󰤯",
+      "󰤟",
+      "󰤢",
+      "󰤥",
+      "󰤨"
+    ],
     "format": "{icon}",
     "format-wifi": "{icon}",
     "format-ethernet": "󰀂",
@@ -168,6 +211,5 @@
     "format-alt": "{:%d/%m/%Y  %H:%M}",
     "tooltip": false
     // TODO: on click add a calendar
-  },
+  }
 }
-
