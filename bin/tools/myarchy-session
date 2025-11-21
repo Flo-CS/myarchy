@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 lock_screen() {
-	hyprlock &
+	pidof hyprlock || hyprlock &
 }
 
 case "$1" in
