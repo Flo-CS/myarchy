@@ -1,12 +1,14 @@
+@import "./theme.css";
+
 * {
   font-family: "Symbols Nerd Font", "Rubik";
   min-height: 0;
-  color: #e6d8ba;
+  color: @foreground;
 }
 
 window#waybar {
-    border-bottom: 1px solid #11221C;
-    background-color: alpha(#11221C, 0.95);
+    border-bottom: 1px solid @background;
+    background-color: alpha(@background, 0.95);
 }
 
 .modules-left {
@@ -20,7 +22,7 @@ window#waybar {
 tooltip {
   padding: 2px;
   border-radius: 0px;
-  background-color: #11221C;
+  background-color: @background;
 }
 
 #systemd-failed-units,
@@ -57,7 +59,7 @@ tooltip {
 #workspaces button:hover {
   box-shadow: inherit;
   text-shadow: inherit;
-  background-color: #214237;
+  background-color: @background-alt;
 }
 
 #workspaces button.empty {

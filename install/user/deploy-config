@@ -37,7 +37,8 @@ myarchy-lib robust-link $SOURCE/config/kvantum/kvantum.kvconfig ~/.config/Kvantu
 myarchy-lib robust-link $SOURCE/themes/current/kvantum ~/.config/Kvantum/theme
 
 myarchy-lib robust-link $SOURCE/config/waybar/config.jsonc ~/.config/waybar/config.jsonc
-myarchy-lib robust-link $SOURCE/themes/current/waybar/style.css ~/.config/waybar/style.css
+myarchy-lib robust-link $SOURCE/config/waybar/style.css ~/.config/waybar/style.css
+myarchy-lib robust-link $SOURCE/themes/current/waybar/theme.css ~/.config/waybar/theme.css
 
 myarchy-lib robust-link $SOURCE/config/wofi/config ~/.config/wofi/config
 myarchy-lib robust-link $SOURCE/themes/current/wofi/style.css ~/.config/wofi/style.css
