@@ -33,6 +33,7 @@ source $MYARCHY_DIR/install/user/deploy-bin
 source $MYARCHY_DIR/install/user/deploy-config
 source $MYARCHY_DIR/install/user/deploy-applications
 
+# TODO: perhaps move them to install ?
 myarchy-theme init
 myarchy-wallpaper init
 

@@ -1,14 +1,8 @@
 #!/usr/bin/env bash
 
-is_battery_powered() {
-  if ls /sys/class/power_supply/BAT* &>/dev/null; then
-    return 0
-  else
-    return 1
-  fi
-}
+presence=$(myarchy-battery presence)
 
-if is_battery_powered; then
+if [[ $presence == true ]]; then
   powerprofilesctl set balanced
   systemctl --user enable --now myarchy-battery-monitor.timer
 else
