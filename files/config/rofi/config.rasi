@@ -264,4 +264,5 @@ element-icon {
 
 element-text {
     text-color: inherit;
+    highlight: underline;
 }
