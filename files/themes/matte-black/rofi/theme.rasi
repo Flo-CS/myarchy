@@ -1,9 +1,0 @@
-* {
-    bg0:    #1e1e1eF2;
-    bg1:    #333333E6;
-
-    fg0:    #eaeaea;
-    fg1:    #bebebe80;
-
-    border1: #333333;
-}

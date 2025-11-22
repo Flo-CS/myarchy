@@ -1,0 +1,86 @@
+# Main background
+theme[main_bg]="#050506"
+
+# Main text color
+theme[main_fg]="#f3f3f5"
+
+# Title color for boxes
+theme[title]="#7a7c80"
+
+# Highlight color for keyboard shortcuts
+theme[hi_fg]="#d97b00"
+
+# Background color of selected items
+theme[selected_bg]="#d97b00"
+
+# Foreground color of selected items
+theme[selected_fg]="#050506"
+
+# Color of inactive/disabled text
+theme[inactive_fg]="#26282d"
+
+# Color of text appearing on top of graphs
+theme[graph_text]="#f3f3f5"
+
+# Misc colors for processes box
+theme[proc_misc]="#f3f3f5"
+
+# Cpu box outline color
+theme[cpu_box]="#7a7c80"
+
+# Memory/disks box outline color
+theme[mem_box]="#7a7c80"
+
+# Net up/down box outline color
+theme[net_box]="#7a7c80"
+
+# Processes box outline color
+theme[proc_box]="#7a7c80"
+
+# Box divider line and small boxes line color
+theme[div_line]="#7a7c80"
+
+# Temperature graph colors
+theme[temp_start]="#7a7c80"
+theme[temp_mid]="#d97b00"
+theme[temp_end]="#c0392b"
+
+# CPU graph colors
+theme[cpu_start]="#7a7c80"
+theme[cpu_mid]="#d97b00"
+theme[cpu_end]="#c0392b"
+
+# Mem/Disk free meter
+theme[free_start]="#7a7c80"
+theme[free_mid]="#d97b00"
+theme[free_end]="#c0392b"
+
+# Mem/Disk cached meter
+theme[cached_start]="#7a7c80"
+theme[cached_mid]="#d97b00"
+theme[cached_end]="#c0392b"
+
+# Mem/Disk available meter
+theme[available_start]="#7a7c80"
+theme[available_mid]="#d97b00"
+theme[available_end]="#c0392b"
+
+# Mem/Disk used meter
+theme[used_start]="#7a7c80"
+theme[used_mid]="#d97b00"
+theme[used_end]="#c0392b"
+
+# Download graph colors
+theme[download_start]="#7a7c80"
+theme[download_mid]="#d97b00"
+theme[download_end]="#c0392b"
+
+# Upload graph colors
+theme[upload_start]="#7a7c80"
+theme[upload_mid]="#d97b00"
+theme[upload_end]="#c0392b"
+
+# Process box color gradient for threads, mem and cpu usage
+theme[process_start]="#7a7c80"
+theme[process_mid]="#d97b00"
+theme[process_end]="#c0392b"
