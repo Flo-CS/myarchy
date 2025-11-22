@@ -27,6 +27,7 @@ source $MYARCHY_DIR/install/global/config-system-backups
 source $MYARCHY_DIR/install/global/config-terminal
 source $MYARCHY_DIR/install/global/config-boot-alternatives-options
 source $MYARCHY_DIR/install/global/config-boot-splashscreen circle_hud
+source $MYARCHY_DIR/install/global/config-boot-timeout
 
 # USER
 
