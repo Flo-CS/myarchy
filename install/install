@@ -16,7 +16,7 @@ source $MYARCHY_DIR/install/global/deploy-myarchy-lib
 myarchy-lib init
 
 sudo pacman -Syu --noconfirm
-source $MYARCHY_DIR/install/global/packages # TODO: packages also contains some packages for user environment (like flutter)
+source $MYARCHY_DIR/install/global/install-packages # TODO: packages also contains some packages for user environment (like flutter)
 
 source $MYARCHY_DIR/install/global/config-sudoers
 source $MYARCHY_DIR/install/global/config-bluetooth
@@ -25,7 +25,8 @@ source $MYARCHY_DIR/install/global/config-firewall
 source $MYARCHY_DIR/install/global/config-faillock
 source $MYARCHY_DIR/install/global/config-system-backups
 source $MYARCHY_DIR/install/global/config-terminal
-source $MYARCHY_DIR/install/global/config-alternative-boot-options
+source $MYARCHY_DIR/install/global/config-boot-alternatives-options
+source $MYARCHY_DIR/install/global/config-boot-splashscreen circle_hud
 
 # USER
 

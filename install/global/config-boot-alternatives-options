@@ -23,5 +23,3 @@ if [[ -n $windows_boot_partition_path ]]; then
 else
     echo "no Windows Boot Manager found. Skipping Windows entry in GRUB."
 fi
-
-grep -q '^GRUB_DEFAULT=' /etc/default/grub && sudo sed -i 's/^GRUB_DEFAULT=.*/GRUB_DEFAULT=saved/' /etc/default/grub
