@@ -65,9 +65,14 @@ def parse_rgb(color: str) -> Optional[Tuple[int, int, int]]:
         hex_part = hex_match.group(1)
         return int(hex_part[0:2], 16), int(hex_part[2:4], 16), int(hex_part[4:6], 16)
 
-    rgba_hex_match = re.fullmatch(r"rgba?\(([0-9a-f]{6})([0-9a-f]{2})?\)", token)
+    rgba_hex_match = re.fullmatch(r"rgba?\(#?([0-9a-f]{6})([0-9a-f]{2})?\)", token)
     if rgba_hex_match:
         hex_part = rgba_hex_match.group(1)
+        return int(hex_part[0:2], 16), int(hex_part[2:4], 16), int(hex_part[4:6], 16)
+
+    rgba_hex_dec_alpha = re.fullmatch(r"rgba?\(#?([0-9a-f]{6}),([0-9.]+)\)", token)
+    if rgba_hex_dec_alpha:
+        hex_part = rgba_hex_dec_alpha.group(1)
         return int(hex_part[0:2], 16), int(hex_part[2:4], 16), int(hex_part[4:6], 16)
 
     rgba_match = re.fullmatch(r"(rgba?)\((\d{1,3}),(\d{1,3}),(\d{1,3})(,[0-9.]+)?\)", token)
@@ -182,14 +187,23 @@ def format_replacement(src: str, target_hex: str) -> str:
         alpha = token[7:9]
         return f"{target}{alpha}"
 
-    rgba_hex = re.fullmatch(r"(rgba?)\(([0-9a-f]{6})([0-9a-f]{2})?\)", token)
+    rgba_hex = re.fullmatch(r"(rgba?)\((#?)([0-9a-f]{6})([0-9a-f]{2})?\)", token)
     if rgba_hex:
         prefix = rgba_hex.group(1).lower()
-        alpha = rgba_hex.group(3) or ""
+        has_hash = rgba_hex.group(2)
+        alpha = rgba_hex.group(4) or ""
         rgb_hex = target.lstrip("#")
         if prefix == "rgba" and alpha:
-            return f"rgba({rgb_hex}{alpha})"
-        return f"rgb({rgb_hex})"
+            return f"rgba({has_hash}{rgb_hex}{alpha})"
+        return f"rgb({has_hash}{rgb_hex})"
+
+    rgba_hex_with_dec_alpha = re.fullmatch(r"(rgba?)\((#?)([0-9a-f]{6}),([0-9.]+)\)", token)
+    if rgba_hex_with_dec_alpha:
+        prefix = rgba_hex_with_dec_alpha.group(1).lower()
+        has_hash = rgba_hex_with_dec_alpha.group(2)
+        alpha_dec = rgba_hex_with_dec_alpha.group(4)
+        rgb_hex = target.lstrip("#")
+        return f"{prefix}({has_hash}{rgb_hex},{alpha_dec})"
 
     rgba_dec = re.fullmatch(
         r"(rgba?)\((\d{1,3}),(\d{1,3}),(\d{1,3})(,([0-9.]+))?\)", token, flags=re.IGNORECASE
