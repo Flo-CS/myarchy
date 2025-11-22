@@ -4,9 +4,6 @@ refresh_all() {
 	# Alacritty
 	touch ~/.config/alacritty/alacritty.toml # Trigger reload
 
-	# Bat
-	bat cache --build
-
 	# Waybar
 	pkill -x waybar && setsid uwsm app -- waybar &
 
@@ -18,6 +15,9 @@ refresh_all() {
 
 	# Swayosd
 	pkill -x swayosd-server && setsid uwsm app -- swayosd-server &
+
+	# Bat
+	bat cache --build &
 }
 
 case "$1" in

@@ -1,11 +1,15 @@
 #!/usr/bin/env python3
 """Palette management utilities for myarchy.
 
-Commands:
-  preview - show palette entries for a theme
-  apply   - normalize theme colors toward a palette by similarity (dry-run by default)
-  audit   - report colors outside the palette with suggested replacements
-  remap   - positional mapping from one palette to another (dry-run by default)
+Commands (new names):
+  show       - display palette entries for a theme
+  normalize  - align colors to a palette by similarity (dry-run by default)
+  audit      - report colors outside the palette with suggested replacements
+  remap      - positional mapping from one palette to another (dry-run by default)
+
+Compatibility aliases:
+  preview -> show
+  apply   -> normalize
 """
 
 from __future__ import annotations
@@ -422,20 +426,37 @@ def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         description="Palette management utilities for myarchy.",
         usage=(
-            "myarchy-palette {preview <theme> [--palette <path>]|"
-            "apply <theme> [--threshold <n>] [--palette <path>] [--apply]|"
+            "myarchy-palette {show <theme> [--palette <path>]|"
+            "normalize <theme> [--threshold <n>] [--palette <path>] [--write]|"
             "audit <theme> [--palette <path>] [--threshold <n>]|"
-            "remap <theme> --to <palette> [--from <palette>] [--apply]}"
+            "remap <theme> --to <palette> [--from <palette>] [--write]}"
         ),
     )
     subparsers = parser.add_subparsers(dest="command", required=True)
 
-    preview = subparsers.add_parser("preview", help="Preview palette entries")
+    show = subparsers.add_parser("show", help="Show palette entries for a theme")
+    show.add_argument("theme")
+    show.add_argument("--palette", help="Override palette path")
+    show.set_defaults(func=command_preview)
+
+    # Compatibility alias
+    preview = subparsers.add_parser("preview", help=argparse.SUPPRESS)
     preview.add_argument("theme")
     preview.add_argument("--palette", help="Override palette path")
     preview.set_defaults(func=command_preview)
 
-    apply = subparsers.add_parser("apply", help="Normalize colors toward a palette")
+    normalize = subparsers.add_parser(
+        "normalize", help="Normalize colors toward a palette (dry-run by default)"
+    )
+    normalize.add_argument("theme")
+    normalize.add_argument("--threshold", type=int, default=12, help="RGB distance threshold")
+    normalize.add_argument("--palette", help="Override palette path")
+    normalize.add_argument("--write", action="store_true", dest="apply", help="Write changes to files")
+    normalize.add_argument("--apply", action="store_true", dest="apply", help=argparse.SUPPRESS)
+    normalize.set_defaults(func=command_apply)
+
+    # Compatibility alias
+    apply = subparsers.add_parser("apply", help=argparse.SUPPRESS)
     apply.add_argument("theme")
     apply.add_argument("--threshold", type=int, default=12, help="RGB distance threshold")
     apply.add_argument("--palette", help="Override palette path")
@@ -448,11 +469,12 @@ def build_parser() -> argparse.ArgumentParser:
     audit.add_argument("--threshold", type=int, default=12, help="RGB distance threshold")
     audit.set_defaults(func=command_audit)
 
-    remap = subparsers.add_parser("remap", help="Positional remap between palettes")
+    remap = subparsers.add_parser("remap", help="Positional remap between palettes (dry-run by default)")
     remap.add_argument("theme")
     remap.add_argument("--from", dest="from_palette", help="Source palette (defaults to theme palette)")
     remap.add_argument("--to", dest="to_palette", required=True, help="Destination palette path")
-    remap.add_argument("--apply", action="store_true", help="Write changes to files")
+    remap.add_argument("--write", action="store_true", dest="apply", help="Write changes to files")
+    remap.add_argument("--apply", action="store_true", dest="apply", help=argparse.SUPPRESS)
     remap.set_defaults(func=command_remap)
 
     return parser
