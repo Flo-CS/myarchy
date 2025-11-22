@@ -2,8 +2,8 @@
     bg0:    #11221CF2;
     bg1:    #23372bE6;
 
-    fg0:    #e6d8ba;
-    fg1:    #e6d8ba80;
+    fg0:    #f6f5dd;
+    fg1:    #f6f5dd80;
 
     border1: #53685b;
 }

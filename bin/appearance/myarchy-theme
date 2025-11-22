@@ -5,19 +5,55 @@ THEMES_DIR="$MYARCHY_DIR/files/themes"
 init_theme() {
 	if [[ ! -d "$THEMES_DIR/current" ]]; then
 		echo "Setting default theme"
-		set_theme $(list_themes | head -n 1)
+		set_theme "$(list_themes | head -n 1)"
 	fi
 }
 
 get_theme() {
-	theme_path=$(readlink -f "$THEMES_DIR/current")
-	theme_name=$(basename $theme_path)
+	local theme_path=$(readlink -f "$THEMES_DIR/current")
+	local theme_name=$(basename "$theme_path")
 
 	echo "$theme_name"
 }
 
 list_themes() {
 	fd --glob "*" "$THEMES_DIR/" --format {/} --max-depth 1
+}
+
+add_theme() {
+	local new_theme="$1"
+	local base_theme
+
+	if [[ -n "$2" ]]; then
+		base_theme="$2"
+	elif [[ -e "$THEMES_DIR/current" ]]; then
+		base_theme=$(basename "$(readlink -f "$THEMES_DIR/current" 2>/dev/null)")
+	else
+		base_theme=$(list_themes | head -n 1)
+	fi
+
+	if [[ -e "$THEMES_DIR/$new_theme" ]]; then
+		echo "Theme '$new_theme' already exists." >&2
+		exit 1
+	fi
+
+	if [[ ! -d "$THEMES_DIR/$base_theme" ]]; then
+		echo "Base theme '$base_theme' does not exist." >&2
+		exit 1
+	fi
+
+	cp -r "$THEMES_DIR/$base_theme" "$THEMES_DIR/$new_theme"
+
+	# Copy palette if present in base, and snapshot base palette for remap reference
+	if [[ -f "$THEMES_DIR/$base_theme/palette.txt" ]]; then
+		cp "$THEMES_DIR/$base_theme/palette.txt" "$THEMES_DIR/$new_theme/palette.txt"
+		cp "$THEMES_DIR/$base_theme/palette.txt" "$THEMES_DIR/$new_theme/palette.base.txt"
+		echo "Copied palette from '$base_theme'. Edit $THEMES_DIR/$new_theme/palette.txt for the new colors."
+		echo "When ready, remap old colors to the new palette:"
+		echo "  myarchy-palette remap $new_theme --from $THEMES_DIR/$new_theme/palette.base.txt --to $THEMES_DIR/$new_theme/palette.txt --apply"
+	fi
+
+	echo "Created theme '$new_theme' from '$base_theme'."
 }
 
 set_theme() {
@@ -36,11 +72,14 @@ get)
 list)
 	list_themes
 	;;
+add)
+	add_theme "$2" "$3"
+	;;
 set)
 	set_theme "$2"
 	;;
 *)
-	echo "Usage: myarchy-theme {init|get|list|set <theme_name>}" >&2
+	echo "Usage: myarchy-theme {init|get|list|add <new_theme> [base_theme]|set <theme>}" >&2
 	exit 1
 	;;
 esac

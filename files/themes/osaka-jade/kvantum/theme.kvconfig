@@ -91,11 +91,11 @@ inactive.highlight.color=#2DD5B7
 text.color=#C1C497
 window.text.color=#C1C497
 button.text.color=#C1C497
-disabled.text.color=#589A5F
+disabled.text.color=#549e6a
 tooltip.text.color=#C1C497
 highlight.text.color=#111c18
 link.color=#2DD5B7
-link.visited.color=#509475
+link.visited.color=#549e6a
 
 [ItemView]
 inherits=PanelButtonCommand
@@ -236,7 +236,7 @@ frame.bottom=3
 frame.left=3
 frame.right=3
 indicator.size=10
-text.normal.color=#589A5F
+text.normal.color=#549e6a
 text.focus.color=#C1C497
 text.press.color=#C1C497
 text.toggle.color=#C1C497
