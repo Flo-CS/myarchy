@@ -443,7 +443,7 @@ def command_remap(args: argparse.Namespace) -> None:
         print(f"  {src_sw}{src}{label_note} -> {dst_sw}{rendered}")
 
     if not args.apply:
-        print("Dry run. Use --apply to write changes.", file=sys.stderr)
+        print("Dry run. Use --write to apply changes.", file=sys.stderr)
         return
 
     replacements = dict(formatted_map)
@@ -512,7 +512,11 @@ def build_parser() -> argparse.ArgumentParser:
     audit.set_defaults(func=command_audit)
 
     remap = subparsers.add_parser(
-        "remap", help="Positional remap from base theme palette to target theme palette (dry-run by default)"
+        "remap",
+        help=(
+            "Remap colors using palette labels (falls back to position). "
+            "Base palette is from --from-theme, target from <theme>. Dry-run by default."
+        ),
     )
     remap.add_argument("theme")
     remap.add_argument(
