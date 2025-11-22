@@ -4,7 +4,7 @@
 Commands (new names):
   show       - display palette entries for a theme (uses theme palette)
   normalize  - align/report colors to a palette by similarity (dry-run by default)
-  remap      - positional mapping from one palette to another (dry-run by default)
+  remap      - positional mapping from a base theme palette to a target theme palette (dry-run by default)
 
 Compatibility aliases:
   preview -> show
@@ -345,8 +345,9 @@ def command_audit(args: argparse.Namespace) -> None:
 
 def command_remap(args: argparse.Namespace) -> None:
     theme_dir = require_theme(args.theme)
-    from_palette = Path(args.from_palette) if args.from_palette else theme_dir / "palette.txt"
-    to_palette = Path(args.to_palette)
+    base_dir = require_theme(args.from_theme)
+    from_palette = base_dir / "palette.txt"
+    to_palette = theme_dir / "palette.txt"
 
     from_colors = load_palette(from_palette)
     to_colors = load_palette(to_palette)
@@ -398,7 +399,7 @@ def build_parser() -> argparse.ArgumentParser:
             "myarchy-palette {\n"
             "  show <theme>\n"
             "  normalize <theme> [--threshold <n>] [--write]\n"
-            "  remap <theme> --to <palette> [--from <palette>] [--write]\n"
+            "  remap <theme> --from-theme <base_theme> [--write]\n"
             "}"
         ).replace("\n", "\n  "),
     )
@@ -451,10 +452,16 @@ def build_parser() -> argparse.ArgumentParser:
     audit.add_argument("--apply", action="store_true", dest="apply", help=argparse.SUPPRESS)
     audit.set_defaults(func=command_audit)
 
-    remap = subparsers.add_parser("remap", help="Positional remap between palettes (dry-run by default)")
+    remap = subparsers.add_parser(
+        "remap", help="Positional remap from base theme palette to target theme palette (dry-run by default)"
+    )
     remap.add_argument("theme")
-    remap.add_argument("--from", dest="from_palette", help="Source palette (defaults to theme palette)")
-    remap.add_argument("--to", dest="to_palette", required=True, help="Destination palette path")
+    remap.add_argument(
+        "--from-theme",
+        dest="from_theme",
+        required=True,
+        help="Base theme to take source palette from (uses its palette.txt)",
+    )
     remap.add_argument("--write", action="store_true", dest="apply", help="Write changes to files")
     remap.add_argument("--apply", action="store_true", dest="apply", help=argparse.SUPPRESS)
     remap.set_defaults(func=command_remap)

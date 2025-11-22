@@ -47,10 +47,9 @@ add_theme() {
 	# Copy palette if present in base, and snapshot base palette for remap reference
 	if [[ -f "$THEMES_DIR/$base_theme/palette.txt" ]]; then
 		cp "$THEMES_DIR/$base_theme/palette.txt" "$THEMES_DIR/$new_theme/palette.txt"
-		cp "$THEMES_DIR/$base_theme/palette.txt" "$THEMES_DIR/$new_theme/palette.base.txt"
 		echo "Copied palette from '$base_theme'. Edit $THEMES_DIR/$new_theme/palette.txt for the new colors."
 		echo "When ready, remap old colors to the new palette:"
-		echo "  myarchy-palette remap $new_theme --from $THEMES_DIR/$new_theme/palette.base.txt --to $THEMES_DIR/$new_theme/palette.txt --apply"
+		echo "  myarchy-palette remap $new_theme --from-theme $base_theme --write"
 	fi
 
 	echo "Created theme '$new_theme' from '$base_theme'."
