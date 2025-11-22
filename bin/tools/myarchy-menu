@@ -146,6 +146,7 @@ Packages
 Apps
 Refresh
 Deploy
+Update
 Drives' | dmenu "?")
 
 	case "$selected" in
@@ -164,6 +165,7 @@ Drives' | dmenu "?")
 	*"Apps"*) show_apps_menu ;;
 	*"Refresh"*) myarchy-terminal launch-menu myarchy-refresh all ;;
 	*"Deploy"*) myarchy-terminal launch-menu myarchy-deploy all ;;
+	*"Update"*) myarchy-terminal launch-menu myarchy-update all ;;
 	*"Drives"*) show_drives_menu ;;
 	*) exit 0 ;;
 	esac
