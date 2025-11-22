@@ -2,14 +2,14 @@
 """Palette management utilities for myarchy.
 
 Commands (new names):
-  show       - display palette entries for a theme
-  normalize  - align colors to a palette by similarity (dry-run by default)
-  audit      - report colors outside the palette with suggested replacements
+  show       - display palette entries for a theme (uses theme palette)
+  normalize  - align/report colors to a palette by similarity (dry-run by default)
   remap      - positional mapping from one palette to another (dry-run by default)
 
 Compatibility aliases:
   preview -> show
   apply   -> normalize
+  audit   -> normalize
 """
 
 from __future__ import annotations
@@ -23,6 +23,9 @@ import sys
 from collections import Counter
 from pathlib import Path
 from typing import Dict, Iterator, List, NoReturn, Optional, Sequence, Tuple
+
+# Maximum possible RGB distance (~sqrt(3*255^2) ≈ 441). Use 442 to guarantee coverage.
+MAX_DISTANCE = 442
 
 
 def _base_dir() -> Path:
@@ -208,12 +211,12 @@ def require_theme(theme: str) -> Path:
 
 
 def palette_path(theme_dir: Path, override: Optional[str]) -> Path:
-    return Path(override) if override else theme_dir / "palette.txt"
+    return theme_dir / "palette.txt"
 
 
 def command_preview(args: argparse.Namespace) -> None:
     theme_dir = require_theme(args.theme)
-    palette_file = palette_path(theme_dir, args.palette)
+    palette_file = palette_path(theme_dir, None)
     palette = load_palette(palette_file)
 
     print(f"Palette from {palette_file}:")
@@ -286,7 +289,7 @@ def command_apply(args: argparse.Namespace) -> None:
     if args.threshold < 0:
         fail("Threshold must be a non-negative integer.")
 
-    palette_file = palette_path(theme_dir, args.palette)
+    palette_file = palette_path(theme_dir, None)
     palette = load_palette(palette_file)
     palette_set = set(palette)
 
@@ -336,42 +339,8 @@ def command_apply(args: argparse.Namespace) -> None:
 
 
 def command_audit(args: argparse.Namespace) -> None:
-    theme_dir = require_theme(args.theme)
-    if args.threshold < 0:
-        fail("Threshold must be a non-negative integer.")
-
-    palette_file = palette_path(theme_dir, args.palette)
-    palette = load_palette(palette_file)
-    palette_set = set(palette)
-    total_count, file_count = collect_counts(theme_dir)
-    threshold_sq = args.threshold * args.threshold
-
-    print(f"Colors not in palette (distance <= {args.threshold} suggests replacement):")
-    for color, count in total_count.items():
-        if color in palette_set:
-            continue
-        rgb = parse_rgb(color)
-        if not rgb:
-            continue
-
-        best, best_dist = compute_nearest_palette(palette, color)
-        files_line = describe_files(color, file_count)
-        src_sw = render_swatch(color)
-        dst_sw = render_swatch(best) if best else ""
-
-        if best is not None and best_dist is not None and best_dist <= threshold_sq:
-            rendered = format_replacement(color, best)
-            if rendered == color:
-                continue
-            print(
-                f"  {src_sw}{color} -> {dst_sw}{rendered} "
-                f"(count={count}) files: {files_line}"
-            )
-        else:
-            print(
-                f"  {src_sw}{color} (count={count}) files: {files_line} "
-                f"(no close replacement within {args.threshold})"
-            )
+    # Alias to normalize behavior for backward compatibility.
+    command_apply(args)
 
 
 def command_remap(args: argparse.Namespace) -> None:
@@ -426,31 +395,34 @@ def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         description="Palette management utilities for myarchy.",
         usage=(
-            "myarchy-palette {show <theme> [--palette <path>]|"
-            "normalize <theme> [--threshold <n>] [--palette <path>] [--write]|"
-            "audit <theme> [--palette <path>] [--threshold <n>]|"
-            "remap <theme> --to <palette> [--from <palette>] [--write]}"
-        ),
+            "myarchy-palette {\n"
+            "  show <theme>\n"
+            "  normalize <theme> [--threshold <n>] [--write]\n"
+            "  remap <theme> --to <palette> [--from <palette>] [--write]\n"
+            "}"
+        ).replace("\n", "\n  "),
     )
     subparsers = parser.add_subparsers(dest="command", required=True)
 
     show = subparsers.add_parser("show", help="Show palette entries for a theme")
     show.add_argument("theme")
-    show.add_argument("--palette", help="Override palette path")
     show.set_defaults(func=command_preview)
 
     # Compatibility alias
     preview = subparsers.add_parser("preview", help=argparse.SUPPRESS)
     preview.add_argument("theme")
-    preview.add_argument("--palette", help="Override palette path")
     preview.set_defaults(func=command_preview)
 
     normalize = subparsers.add_parser(
-        "normalize", help="Normalize colors toward a palette (dry-run by default)"
+        "normalize", help="Normalize/report colors toward a palette (dry-run by default)"
     )
     normalize.add_argument("theme")
-    normalize.add_argument("--threshold", type=int, default=12, help="RGB distance threshold")
-    normalize.add_argument("--palette", help="Override palette path")
+    normalize.add_argument(
+        "--threshold",
+        type=int,
+        default=MAX_DISTANCE,
+        help=f"RGB distance threshold (default {MAX_DISTANCE}, max to always pick nearest)",
+    )
     normalize.add_argument("--write", action="store_true", dest="apply", help="Write changes to files")
     normalize.add_argument("--apply", action="store_true", dest="apply", help=argparse.SUPPRESS)
     normalize.set_defaults(func=command_apply)
@@ -458,15 +430,25 @@ def build_parser() -> argparse.ArgumentParser:
     # Compatibility alias
     apply = subparsers.add_parser("apply", help=argparse.SUPPRESS)
     apply.add_argument("theme")
-    apply.add_argument("--threshold", type=int, default=12, help="RGB distance threshold")
-    apply.add_argument("--palette", help="Override palette path")
+    apply.add_argument(
+        "--threshold",
+        type=int,
+        default=MAX_DISTANCE,
+        help=f"RGB distance threshold (default {MAX_DISTANCE}, max to always pick nearest)",
+    )
     apply.add_argument("--apply", action="store_true", help="Write changes to files")
     apply.set_defaults(func=command_apply)
 
-    audit = subparsers.add_parser("audit", help="Report colors outside the palette")
+    audit = subparsers.add_parser("audit", help=argparse.SUPPRESS)
     audit.add_argument("theme")
-    audit.add_argument("--palette", help="Override palette path")
-    audit.add_argument("--threshold", type=int, default=12, help="RGB distance threshold")
+    audit.add_argument(
+        "--threshold",
+        type=int,
+        default=MAX_DISTANCE,
+        help=f"RGB distance threshold (default {MAX_DISTANCE}, max to always pick nearest)",
+    )
+    audit.add_argument("--write", action="store_true", dest="apply", help=argparse.SUPPRESS)
+    audit.add_argument("--apply", action="store_true", dest="apply", help=argparse.SUPPRESS)
     audit.set_defaults(func=command_audit)
 
     remap = subparsers.add_parser("remap", help="Positional remap between palettes (dry-run by default)")
