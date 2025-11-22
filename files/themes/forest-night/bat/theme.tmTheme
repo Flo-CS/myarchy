@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple Computer//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>name</key>
+  <string>Matte Black</string>
+  <key>settings</key>
+  <array>
+    <dict>
+      <key>settings</key>
+      <dict>
+        <key>background</key>
+        <string>#060906</string>
+        <key>caret</key>
+        <string>#e7efe8</string>
+        <key>foreground</key>
+        <string>#56685d</string>
+        <key>invisibles</key>
+        <string>#1e2d24</string>
+        <key>lineHighlight</key>
+        <string>#111a14</string>
+        <key>selection</key>
+        <string>#1e2d24</string>
+      </dict>
+    </dict>
+    <dict>
+      <key>name</key>
+      <string>Comment</string>
+      <key>scope</key>
+      <string>comment</string>
+      <key>settings</key>
+      <dict>
+        <key>fontStyle</key>
+        <string>italic</string>
+        <key>foreground</key>
+        <string>#1e2d24</string>
+      </dict>
+    </dict>
+    <dict>
+      <key>name</key>
+      <string>String</string>
+      <key>scope</key>
+      <string>string, punctuation.definition.string</string>
+      <key>settings</key>
+      <dict>
+        <key>foreground</key>
+        <string>#c2a44a</string>
+      </dict>
+    </dict>
+    <dict>
+      <key>name</key>
+      <string>Number</string>
+      <key>scope</key>
+      <string>constant.numeric</string>
+      <key>settings</key>
+      <dict>
+        <key>foreground</key>
+        <string>#4a9e6f</string>
+      </dict>
+    </dict>
+    <dict>
+      <key>name</key>
+      <string>Keyword</string>
+      <key>scope</key>
+      <string>keyword, storage</string>
+      <key>settings</key>
+      <dict>
+        <key>foreground</key>
+        <string>#2f7a5b</string>
+      </dict>
+    </dict>
+    <dict>
+      <key>name</key>
+      <string>Function</string>
+      <key>scope</key>
+      <string>entity.name.function, support.function</string>
+      <key>settings</key>
+      <dict>
+        <key>foreground</key>
+        <string>#4a9e6f</string>
+      </dict>
+    </dict>
+    <dict>
+      <key>name</key>
+      <string>Variable</string>
+      <key>scope</key>
+      <string>variable</string>
+      <key>settings</key>
+      <dict>
+        <key>foreground</key>
+        <string>#c9d5cb</string>
+      </dict>
+    </dict>
+    <dict>
+      <key>name</key>
+      <string>Type</string>
+      <key>scope</key>
+      <string>entity.name.type, support.type</string>
+      <key>settings</key>
+      <dict>
+        <key>foreground</key>
+        <string>#56685d</string>
+      </dict>
+    </dict>
+  </array>
+</dict>
+</plist>

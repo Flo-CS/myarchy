@@ -20,7 +20,7 @@ import re
 import shutil
 import subprocess
 import sys
-from collections import Counter
+from collections import Counter, defaultdict
 from pathlib import Path
 from typing import Dict, Iterator, List, NoReturn, Optional, Sequence, Tuple
 
@@ -138,11 +138,11 @@ def extract_colors(theme_dir: Path) -> Iterator[ColorMatch]:
             yield normalize_color(raw), raw, rel
 
 
-def load_palette(palette_file: Path) -> List[str]:
+def read_palette_entries(palette_file: Path) -> List[Tuple[str, str]]:
     if not palette_file.is_file():
         fail(f"Palette file not found: {palette_file}")
 
-    colors: List[str] = []
+    entries: List[Tuple[str, str]] = []
     try:
         lines = palette_file.read_text(encoding="utf-8").splitlines()
     except OSError as exc:
@@ -152,16 +152,22 @@ def load_palette(palette_file: Path) -> List[str]:
         stripped = line.strip()
         if not stripped or stripped.startswith("//") or stripped.startswith(";") or stripped.startswith("##"):
             continue
-        token = stripped.split()[0]
+        parts = stripped.split(None, 1)
+        token = parts[0]
+        label = parts[1].strip() if len(parts) > 1 else ""
         if not re.fullmatch(r"#[0-9a-fA-F]{6}", token):
             print(f"Skipping invalid palette entry: {line}", file=sys.stderr)
             continue
-        colors.append(token.lower())
+        entries.append((token.lower(), label))
 
-    if not colors:
+    if not entries:
         fail(f"Palette is empty at {palette_file}")
 
-    return colors
+    return entries
+
+
+def load_palette(palette_file: Path) -> List[str]:
+    return [color for color, _ in read_palette_entries(palette_file)]
 
 
 def format_replacement(src: str, target_hex: str) -> str:
@@ -217,12 +223,15 @@ def palette_path(theme_dir: Path, override: Optional[str]) -> Path:
 def command_preview(args: argparse.Namespace) -> None:
     theme_dir = require_theme(args.theme)
     palette_file = palette_path(theme_dir, None)
-    palette = load_palette(palette_file)
+    entries = read_palette_entries(palette_file)
 
     print(f"Palette from {palette_file}:")
-    for color in palette:
+    for color, label in entries:
         swatch = render_swatch(color)
-        print(f"  {swatch}{color}")
+        if label:
+            print(f"  {swatch}{color} {label}")
+        else:
+            print(f"  {swatch}{color}")
 
 
 def collect_counts(theme_dir: Path) -> Tuple[Counter[str], Counter[Tuple[str, str]]]:
@@ -349,8 +358,10 @@ def command_remap(args: argparse.Namespace) -> None:
     from_palette = base_dir / "palette.txt"
     to_palette = theme_dir / "palette.txt"
 
-    from_colors = load_palette(from_palette)
-    to_colors = load_palette(to_palette)
+    from_entries = read_palette_entries(from_palette)
+    to_entries = read_palette_entries(to_palette)
+    from_colors = [c for c, _ in from_entries]
+    to_colors = [c for c, _ in to_entries]
 
     if len(from_colors) != len(to_colors):
         fail(
@@ -360,34 +371,82 @@ def command_remap(args: argparse.Namespace) -> None:
 
     total_count, file_count = collect_counts(theme_dir)
 
+    def label_map(entries: List[Tuple[str, str]]) -> Dict[str, str]:
+        mapping: Dict[str, str] = {}
+        seen_duplicates = set()
+        for color, label in entries:
+            if not label:
+                continue
+            if label in mapping and label not in seen_duplicates:
+                print(f"Duplicate label '{label}' found; using first occurrence.", file=sys.stderr)
+                seen_duplicates.add(label)
+                continue
+            mapping.setdefault(label, color)
+        return mapping
+
+    from_labels = label_map(from_entries)
+    to_labels = label_map(to_entries)
+    common_labels = [label for label in from_labels if label in to_labels]
+
     replace_map: Dict[str, str] = {}
     formatted_map: Dict[str, str] = {}
-    for src, dst in zip(from_colors, to_colors):
+    label_for_src: Dict[str, str] = {}
+
+    # Prefer label-based mapping when labels align
+    for label in common_labels:
+        src = from_labels[label]
+        dst = to_labels[label]
         if src == dst:
             continue
         replace_map[src] = dst
         formatted_map[src] = format_replacement(src, dst)
+        label_for_src[src] = label
+
+    # Fallback positional mapping for remaining entries
+    for idx, (src, _) in enumerate(from_entries):
+        dst, dst_label = to_entries[idx]
+        if src in replace_map:
+            continue
+        if src == dst:
+            continue
+        replace_map[src] = dst
+        formatted_map[src] = format_replacement(src, dst)
+        if dst_label:
+            label_for_src[src] = dst_label
+
+    # Also remap any rgb/rgba/hex variants in the theme that match the source palette color.
+    colors_by_rgb: Dict[Tuple[int, int, int], List[str]] = defaultdict(list)
+    for color in total_count:
+        rgb = parse_rgb(color)
+        if rgb:
+            colors_by_rgb[rgb].append(color)
+
+    for src, dst in replace_map.items():
+        src_rgb = parse_rgb(src)
+        if not src_rgb:
+            continue
+        for variant in colors_by_rgb.get(src_rgb, []):
+            if variant in formatted_map:
+                continue
+            formatted_map[variant] = format_replacement(variant, dst)
 
     if not replace_map:
         print("No remaps to apply (palettes identical?).", file=sys.stderr)
         return
 
-    print(f"Planned palette remap (positional from -> to):")
+    print("Planned palette remap (matching by label when available, otherwise by position):")
     for src, dst in replace_map.items():
         rendered = formatted_map[src]
-        files_line = describe_files(src, file_count)
         src_sw = render_swatch(src)
         dst_sw = render_swatch(rendered)
-        print(
-            f"  {src_sw}{src} -> {dst_sw}{rendered} "
-            f"(count={total_count.get(src,0)}) files: {files_line}"
-        )
+        label_note = f" [{label_for_src[src]}]" if src in label_for_src else ""
+        print(f"  {src_sw}{src}{label_note} -> {dst_sw}{rendered}")
 
     if not args.apply:
         print("Dry run. Use --apply to write changes.", file=sys.stderr)
         return
 
-    replacements = {color: formatted_map[color] for color in replace_map}
+    replacements = dict(formatted_map)
     replace_in_files(theme_dir, replacements)
     print(f"Applied palette remap using {from_palette} -> {to_palette}.")
 
