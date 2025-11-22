@@ -82,7 +82,7 @@ install_waybar() {
 }
 
 install_launcher() {
-	install_pkgs rofi
+	install_pkgs rofi rofi-emoji
 }
 
 install_picture_tools() {
@@ -123,6 +123,10 @@ install_bluetooth() {
 
 install_clipboard() {
 	install_pkgs wl-clipboard
+}
+
+install_typing() {
+	install_pkgs wtype
 }
 
 install_disks() {
