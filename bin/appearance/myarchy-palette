@@ -224,14 +224,31 @@ def command_preview(args: argparse.Namespace) -> None:
     theme_dir = require_theme(args.theme)
     palette_file = palette_path(theme_dir, None)
     entries = read_palette_entries(palette_file)
+    total_count, file_count = collect_counts(theme_dir)
+
+    # Exclude palette.txt occurrences from usage counts so we only count actual config files.
+    usage = Counter(total_count)
+    files_by_color: Dict[str, List[Tuple[str, int]]] = defaultdict(list)
+    for (color_key, rel), count in list(file_count.items()):
+        if rel == "palette.txt":
+            usage[color_key] -= count
+            if usage[color_key] <= 0:
+                usage.pop(color_key, None)
+            continue
+        files_by_color[color_key].append((rel, count))
 
     print(f"Palette from {palette_file}:")
     for color, label in entries:
         swatch = render_swatch(color)
+        uses = usage.get(normalize_color(color), 0)
         if label:
-            print(f"  {swatch}{color} {label}")
+            print(f"  {swatch}{color} {label} (uses: {uses})")
         else:
-            print(f"  {swatch}{color}")
+            print(f"  {swatch}{color} (uses: {uses})")
+        if args.details:
+            per_files = files_by_color.get(normalize_color(color), [])
+            for rel, count in sorted(per_files):
+                print(f"      {rel} ({count})")
 
 
 def collect_counts(theme_dir: Path) -> Tuple[Counter[str], Counter[Tuple[str, str]]]:
@@ -466,11 +483,17 @@ def build_parser() -> argparse.ArgumentParser:
 
     show = subparsers.add_parser("show", help="Show palette entries for a theme")
     show.add_argument("theme")
+    show.add_argument(
+        "--details",
+        action="store_true",
+        help="List files (within the theme) where each palette color is used",
+    )
     show.set_defaults(func=command_preview)
 
     # Compatibility alias
     preview = subparsers.add_parser("preview", help=argparse.SUPPRESS)
     preview.add_argument("theme")
+    preview.add_argument("--details", action="store_true", help=argparse.SUPPRESS)
     preview.set_defaults(func=command_preview)
 
     normalize = subparsers.add_parser(
