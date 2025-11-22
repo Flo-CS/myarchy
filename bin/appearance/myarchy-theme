@@ -22,29 +22,10 @@ list_themes() {
 
 add_theme() {
 	local new_theme="$1"
-	local base_theme
-
-	if [[ -n "$2" ]]; then
-		base_theme="$2"
-	elif [[ -e "$THEMES_DIR/current" ]]; then
-		base_theme=$(basename "$(readlink -f "$THEMES_DIR/current" 2>/dev/null)")
-	else
-		base_theme=$(list_themes | head -n 1)
-	fi
-
-	if [[ -e "$THEMES_DIR/$new_theme" ]]; then
-		echo "Theme '$new_theme' already exists." >&2
-		exit 1
-	fi
-
-	if [[ ! -d "$THEMES_DIR/$base_theme" ]]; then
-		echo "Base theme '$base_theme' does not exist." >&2
-		exit 1
-	fi
+	local base_theme="$2"
 
 	cp -r "$THEMES_DIR/$base_theme" "$THEMES_DIR/$new_theme"
 
-	# Copy palette if present in base, and snapshot base palette for remap reference
 	if [[ -f "$THEMES_DIR/$base_theme/palette.txt" ]]; then
 		cp "$THEMES_DIR/$base_theme/palette.txt" "$THEMES_DIR/$new_theme/palette.txt"
 		echo "Copied palette from '$base_theme'. Edit $THEMES_DIR/$new_theme/palette.txt for the new colors."
