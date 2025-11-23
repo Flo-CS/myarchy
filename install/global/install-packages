@@ -207,6 +207,7 @@ install_fonts
 install_audio
 install_bluetooth
 install_clipboard
+install_typing
 install_disks
 install_multimedia
 install_backup_tools
