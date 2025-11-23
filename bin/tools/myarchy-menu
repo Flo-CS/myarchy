@@ -149,7 +149,7 @@ Apps
 Refresh
 Deploy
 Update
-Drives' | dmenu "?")
+Drives' | dmenu "▶")
 
 	case "$selected" in
 	*"Theme"*) show_select_theme_menu ;;
