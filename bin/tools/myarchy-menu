@@ -131,8 +131,8 @@ show_drives_menu() {
 	fi
 }
 
-show_config_menu() {
-	selected=$(printf 'Edit hyprland apps' | dmenu "Config")
+show_edit_config_menu() {
+	selected=$(printf 'Hyprland apps' | dmenu "Edit config")
 
 	if [[ -z "$selected" ]]; then
 		show_main_menu
@@ -163,7 +163,7 @@ Refresh
 Deploy
 Update
 Drives
-Config' | dmenu "▶")
+Edit config' | dmenu "▶")
 
 	case "$selected" in
 	*"Theme"*) show_select_theme_menu ;;
@@ -184,7 +184,7 @@ Config' | dmenu "▶")
 	*"Deploy"*) myarchy-terminal launch-menu myarchy-deploy all ;;
 	*"Update"*) myarchy-terminal launch-menu myarchy-update all ;;
 	*"Drives"*) show_drives_menu ;;
-	*"Config"*) show_config_menu ;;
+	*"Edit config"*) show_edit_config_menu ;;
 	*) exit 0 ;;
 	esac
 }
