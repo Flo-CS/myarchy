@@ -139,7 +139,7 @@ show_edit_config_menu() {
 	else
 		# TODO: perhaps it's not very maintainable to hardcode paths here
 		case "$selected" in
-		*"Edit hyprland apps"*) myarchy-terminal launch nvim $MYARCHY_DIR/files/config/hypr/hyprland/apps.conf ;;
+		*"Hyprland apps"*) myarchy-terminal launch nvim $MYARCHY_DIR/files/config/hypr/hyprland/apps.conf ;;
 		esac
 	fi
 }
