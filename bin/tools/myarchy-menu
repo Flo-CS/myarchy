@@ -131,6 +131,19 @@ show_drives_menu() {
 	fi
 }
 
+show_config_menu() {
+	selected=$(printf 'Edit hyprland apps' | dmenu "Config")
+
+	if [[ -z "$selected" ]]; then
+		show_main_menu
+	else
+		# TODO: perhaps it's not very maintainable to hardcode paths here
+		case "$selected" in
+		*"Edit hyprland apps"*) myarchy-terminal launch nvim $MYARCHY_DIR/files/config/hypr/hyprland/apps.conf ;;
+		esac
+	fi
+}
+
 show_main_menu() {
 	selected=$(printf 'Theme
 Wallpaper
@@ -149,7 +162,8 @@ Apps
 Refresh
 Deploy
 Update
-Drives' | dmenu "▶")
+Drives
+Config' | dmenu "▶")
 
 	case "$selected" in
 	*"Theme"*) show_select_theme_menu ;;
@@ -170,6 +184,7 @@ Drives' | dmenu "▶")
 	*"Deploy"*) myarchy-terminal launch-menu myarchy-deploy all ;;
 	*"Update"*) myarchy-terminal launch-menu myarchy-update all ;;
 	*"Drives"*) show_drives_menu ;;
+	*"Config"*) show_config_menu ;;
 	*) exit 0 ;;
 	esac
 }
