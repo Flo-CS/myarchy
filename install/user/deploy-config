@@ -40,6 +40,9 @@ myarchy-lib robust-link $SOURCE/themes/current/btop/theme.theme ~/.config/btop/t
 myarchy-lib robust-link $SOURCE/config/kvantum/kvantum.kvconfig ~/.config/Kvantum/kvantum.kvconfig
 myarchy-lib robust-link $SOURCE/themes/current/kvantum ~/.config/Kvantum/theme
 
+myarchy-lib robust-link $SOURCE/themes/current/gtk/gtk-3.0/settings.ini ~/.config/gtk-3.0/settings.ini
+myarchy-lib robust-link $SOURCE/themes/current/gtk/gtk-4.0/settings.ini ~/.config/gtk-4.0/settings.ini
+
 myarchy-lib robust-link $SOURCE/config/waybar/config.jsonc ~/.config/waybar/config.jsonc
 myarchy-lib robust-link $SOURCE/config/waybar/style.css ~/.config/waybar/style.css
 myarchy-lib robust-link $SOURCE/themes/current/waybar/theme.css ~/.config/waybar/theme.css

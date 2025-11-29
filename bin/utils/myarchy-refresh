@@ -16,6 +16,13 @@ refresh_all() {
 	# Swayosd
 	pkill -x swayosd-server && setsid uwsm app -- swayosd-server &
 
+	# GTK - trigger settings reload by touching settings files
+	touch ~/.config/gtk-3.0/settings.ini &
+	touch ~/.config/gtk-4.0/settings.ini &
+
+	# Cursor - apply preferred cursor
+	myarchy-cursor apply-preferred &
+
 	# Bat
 	bat cache --build &
 }
