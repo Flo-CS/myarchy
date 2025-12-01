@@ -1,6 +1,8 @@
 $default_volume_increment = 2
 $default_brightness_increment = 5
 
+$main_modifier = SUPER
+
 source=./hyprland/hyprland.conf
 
 input {
