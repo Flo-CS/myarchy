@@ -38,7 +38,11 @@ if ! grep -q 'add_dracutmodules+=" plymouth "' "$DRACUT_CONFIG_FILE"; then
 	SHOULD_REBUILD_DRACUT=true
 fi
 
-sudo plymouth-set-default-theme $PLYMOUTH_THEME # TODO: dracut should be rebuilt after that
+current_plymouth_theme=$(plymouth-set-default-theme)
+if [ "$current_plymouth_theme" != "$PLYMOUTH_THEME" ]; then
+	SHOULD_REBUILD_DRACUT=true
+	sudo plymouth-set-default-theme $PLYMOUTH_THEME
+fi
 
 if [ $SHOULD_REBUILD_DRACUT = true ]; then
 	sudo dracut-rebuild
