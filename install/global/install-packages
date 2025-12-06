@@ -50,7 +50,7 @@ install_wayland() {
 
 install_boot() {
 	install_pkgs plymouth
-	install_yay_pkgs plymouth-theme-circle-hud-git
+	install_yay_pkgs plymouth-theme-spinner-alt-git
 }
 
 install_cursors() {
