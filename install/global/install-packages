@@ -179,6 +179,10 @@ install_python() {
 	install_pkgs python-pip
 }
 
+install_login_manager() {
+	install_pkgs greetd greetd-tuigreet
+}
+
 install_terminal
 install_flatpak
 install_git
@@ -188,6 +192,7 @@ install_sync_tools
 install_nodejs
 install_wayland
 install_boot
+install_login_manager
 install_cursors
 install_qt
 install_uwsm

@@ -1,0 +1,6 @@
+[terminal]
+vt = 1
+
+[default_session]
+command = "tuigreet --greeting 'Welcome' --cmd 'uwsm start hyprland-uwsm.desktop' --time --remember --remember-session --asterisks --power-shutdown 'systemctl poweroff' --power-reboot 'systemctl reboot' --theme 'text=white;time=white;container=black;border=white;greet=white;prompt=white;input=white;action=white;button=white'"
+user = "greeter"
