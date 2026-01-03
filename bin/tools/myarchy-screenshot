@@ -2,11 +2,19 @@
 
 [[ -f ~/.config/user-dirs.dirs ]] && source ~/.config/user-dirs.dirs
 
-OUTPUT_DIR="${XDG_PICTURES_DIR:-$HOME/pictures}"
+OUTPUT_DIR="${XDG_PICTURES_DIR:-$HOME/pictures/screenshots}"
+OUTPUT_FILENAME="$(date +'%Y-%m-%d_%H-%M-%S').png"
 
-hyprshot -m ${1:-output} --raw |
+type=$(case "$1" in
+  fullscreen) echo output ;;
+  area) echo region ;;
+  window) echo window ;;
+  *) echo output ;;
+  esac)
+
+hyprshot -m $type --raw |
   satty --filename - \
-    --output-filename "$OUTPUT_DIR/screenshot-$(date +'%Y-%m-%d_%H-%M-%S').png" \
+    --output-filename "$OUTPUT_DIR/$OUTPUT_FILENAME" \
     --early-exit \
     --actions-on-enter save-to-clipboard \
     --save-after-copy \

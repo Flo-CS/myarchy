@@ -63,8 +63,8 @@ Window' | dmenu "Screenshot")
 		show_main_menu
 	else
 		case "$selected" in
-		*"Fullscreen"*) myarchy-screenshot output ;;
-		*"Area"*) myarchy-screenshot region ;;
+		*"Fullscreen"*) myarchy-screenshot fullscreen ;;
+		*"Area"*) myarchy-screenshot area ;;
 		*"Window"*) myarchy-screenshot window ;;
 		esac
 	fi
