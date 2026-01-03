@@ -1,0 +1,54 @@
+#!/usr/bin/env bash
+
+share_clipboard() {
+  TEMP_FILE=$(mktemp --suffix=.txt)
+  wl-paste >"$TEMP_FILE"
+  systemd-run --user --quiet --collect localsend --headless send "$TEMP_FILE"
+}
+
+share_files() {
+  if (($# > 0)); then
+    FILES="$*"
+  else
+    FILES=$(find "$HOME" -type f 2>/dev/null | fzf --multi)
+    [ -z "$FILES" ] && exit 0
+  fi
+
+  if echo "$FILES" | grep -q $'\n'; then
+    readarray -t FILE_ARRAY <<<"$FILES"
+    systemd-run --user --quiet --collect localsend --headless send "${FILE_ARRAY[@]}"
+  else
+    systemd-run --user --quiet --collect localsend --headless send "$FILES"
+  fi
+}
+
+share_folder() {
+  if (($# > 0)); then
+    FOLDER="$1"
+  else
+    FOLDER=$(find "$HOME" -type d 2>/dev/null | fzf)
+    [ -z "$FOLDER" ] && exit 0
+  fi
+
+  systemd-run --user --quiet --collect localsend --headless send "$FOLDER"
+}
+
+command="$1"
+
+case "$command" in
+clipboard)
+  share_clipboard
+  ;;
+file)
+  shift
+  share_files "$@"
+  ;;
+folder)
+  shift
+  share_folder "$@"
+  ;;
+*)
+  echo "Usage: myarchy-share [clipboard|file|folder]"
+  exit 1
+  ;;
+esac

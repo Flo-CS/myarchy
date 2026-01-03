@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+
+list_fonts() {
+	fc-list $1 -f "%{family[0]}\n" | sort -u
+}
+
+case "$1" in
+list)
+	list_fonts "$2"
+	;;
+*)
+	echo "Usage: $0 list [pattern]"
+	;;
+esac

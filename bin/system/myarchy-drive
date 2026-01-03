@@ -1,0 +1,36 @@
+#!/usr/bin/env bash
+
+list_mountable_drives() {
+	lsblk -p -J -o NAME,MODEL,SIZE,TYPE,TRAN,MOUNTPOINT | jq -r '.blockdevices[] | select(.tran=="usb" and .type=="disk") |  .model as $model |  .children[]? | select(.type=="part") | "\(.name) \($model) \(.size) \(.mountpoint // "not mounted")"'
+}
+
+mount_drive() {
+	udiskie-mount "$1"
+}
+
+unmount_drive() {
+	udiskie-umount "$1"
+}
+
+get_drive_mountpoint() {
+	lsblk -no MOUNTPOINT "$1"
+}
+
+case "$1" in
+list)
+	list_mountable_drives
+	;;
+mount)
+	mount_drive "$2"
+	;;
+unmount)
+	unmount_drive "$2"
+	;;
+mountpoint)
+	get_drive_mountpoint "$2"
+	;;
+*)
+	echo "Usage: $0 {list|mount <device>|unmount <device>|mountpoint <device>}"
+	exit 1
+	;;
+esac

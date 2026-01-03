@@ -1,0 +1,2 @@
+Defaults timestamp_timeout=30
+Defaults passwd_tries=10

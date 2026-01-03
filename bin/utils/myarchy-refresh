@@ -1,0 +1,38 @@
+#!/usr/bin/env bash
+
+refresh_all() {
+	# Alacritty
+	touch ~/.config/alacritty/alacritty.toml # Trigger reload
+
+	# Waybar
+	pkill -x waybar && setsid uwsm app -- waybar &
+
+	# Mako
+	makoctl reload &
+
+	# Hyprland
+	hyprctl reload &
+
+	# Swayosd
+	pkill -x swayosd-server && setsid uwsm app -- swayosd-server &
+
+	# GTK - trigger settings reload by touching settings files
+	touch ~/.config/gtk-3.0/settings.ini &
+	touch ~/.config/gtk-4.0/settings.ini &
+
+	# Cursor - apply preferred cursor
+	myarchy-cursor apply-preferred &
+
+	# Bat
+	bat cache --build &
+}
+
+case "$1" in
+all)
+	refresh_all
+	;;
+*)
+	echo "Usage: $0 all"
+	exit 1
+	;;
+esac

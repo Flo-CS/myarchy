@@ -1,0 +1,13 @@
+#d97b00 accent
+#a4466b accent2
+#c0392b alert
+#0b0b0c bg0
+#121214 bg1
+#1b1c1f bg2
+#050506 black
+#26282d border
+#f1e6d0 highlight
+#7a7c80 muted
+#d7d8dc text
+#f3f3f5 text-strong
+#e0b450 warn

@@ -1,0 +1,228 @@
+#!/usr/bin/env bash
+
+install_pkgs() {
+	sudo pacman -S --noconfirm --needed "$@"
+}
+
+install_yay_pkgs() {
+	yay -S --needed --answerclean None --answerdiff All "$@"
+}
+
+install_terminal() {
+	install_pkgs alacritty starship neovim gum zoxide eza direnv tmux
+}
+
+install_flatpak() {
+	install_pkgs flatpak
+	flatpak remote-add --user --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo
+}
+
+install_git() {
+	install_pkgs git git-delta git-filter-repo lazygit
+	install_yay_pkgs git-credential-oauth
+}
+
+install_net_tools() {
+	install_pkgs curl
+}
+
+install_files_tools() {
+	install_pkgs bat fd ripgrep fzf jq go-yq python-j2cli unzip xz zip yazi
+}
+
+install_sync_tools() {
+	install_pkgs rclone syncthing rsync
+}
+
+install_nodejs() {
+	install_pkgs nvm
+	source /usr/share/nvm/init-nvm.sh
+	nvm install --lts || echo "nvm install failed, maybe nvm is not properly configured" >&2
+}
+
+install_hyprland() {
+	install_pkgs hyprland hyprpaper hyprcursor hyprlock hypridle hyprland-guiutils hyprland-qt-support hyprpolkitagent xdg-desktop-portal-hyprland xdg-desktop-portal-gtk
+}
+
+install_wayland() {
+	install_pkgs qt6-wayland qt5-wayland python-pywayland
+}
+
+install_boot() {
+	install_pkgs plymouth
+	install_yay_pkgs plymouth-theme-spinner-alt-git
+}
+
+install_cursors() {
+	install_pkgs capitaine-cursors
+}
+
+install_qt() {
+	install_pkgs kvantum kvantum-qt5
+}
+
+install_uwsm() {
+	install_pkgs uwsm libnewt
+}
+
+install_build_tools() {
+	install_pkgs cmake meson cpio gcc
+}
+
+install_opengl() {
+	install_pkgs glu
+}
+
+install_osd() {
+	install_pkgs swayosd
+}
+
+install_waybar() {
+	install_pkgs waybar
+}
+
+install_launcher() {
+	install_pkgs rofi rofi-emoji
+}
+
+install_picture_tools() {
+	install_pkgs hyprshot satty
+}
+
+install_notifications() {
+	install_pkgs mako
+}
+
+install_screen() {
+	install_pkgs brightnessctl
+}
+
+install_monitoring() {
+	install_pkgs fastfetch btop
+}
+
+install_firewall() {
+	install_pkgs ufw
+}
+
+install_security() {
+	install_pkgs keychain
+}
+
+install_power() {
+	install_pkgs upower power-profiles-daemon
+}
+
+install_fonts() {
+	install_pkgs ttf-jetbrains-mono-nerd ttf-nerd-fonts-symbols
+}
+
+install_audio() {
+	install_pkgs sof-firmware pipewire wireplumber pipewire-audio pipewire-pulse pipewire-jack wiremix
+}
+
+install_bluetooth() {
+	install_yay_pkgs bluetuith-bin
+}
+
+install_clipboard() {
+	install_pkgs wl-clipboard
+}
+
+install_typing() {
+	install_pkgs wtype
+}
+
+install_disks() {
+	install_pkgs gvfs udisks2 udiskie dust
+}
+
+install_multimedia() {
+	install_pkgs playerctl
+}
+
+install_backup_tools() {
+	install_pkgs snapper snap-pac inotify-tools grub-btrfs
+}
+
+install_docs() {
+	install_pkgs man-pages tldr
+}
+
+install_docker() {
+	install_pkgs docker docker-compose
+	install_yay_pkgs lazydocker
+}
+
+install_rust() {
+	curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y # TODO: security should be added
+}
+
+# TODO: Make a full installation
+install_android_studio() {
+	install_yay_pkgs android-studio
+	# TODO: Set env vars for android-studio, actually they had been written manually inside the bashrc file
+	# https://developer.android.com/tools/variables#envar
+}
+
+# TODO: Make a full installation
+install_flutter() {
+	target_version=$1
+
+	installed_version=$(command -v flutter &>/dev/null && flutter --version | grep -oP 'Flutter \K[0-9.]+' || echo "0.0.0")
+
+	if myarchy-lib version-ge "$installed_version" "$target_version"; then
+		echo "Flutter $installed_version is already installed, skipping installation"
+	else
+		curl --proto '=https' --tlsv1.2 -sSf https://storage.googleapis.com/flutter_infra_release/releases/stable/linux/flutter_linux_$target_version-stable.tar.xz -o /tmp/flutter.tar.xz
+		tar -xf /tmp/flutter.tar.xz -C "$DEV_TOOLS_PATH"
+	fi
+}
+
+install_python() {
+	install_pkgs python-pip
+}
+
+install_login_manager() {
+	install_pkgs greetd greetd-tuigreet
+}
+
+install_terminal
+install_flatpak
+install_git
+install_net_tools
+install_files_tools
+install_sync_tools
+install_nodejs
+install_wayland
+install_boot
+install_login_manager
+install_cursors
+install_qt
+install_uwsm
+install_build_tools
+install_opengl
+install_hyprland
+install_osd
+install_waybar
+install_launcher
+install_picture_tools
+install_notifications
+install_screen
+install_monitoring
+install_firewall
+install_power
+install_fonts
+install_audio
+install_bluetooth
+install_clipboard
+install_typing
+install_disks
+install_multimedia
+install_backup_tools
+install_docs
+install_docker
+install_rust
+install_android_studio
+install_flutter "3.35.1"
+install_python

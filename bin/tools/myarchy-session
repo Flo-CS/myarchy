@@ -1,0 +1,15 @@
+#!/usr/bin/env bash
+
+lock_screen() {
+	pidof hyprlock || hyprlock &
+}
+
+case "$1" in
+lock)
+	lock_screen
+	;;
+*)
+	echo "Usage: $0 {lock}"
+	exit 1
+	;;
+esac

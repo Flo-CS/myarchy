@@ -1,0 +1,44 @@
+#!/usr/bin/env bash
+
+mkdir -p "$HOME/.local/share/applications" "$HOME/.local/share/applications/icons"
+
+shopt -s nullglob
+
+# Copy desktop files
+desktop_files=("$MYARCHY_DIR/files/applications"/*.desktop)
+if [ ${#desktop_files[@]} -gt 0 ]; then
+	echo "Copying desktop files..."
+	for file in "${desktop_files[@]}"; do
+		filename=$(basename "$file")
+		dest="$HOME/.local/share/applications/$filename"
+		if [ ! -f "$dest" ]; then
+			cp "$file" "$dest"
+			chmod +x "$dest"
+			echo "  Copied $filename"
+		else
+			echo "  $filename already exists, skipping"
+		fi
+	done
+else
+	echo "No desktop files found"
+fi
+
+# Copy icon files
+icon_files=("$MYARCHY_DIR/files/applications/icons"/*)
+if [ ${#icon_files[@]} -gt 0 ]; then
+	echo "Copying icon files..."
+	for file in "${icon_files[@]}"; do
+		filename=$(basename "$file")
+		dest="$HOME/.local/share/applications/icons/$filename"
+		if [ ! -f "$dest" ]; then
+			cp "$file" "$dest"
+			echo "  Copied $filename"
+		else
+			echo "  $filename already exists, skipping"
+		fi
+	done
+else
+	echo "No icon files found"
+fi
+
+shopt -u nullglob

@@ -1,0 +1,70 @@
+#!/usr/bin/env bash
+
+THEME_CURSOR="$MYARCHY_DIR/files/themes/current/cursor"
+THEME_DIR="$MYARCHY_DIR/files/themes/current"
+
+list() {
+	find /usr/share/icons ~/.local/share/icons ~/.icons \
+		-type d -name "cursors" -print 2>/dev/null |
+		sed 's|/cursors$||' | xargs -n 1 basename
+}
+
+apply_preferred() {
+	if [[ ! -f "$THEME_CURSOR" ]]; then
+		echo "No cursor config found for current theme"
+		exit 1
+	fi
+
+	local cursor=$(cat $THEME_CURSOR)
+
+	set_cursor $cursor
+}
+
+save_preferred() {
+	local cursor_name="$1"
+	local cursor_size="$2"
+
+	# Save to theme's cursor file
+	echo "$cursor_name $cursor_size" > "$THEME_CURSOR"
+	echo "Saved cursor config: $cursor_name $cursor_size"
+
+	# Update GTK settings to match
+	local gtk3_settings="$THEME_DIR/gtk/gtk-3.0/settings.ini"
+	local gtk4_settings="$THEME_DIR/gtk/gtk-4.0/settings.ini"
+
+	if [[ -f "$gtk3_settings" ]]; then
+		sed -i "s/^gtk-cursor-theme-name=.*/gtk-cursor-theme-name=$cursor_name/" "$gtk3_settings"
+		sed -i "s/^gtk-cursor-theme-size=.*/gtk-cursor-theme-size=$cursor_size/" "$gtk3_settings"
+		echo "Updated GTK-3 settings"
+	fi
+
+	if [[ -f "$gtk4_settings" ]]; then
+		sed -i "s/^gtk-cursor-theme-name=.*/gtk-cursor-theme-name=$cursor_name/" "$gtk4_settings"
+		sed -i "s/^gtk-cursor-theme-size=.*/gtk-cursor-theme-size=$cursor_size/" "$gtk4_settings"
+		echo "Updated GTK-4 settings"
+	fi
+}
+
+set_cursor() {
+	hyprctl setcursor "$1" "$2"
+
+	save_preferred "$1" "$2"
+}
+
+case "$1" in
+list)
+	list
+	;;
+apply-preferred)
+	apply_preferred
+	;;
+set)
+	set_cursor "$2" "$3"
+	;;
+save-preferred)
+	save_preferred "$2" "$3"
+	;;
+*)
+	echo "Usage: $0 {list|apply-preferred|set <cursor-name> <size>|save-preferred <cursor-name> <size>}"
+	;;
+esac

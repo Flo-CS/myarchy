@@ -1,0 +1,35 @@
+#!/usr/bin/env bash
+
+get_has_battery() {
+  upower -e | grep -q 'BAT' && echo "true" || echo "false"
+}
+
+get_battery_percentage() {
+  upower -i "$(upower -e | grep 'BAT')" |
+    awk -F: '/percentage/ {
+      gsub(/[%[:space:]]/, "", $2);
+      val=$2;
+      printf("%d\n", (val+0.5))
+      exit
+    }'
+}
+
+get_battery_state() {
+  upower -i $(upower -e | grep 'BAT') | grep -E "state" | awk '{print $2}'
+}
+
+case "$1" in
+presence)
+  get_has_battery
+  ;;
+percentage)
+  get_battery_percentage
+  ;;
+state)
+  get_battery_state
+  ;;
+*)
+  echo "Usage: $0 {presence|percentage|state}"
+  exit 1
+  ;;
+esac

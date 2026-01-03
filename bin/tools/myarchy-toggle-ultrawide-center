@@ -1,0 +1,16 @@
+#!/usr/bin/env bash
+
+# Toggle centered single window mode for ultrawide monitors
+# Switches between normal gaps and centered gaps for single tiled windows
+
+STATE_FILE="/tmp/myarchy-ultrawide-center-state"
+
+if [[ -f "$STATE_FILE" ]]; then
+    # Currently centered, disable it
+    hyprctl keyword workspace "w[t1], gapsout:20 20"
+    rm "$STATE_FILE"
+else
+    # Currently normal, enable centering
+    hyprctl keyword workspace "w[t1], gapsout:20 600"
+    touch "$STATE_FILE"
+fi

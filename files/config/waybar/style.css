@@ -1,0 +1,68 @@
+@import "./theme.css";
+
+* {
+  font-family: "Symbols Nerd Font", "Rubik";
+  min-height: 0;
+  color: @foreground;
+}
+
+window#waybar {
+    border-bottom: 1px solid @background;
+    background-color: alpha(@background, 0.95);
+}
+
+.modules-left {
+  margin-left: 10px;
+}
+
+.modules-right {
+  margin-right: 10px;
+}
+
+tooltip {
+  padding: 2px;
+  border-radius: 0px;
+  background-color: @background;
+}
+
+#systemd-failed-units,
+#cpu,
+#memory,
+#bluetooth,
+#network,
+#pulseaudio {
+  margin: 0 12px;
+}
+
+#window,
+#workspaces,
+#submap {
+  margin: 0 6px;
+}
+
+#privacy,
+#idle_inhibitor,
+#battery,
+#backlight,
+#clock {
+  margin: 0 12px;
+}
+
+#workspaces button {
+  font-weight: 500;
+  font-size: 16px;
+  background: transparent;
+  transition: 0s all;
+  border:none;
+}
+
+#workspaces button:hover {
+  box-shadow: inherit;
+  text-shadow: inherit;
+  background-color: @background-alt;
+}
+
+#workspaces button.empty {
+  opacity: 0.5;
+}
+

@@ -1,0 +1,29 @@
+#!/usr/bin/env bash
+
+source ~/.config/rc/functions.sh
+source ~/.config/rc/aliases.sh
+source ~/.config/rc/theming.sh
+source ~/.config/rc/settings.sh
+
+[[ -f ~/.bash-preexec.sh ]] && source ~/.bash-preexec.sh
+
+eval "$(keychain --eval)"
+
+eval "$(starship init bash)"
+
+eval "$(zoxide init bash)"
+
+eval "$(direnv hook bash)"
+
+eval "$(fzf --bash)"
+
+. "$HOME/.cargo/env"
+
+. /usr/share/nvm/init-nvm.sh
+
+export DEV_TOOLS_PATH="$HOME/dev/tools"
+
+export PATH="$DEV_TOOLS_PATH/flutter/bin:$PATH"
+
+export ANDROID_AVD_HOME="$HOME/.config/.android/avd"
+export ANDROID_SDK_HOME="$DEV_TOOLS_PATH/android/sdk"

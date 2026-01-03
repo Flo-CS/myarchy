@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+
+set -eEo pipefail
+
+sudo cp -f --remove-destination "$MYARCHY_DIR/install/global/files/myarchy-lib" "/usr/local/bin/myarchy-lib"

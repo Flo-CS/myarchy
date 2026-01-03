@@ -1,0 +1,59 @@
+#!/usr/bin/env bash
+
+declare -A REPOS=(
+	["hyprland-plugins"]="https://github.com/hyprwm/hyprland-plugins"
+)
+REQUIRED_REPOS=$(echo "${!REPOS[@]}" | tr ' ' '\n' | sort -u)
+
+list_plugins() {
+	hyprpm list |
+		sed 's/\x1b\[[0-9;]*m//g' |
+		awk '
+/Repository/ {
+       if(match($0, /Repository\s+(\S+)/, arr)) {
+        repo = arr[1];
+        sub(/:$/, "", repo);
+    }
+    next
+}
+/Plugin/ {
+    if(match($0, /Plugin\s+(\S+)/, arr)) {
+        plugin = arr[1];
+    }
+    next
+}
+/enabled/ {
+    if(match($0, /enabled:\s*(\S+)/, arr)) {
+        enabled = arr[1];
+    }
+    print repo " " plugin " " enabled
+}' | jq -Rn '[inputs | split(" ") | {repo: .[0], plugin: .[1], enabled: (.[2] == "true")}]'
+
+}
+
+install_plugins() {
+	plugins_to_install=$(echo "$1" | sort -u)
+
+	enabled_plugins=$(list_plugins | jq '[.[] | select(.enabled == true)]' | jq -r '.[] | "\(.plugin)"' | sort -u)
+	installed_repos=$(list_plugins | jq -r '.[] | "\(.repo)"' | sort -u)
+
+	plugins_to_enable=$(comm -13 <(echo "$enabled_plugins") <(echo "$plugins_to_install"))
+	repos_to_install=$(comm -13 <(echo "$installed_repos") <(echo "$REQUIRED_REPOS"))
+
+	if [[ -n "$repos_to_install" ]] || [[ -n "$plugins_to_enable" ]]; then
+		hyprpm update || echo "failed to update hyprpm"
+	fi
+
+	hyprpm reload || echo "failed to reload hyprpm"
+
+	for repo in $repos_to_install; do
+		local url="${REPOS[$repo]}"
+		hyprpm add "$url" || echo "failed to add repo $repo with $url"
+	done
+
+	for plugin in $plugins_to_enable; do
+		hyprpm enable "$plugin" || echo "failed to enable plugin $plugin"
+	done
+}
+
+install_plugins "$*"

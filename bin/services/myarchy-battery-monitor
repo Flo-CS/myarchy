@@ -1,0 +1,16 @@
+#!/usr/bin/env bash
+
+BAT_THRESHOLD=10
+NOTIFICATION_FLAG="/run/user/$UID/myarchy_battery_notified"
+
+bat_level=$(myarchy-battery percentage)
+bat_state=$(myarchy-battery state)
+
+if [[ "$bat_state" == "discharging" && "$bat_level" -le "$BAT_THRESHOLD" ]]; then
+  if [[ ! -f "$NOTIFICATION_FLAG" ]]; then
+    notify-send -u critical "󱐋 Time to recharge!" "Battery is down to ${bat_level}%" -i battery-caution -t 30000
+    touch "$NOTIFICATION_FLAG"
+  fi
+else
+  rm -f "$NOTIFICATION_FLAG"
+fi

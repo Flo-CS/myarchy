@@ -1,0 +1,4 @@
+#!/usr/bin/env bash
+
+# Start on first usage, different from .service which start on boot
+sudo systemctl enable --now docker.socket

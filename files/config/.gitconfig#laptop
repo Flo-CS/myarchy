@@ -1,0 +1,9 @@
+[include]
+	path = ~/.gitconfig-default
+[credential]
+	helper = cache --timeout 21600
+	helper = oauth
+[user]
+	email = 53081078+Flo-CS@users.noreply.github.com
+	name = Flo-CS
+

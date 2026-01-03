@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+
+sudo pacman -R --noconfirm xterm || echo "xterm is already uninstalled, skipping"
+
+sudo ln -sf /usr/bin/alacritty /usr/bin/xterm # Stupid workaround to allow to run .desktop files that require by default xterm (i don't know how to change it)

@@ -1,0 +1,46 @@
+#!/usr/bin/env bash
+
+set -eEo pipefail
+
+# VARS
+
+export MYARCHY_DIR="$HOME/.local/share/myarchy"
+export MYARCHY_INSTANCE_ID=${MYARCHY_INSTANCE_ID:-$(gum input --header "Enter your myarchy instance ID used to identify specific local configurations (e.g. 'desktop', 'laptop')")}
+
+export DEV_TOOLS_PATH="$HOME/dev/tools"
+mkdir -p $DEV_TOOLS_PATH
+
+# GLOBAL / SYSTEM
+
+source $MYARCHY_DIR/install/global/deploy-myarchy-lib
+myarchy-lib init
+
+sudo pacman -Syu --noconfirm
+source $MYARCHY_DIR/install/global/install-packages # TODO: packages also contains some packages for user environment (like flutter)
+
+source $MYARCHY_DIR/install/global/config-sudoers
+source $MYARCHY_DIR/install/global/config-bluetooth
+source $MYARCHY_DIR/install/global/config-docker
+source $MYARCHY_DIR/install/global/config-firewall
+source $MYARCHY_DIR/install/global/config-faillock
+source $MYARCHY_DIR/install/global/config-system-backups
+source $MYARCHY_DIR/install/global/config-terminal
+source $MYARCHY_DIR/install/global/config-grub-alternatives-options
+source $MYARCHY_DIR/install/global/config-grub-timeout
+source $MYARCHY_DIR/install/global/config-boot-splashscreen spinner_alt
+source $MYARCHY_DIR/install/global/config-login-manager
+
+# USER
+
+source $MYARCHY_DIR/install/user/deploy-bin
+
+# TODO: perhaps move them to install ?
+myarchy-theme init
+myarchy-wallpaper init
+
+source $MYARCHY_DIR/install/user/deploy-config
+source $MYARCHY_DIR/install/user/deploy-applications
+
+source $MYARCHY_DIR/install/user/config-battery-and-power
+
+myarchy-refresh all

@@ -1,0 +1,67 @@
+#!/usr/bin/env bash
+
+REMOTE="flathub"
+
+install_flatpak_pkg() {
+  SCOPE_ARGS=$(
+    case $1 in
+    user) echo "--user" ;;
+    system) echo "--system" ;;
+    esac
+  )
+
+  pkg_to_install=$(
+    flatpak remote-ls $SCOPE_ARGS "$REMOTE" --app --columns=application,name |
+      fzf --multi \
+        --with-nth=2.. \
+        --preview "flatpak remote-info $SCOPE_ARGS $REMOTE {1}" \
+        --preview-window 'down:65%:wrap' \
+        --bind 'alt-d:preview-half-page-down,alt-u:preview-half-page-up' \
+        --bind 'alt-k:preview-up,alt-j:preview-down' \
+        --color 'pointer:green,marker:green'
+  )
+
+  if [[ -n "$pkg_to_install" ]]; then
+    echo "$pkg_to_install" | awk '{print $1}' | tr '\n' ' ' | xargs flatpak install -y $source
+  fi
+}
+
+remove_flatpak_pkg() {
+  SCOPE_ARGS=$(
+    case $1 in
+    user) echo "--user" ;;
+    system) echo "--system" ;;
+    esac
+  )
+
+  pkg_to_remove=$(
+    flatpak list $SCOPE_ARGS --app --columns=application,name |
+      fzf --multi \
+        --with-nth=2.. \
+        --preview "flatpak info {1}" \
+        --preview-window 'down:65%:wrap' \
+        --bind 'alt-d:preview-half-page-down,alt-u:preview-half-page-up' \
+        --bind 'alt-k:preview-up,alt-j:preview-down' \
+        --color 'pointer:red,marker:red'
+  )
+
+  if [[ -n "$pkg_to_remove" ]]; then
+    echo "$pkg_to_remove" |
+      awk '{print $1}' |
+      tr '\n' ' ' |
+      xargs -r flatpak uninstall $SCOPE_ARGS -y --delete-data
+  fi
+}
+
+case "$2" in
+install)
+  install_flatpak_pkg "${1:-user}"
+  ;;
+remove)
+  remove_flatpak_pkg "${1:-user}"
+  ;;
+*)
+  echo "Usage: $0 {install|remove} [user|system]"
+  exit 1
+  ;;
+esac

@@ -1,0 +1,35 @@
+#!/usr/bin/env bash
+
+launch_tui() {
+	cmd="$*"
+	setsid uwsm app -- alacritty --class Myarchy.App -e $cmd
+}
+
+launch_big_tui() {
+	cmd="$*"
+	setsid uwsm app -- alacritty --class Myarchy.BigApp -e $cmd
+}
+
+launch_menu_tui() {
+	cmd="$*"
+	setsid uwsm app -- alacritty --class Myarchy.Menu -e bash -i -c "$cmd; gum spin --spinner 'pulse' --title 'Press any key to close...' -- bash -c 'read -n 1 -s'"
+}
+
+case "$1" in
+launch)
+	shift
+	launch_tui "$@"
+	;;
+launch-big)
+	shift
+	launch_big_tui "$@"
+	;;
+launch-menu)
+	shift
+	launch_menu_tui "$@"
+	;;
+*)
+	echo "Usage: $0 {launch|launch-big|launch-menu} [command]"
+	exit 1
+	;;
+esac

@@ -1,0 +1,26 @@
+#!/usr/bin/env bash
+
+info=$(hyprctl activewindow -j)
+
+class=$(echo "$info" | jq -r '.class')
+title=$(echo "$info" | jq -r '.title')
+initialClass=$(echo "$info" | jq -r '.initialClass')
+initialTitle=$(echo "$info" | jq -r '.initialTitle')
+pid=$(echo "$info" | jq -r '.pid')
+
+selection=$(printf "%s\n%s\n%s\n%s\n%s\n" \
+	"class: $class" \
+	"title: $title" \
+	"initialClass: $initialClass" \
+	"initialTitle: $initialTitle" \
+	"pid: $pid" |
+	rofi -dmenu -p "Window Info")
+
+# Nothing selected
+[ -z "$selection" ] && exit 0
+
+# Extract copied value (everything after the colon + space)
+value="${selection#*: }"
+
+# Copy to clipboard
+printf "%s" "$value" | wl-copy

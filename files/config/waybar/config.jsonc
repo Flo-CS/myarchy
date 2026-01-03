@@ -1,0 +1,215 @@
+// -*- mode: jsonc -*-
+{
+  "reload_style_on_change": true,
+  "layer": "top",
+  "position": "top",
+  "height": 34,
+  "spacing": 0,
+  "modules-left": [
+    "systemd-failed-units",
+    "cpu",
+    "memory",
+    "bluetooth",
+    "network",
+    "pulseaudio"
+  ],
+  "modules-center": [
+    "hyprland/window",
+    "hyprland/workspaces",
+    "hyprland/submap"
+  ],
+  "modules-right": [
+    "privacy",
+    "idle_inhibitor",
+    "battery",
+    "backlight",
+    "clock#time"
+  ],
+  "cpu": {
+    "interval": 5,
+    "format": "󰍛",
+    "on-click": "myarchy-terminal launch-big btop"
+  },
+  "memory": {
+    "interval": 5,
+    "format": "",
+    "on-click": "myarchy-terminal launch-big btop"
+  },
+  "backlight": {
+    "format": "{icon}",
+    "format-icons": [
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      ""
+    ],
+  },
+  "battery": {
+    "format": "{capacity}% {icon}",
+    "format-discharging": "{icon}",
+    "format-charging": "{icon}",
+    "format-plugged": "",
+    "format-icons": {
+      "charging": [
+        "󰢜",
+        "󰂆",
+        "󰂇",
+        "󰂈",
+        "󰢝",
+        "󰂉",
+        "󰢞",
+        "󰂊",
+        "󰂋",
+        "󰂅"
+      ],
+      "default": [
+        "󰁺",
+        "󰁻",
+        "󰁼",
+        "󰁽",
+        "󰁾",
+        "󰁿",
+        "󰂀",
+        "󰂁",
+        "󰂂",
+        "󰁹"
+      ]
+    },
+    "format-full": "󰂅",
+    "tooltip-format-discharging": "{power:>1.0f}W↓ {capacity}%",
+    "tooltip-format-charging": "{power:>1.0f}W↑ {capacity}%",
+    "interval": 5,
+    "states": {
+      "warning": 20,
+      "critical": 10
+    }
+  },
+  "systemd-failed-units": {
+    "hide-on-ok": true,
+    "format": "✗ {nr_failed}",
+    "format-ok": "✓",
+    "system": true,
+    "user": true,
+  },
+  "privacy": {
+    "icon-spacing": 4,
+    "icon-size": 20,
+    "modules": [
+      {
+        "type": "screenshare",
+        "tooltip": true,
+        "tooltip-icon-size": 20
+      },
+      {
+        "type": "audio-out",
+        "tooltip": true,
+        "tooltip-icon-size": 20
+      },
+      {
+        "type": "audio-in",
+        "tooltip": true,
+        "tooltip-icon-size": 20
+      },
+    ],
+  },
+  "idle_inhibitor": {
+    "format": "{icon}",
+    "format-icons": {
+      "activated": "󰈈",
+      "deactivated": "",
+    },
+  },
+  "hyprland/workspaces": {
+    "format": "{icon}",
+    "on-click": "activate",
+    "on-scroll-up": "hyprctl dispatch workspace e+1",
+    "on-scroll-down": "hyprctl dispatch workspace e-1",
+    "format-icons": {
+      "urgent": "",
+      "default": "",
+      "1": "1",
+      "2": "2",
+      "3": "3",
+      "4": "4",
+      "5": "5",
+      "6": "6",
+      "7": "7",
+      "8": "8",
+      "9": "9",
+      "active": "󱓻"
+    },
+    "persistent-workspaces": {
+      "1": [],
+      "2": [],
+      "3": [],
+      "4": [],
+      "5": []
+    }
+  },
+  "hyprland/submap": {
+    "format": "󰌌 ",
+    "max-length": 8,
+    "tooltip": false,
+  },
+  "hyprland/window": {
+    "format": "",
+    "icon": true,
+    "icon-size": 18,
+    "max-length": 60,
+  },
+  "pulseaudio": {
+    "format": "{icon}",
+    "on-click": "myarchy-terminal launch wiremix",
+    "tooltip-format": "Playing at {volume}%",
+    "scroll-step": 5,
+    "format-muted": "",
+    "format-icons": {
+      "default": [
+        "",
+        "",
+        ""
+      ]
+    }
+  },
+  "bluetooth": {
+    "format": "",
+    "format-off": "󰂲",
+    "format-offline": "󰂲",
+    "format-disabled": "󰂲",
+    "format-no-controller": "󰂲",
+    "format-connected": "",
+    "tooltip-format": "{num_connections} device(s): {device_alias}",
+    "on-click": "myarchy-terminal launch bluetuith --no-warning",
+  },
+  "network": {
+    "format-icons": [
+      "󰤯",
+      "󰤟",
+      "󰤢",
+      "󰤥",
+      "󰤨"
+    ],
+    "format": "{icon}",
+    "format-wifi": "{icon}",
+    "format-ethernet": "󰀂",
+    "format-disconnected": "󰖪",
+    "tooltip-format-wifi": "{essid} ({frequency} GHz)\n⇣{bandwidthDownBytes}  ⇡{bandwidthUpBytes}",
+    "tooltip-format-ethernet": "⇣{bandwidthDownBytes}  ⇡{bandwidthUpBytes}",
+    "tooltip-format-disconnected": "Disconnected",
+    "interval": 3,
+    "spacing": 1,
+    "on-click": "myarchy-terminal launch nmtui",
+  },
+  "clock#time": {
+    "format": "{:%A %d %B %Y %H:%M}",
+    "format-alt": "{:%d/%m/%Y  %H:%M}",
+    "tooltip": false
+    // TODO: on click add a calendar
+  }
+}

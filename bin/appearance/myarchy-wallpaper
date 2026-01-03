@@ -1,0 +1,73 @@
+#!/usr/bin/env bash
+
+WALLPAPERS_DIR="$MYARCHY_DIR/files/wallpapers"
+
+PREFERRED_WALLPAPER_FILE="$MYARCHY_DIR/files/themes/current/preferred-wallpaper"
+
+init_wallpaper() {
+	if [[ ! -f "$WALLPAPERS_DIR/current" ]]; then
+		echo "Setting default wallpaper"
+		set_wallpaper $(list_wallpapers | head -n 1)
+	fi
+}
+
+get_wallpaper() {
+	wallpaper_path=$(readlink -f "$WALLPAPERS_DIR/current")
+	wallpaper_name=$(basename "$wallpaper_path")
+
+	echo "$wallpaper_name"
+}
+
+list_wallpapers() {
+	fd --glob "*" "$WALLPAPERS_DIR/" --format {/}
+}
+
+set_wallpaper() {
+	ln -sfT "$WALLPAPERS_DIR/$1" "$WALLPAPERS_DIR/current"
+
+	hyprctl hyprpaper reload , "$WALLPAPERS_DIR/current"
+
+	save_preferred
+}
+
+apply_preferred() {
+	wallpaper_name=$(cat "$PREFERRED_WALLPAPER_FILE")
+
+	if [ -z "$wallpaper_name" ]; then
+		echo "No wallpaper name found in the current theme."
+		exit 1
+	fi
+
+	set_wallpaper "$wallpaper_name"
+}
+
+save_preferred() {
+	wallpaper_name=$(get_wallpaper)
+
+	echo "$wallpaper_name" >"$PREFERRED_WALLPAPER_FILE"
+}
+
+case "$1" in
+init)
+	init_wallpaper
+	;;
+get)
+	get_wallpaper
+	;;
+list)
+	list_wallpapers
+	;;
+set)
+	set_wallpaper "$2"
+	;;
+apply-preferred)
+	apply_preferred
+	;;
+save-preferred)
+	save_preferred
+	;;
+*)
+	echo "Usage: $0 {get|list|set <wallpaper_name>|apply-preferred|save-preferred|init}" >&2
+	exit 1
+	;;
+esac

@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+
+export MYARCHY_DIR="$HOME/.local/share/myarchy"
+export MYARCHY_INSTANCE_ID="desktop"
+
+. "$HOME/.cargo/env"
+
+source ~/.config/rc/profile.sh

@@ -1,0 +1,10 @@
+$default_volume_increment = 5
+$default_brightness_increment = 5
+
+$main_modifier = ALT
+
+source=./hyprland/hyprland.conf
+
+input {
+    sensitivity = 0 # -1.0 - 1.0, 0 means no modification.
+}

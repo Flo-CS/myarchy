@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+
+presence=$(myarchy-battery presence)
+
+if [[ $presence == true ]]; then
+  powerprofilesctl set balanced
+  systemctl --user enable --now myarchy-battery-monitor.timer
+else
+  powerprofilesctl set performance
+fi

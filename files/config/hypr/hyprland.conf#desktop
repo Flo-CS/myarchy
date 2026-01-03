@@ -1,0 +1,15 @@
+$default_volume_increment = 2
+$default_brightness_increment = 5
+
+$main_modifier = SUPER
+
+source=./hyprland/hyprland.conf
+
+input {
+    sensitivity = -0.5 # -1.0 - 1.0, 0 means no modification.
+}
+
+# Center single window on ultrawide (w[t1] = workspace with 1 tiled window)
+workspace = w[t1], gapsout:20 600
+bind = $main_modifier, w, exec, myarchy-toggle-ultrawide-center
+

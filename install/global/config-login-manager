@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+
+set -eEo pipefail
+
+# Copy greetd config to /etc/greetd/
+sudo myarchy-lib robust-copy \
+	"$MYARCHY_DIR/files/config/greetd/config.toml" \
+	/etc/greetd/config.toml
+
+# Enable greetd service
+sudo systemctl enable greetd.service
+
+echo "✓ Login manager configured. Reboot to use greetd."

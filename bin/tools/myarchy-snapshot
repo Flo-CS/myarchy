@@ -1,0 +1,22 @@
+#!/usr/bin/env bash
+
+create_snapshot() {
+	snapshot_description=${1:-$(gum input --placeholder "Snapshot description")}
+	if ! sudo snapper -c root create --description "$snapshot_description" -u important=yes; then
+		echo "snapshot creation failed"
+	else
+		echo "system backup snapshot created successfully"
+	fi
+}
+
+command="$1"
+
+case $command in
+create)
+	create_snapshot "$2"
+	;;
+*)
+	echo "Usage: $0 create [description]"
+	exit 1
+	;;
+esac

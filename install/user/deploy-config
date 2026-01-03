@@ -1,0 +1,86 @@
+#!/usr/bin/env bash
+
+set -eEo pipefail
+
+SOURCE="$MYARCHY_DIR/files"
+
+myarchy-lib robust-link $SOURCE/config/systemd ~/.config/systemd
+
+myarchy-lib robust-link $SOURCE/config/alacritty/alacritty.toml ~/.config/alacritty/alacritty.toml
+myarchy-lib robust-link $SOURCE/themes/current/alacritty/theme.toml ~/.config/alacritty/theme.toml
+
+myarchy-lib robust-link $SOURCE/config/bat/bat ~/.config/bat/config/bat
+myarchy-lib robust-link $SOURCE/themes/current/bat/theme.tmTheme ~/.config/bat/themes/theme.tmTheme
+
+myarchy-lib robust-link $SOURCE/config/starship/starship.toml.j2 ~/.config/starship.toml.j2
+myarchy-lib robust-link $SOURCE/themes/current/starship/theme.toml ~/.config/starship/theme.toml
+myarchy-lib render-template ~/.config/starship.toml.j2 ~/.config/starship.toml
+
+myarchy-lib robust-link $SOURCE/config/fzf/fzf.sh ~/.config/fzf/fzf.sh
+myarchy-lib robust-link $SOURCE/themes/current/fzf/theme.sh ~/.config/fzf/theme.sh
+
+myarchy-lib robust-link $SOURCE/config/gum/gum.sh ~/.config/gum/gum.sh
+myarchy-lib robust-link $SOURCE/themes/current/gum/theme.sh ~/.config/gum/theme.sh
+
+myarchy-lib robust-link $SOURCE/config/hypr/hyprland ~/.config/hypr/hyprland
+myarchy-lib robust-link $SOURCE/config/hypr/hyprland.conf#$MYARCHY_INSTANCE_ID ~/.config/hypr/hyprland.conf
+myarchy-lib robust-link $SOURCE/themes/current/hypr/hyprland-theme.conf ~/.config/hypr/hyprland/theme.conf
+
+myarchy-lib robust-link $SOURCE/config/hypr/hyprlock ~/.config/hypr/hyprlock
+myarchy-lib robust-link $SOURCE/config/hypr/hyprlock.conf#$MYARCHY_INSTANCE_ID ~/.config/hypr/hyprlock.conf
+myarchy-lib robust-link $SOURCE/themes/current/hypr/hyprlock-theme.conf ~/.config/hypr/hyprlock/theme.conf
+
+myarchy-lib robust-link $SOURCE/config/hypr/hypridle.conf ~/.config/hypr/hypridle.conf
+
+myarchy-lib robust-link $SOURCE/config/hypr/hyprpaper.conf ~/.config/hypr/hyprpaper.conf
+
+myarchy-lib robust-link $SOURCE/config/btop/btop.conf ~/.config/btop/btop.conf
+myarchy-lib robust-link $SOURCE/themes/current/btop/theme.theme ~/.config/btop/theme.theme
+
+myarchy-lib robust-link $SOURCE/config/kvantum/kvantum.kvconfig ~/.config/Kvantum/kvantum.kvconfig
+myarchy-lib robust-link $SOURCE/themes/current/kvantum ~/.config/Kvantum/theme
+
+myarchy-lib robust-link $SOURCE/themes/current/gtk/gtk-3.0/settings.ini ~/.config/gtk-3.0/settings.ini
+myarchy-lib robust-link $SOURCE/themes/current/gtk/gtk-4.0/settings.ini ~/.config/gtk-4.0/settings.ini
+
+myarchy-lib robust-link $SOURCE/config/waybar/config.jsonc ~/.config/waybar/config.jsonc
+myarchy-lib robust-link $SOURCE/config/waybar/style.css ~/.config/waybar/style.css
+myarchy-lib robust-link $SOURCE/themes/current/waybar/theme.css ~/.config/waybar/theme.css
+
+myarchy-lib robust-link $SOURCE/config/rofi/config.rasi ~/.config/rofi/config.rasi
+myarchy-lib robust-link $SOURCE/themes/current/rofi/theme.rasi ~/.config/rofi/theme.rasi
+
+myarchy-lib robust-link $SOURCE/config/nvim ~/.config/nvim
+myarchy-lib robust-link $SOURCE/themes/current/nvim/.theme ~/.config/nvim/.theme
+
+myarchy-lib robust-link $SOURCE/config/mako/config.ini.j2 ~/.config/mako/config.j2
+myarchy-lib robust-link $SOURCE/themes/current/mako/theme.ini ~/.config/mako/theme
+myarchy-lib render-template ~/.config/mako/config.j2 ~/.config/mako/config
+
+myarchy-lib robust-link $SOURCE/config/mpv ~/.config/mpv
+
+myarchy-lib robust-link $SOURCE/config/fastfetch ~/.config/fastfetch
+
+myarchy-lib robust-link $SOURCE/config/swayosd/config.toml ~/.config/swayosd/config.toml
+myarchy-lib robust-link $SOURCE/config/swayosd/style.css ~/.config/swayosd/style.css
+myarchy-lib robust-link $SOURCE/themes/current/swayosd/theme.css ~/.config/swayosd/theme.css
+
+myarchy-lib robust-link $SOURCE/config/wireplumber ~/.config/wireplumber/wireplumber.conf.d
+
+myarchy-lib robust-link $SOURCE/config/keepassxc ~/.config/keepassxc
+
+myarchy-lib robust-link $SOURCE/config/user-dirs.dirs ~/.config/user-dirs.dirs
+
+myarchy-lib robust-link $SOURCE/config/mimeapps.list ~/.config/mimeapps.list
+
+myarchy-lib robust-link $SOURCE/config/.ideavimrc ~/.ideavimrc
+
+myarchy-lib robust-link $SOURCE/config/rc ~/.config/rc
+myarchy-lib robust-link $SOURCE/config/.profile#$MYARCHY_INSTANCE_ID ~/.profile
+myarchy-lib robust-link $SOURCE/config/.bashrc#$MYARCHY_INSTANCE_ID ~/.bashrc
+myarchy-lib robust-link $SOURCE/config/.bash_profile#$MYARCHY_INSTANCE_ID ~/.bash_profile
+
+myarchy-lib robust-link $SOURCE/config/.gitconfig-default ~/.gitconfig-default
+myarchy-lib robust-link $SOURCE/config/.gitconfig#$MYARCHY_INSTANCE_ID ~/.gitconfig
+
+myarchy-lib robust-link $SOURCE/config/.inputrc ~/.inputrc

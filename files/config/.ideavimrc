@@ -1,0 +1,87 @@
+" Helpful documentation : https://github.com/JetBrains/ideavim/wiki/
+
+set scrolloff=15
+
+set incsearch
+set ignorecase
+set smartcase
+
+set ideajoin
+
+set clipboard+=unnamedplus
+set number relativenumber
+
+set notimeout
+
+set idearefactormode=keep
+
+let mapleader = " "
+
+" Plugins
+set which-key
+set quickscope
+Plug 'vim-scripts/argtextobj.vim'
+set argtextobj
+set functiontextobj
+Plug 'machakann/vim-highlightedyank'
+set highlightedyank
+Plug 'tpope/vim-commentary'
+set commentary
+set peekaboo
+Plug 'tpope/vim-surround'
+set surround
+set NERDTree
+
+" Plugins config
+let g:WhichKey_ShowVimActions = "true"
+let g:WhichKey_DefaultDelay = 500
+" let g:WhichKey_FontFamily = "JetBrains Mono"
+let g:WhichKey_FontSize = 12
+
+" Mappings
+map Q gq
+
+map <C-c> <Esc>
+map <C-c> <Action>(EditorEscape)
+map <C-c> <Action>(CloseActiveTab)
+
+" Does not seem to work, should be set in IDE Keymap, perhaps I need to use sethandler
+" map <C-p> <Action>(EditorUp)
+" map <C-n> <Action>(EditorDown)
+map K <Action>(ShowHoverInfo)
+" map U <Action>(QuickImplementations)
+
+map <leader>sf <Action>(GotoFile)
+map <leader>sg <Action>(FindInPath)
+map <leader>sc <Action>(Find)
+map <leader>se <Action>(SearchEverywhere)
+map <leader>sa <Action>(GotoAction)
+map <leader>ss <Action>(GotoSymbol)
+map <leader>sw <Action>(Switcher)
+
+map <leader>dd <Action>(ChooseDebugConfiguration)
+map <leader>db <Action>(ToggleLineBreakpoint)
+map <leader>dr <Action>(Resume)
+map <leader>dc <Action>(RunToCursor)
+map <leader>do <Action>(StepOver)
+map <leader>di <Action>(StepInto)
+map <leader>dO <Action>(StepOut)
+map <leader>ds <Action>(StreamTracerAction)
+
+map <leader>rr <Action>(RunMenu)
+
+map <leader>td <Action>(ToggleDistractionFreeMode)
+
+map <leader>ca <Action>(RefactoringMenu)
+map <leader>cr <Action>(RenameElement)
+
+map <leader>e :NERDTreeFind<CR>
+
+map <leader>a <Action>(FileStructurePopup)
+
+map <leader>Ir <Action>(IdeaVim.ReloadVimRc.reload)
+
+nmap [[ <Action>(MethodUp)
+nmap ]] <Action>(MethodDown)
+
+

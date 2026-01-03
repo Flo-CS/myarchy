@@ -1,0 +1,192 @@
+#!/usr/bin/env bash
+
+dmenu() {
+	local prompt=$1
+
+	pkill -x rofi
+	rofi -dmenu -p "$prompt" -i
+}
+
+show_select_theme_menu() {
+	selected=$(myarchy-theme list | dmenu "Theme")
+
+	if [[ -z "$selected" ]]; then
+		show_main_menu
+	else
+		myarchy-theme set "$selected"
+		myarchy-deploy config
+		myarchy-refresh all
+	fi
+}
+
+show_select_wallpaper_menu() {
+	selected=$(myarchy-wallpaper list | dmenu "Wallpaper")
+
+	if [[ -z "$selected" ]]; then
+		show_main_menu
+	else
+		myarchy-wallpaper set "$selected"
+	fi
+}
+
+show_select_cursor_menu() {
+	selected=$(myarchy-cursor list | dmenu "Cursor")
+
+	if [[ -z "$selected" ]]; then
+		show_main_menu
+	else
+		size=$(rofi -dmenu -p "Enter size:")
+		myarchy-cursor set $selected $size
+	fi
+}
+
+show_system_menu() {
+	selected=$(printf 'Reboot
+Shutdown' | dmenu "System")
+
+	if [[ -z "$selected" ]]; then
+		show_main_menu
+	else
+		case "$selected" in
+		*"Reboot"*) systemctl reboot ;;
+		*"Shutdown"*) systemctl poweroff ;;
+		esac
+	fi
+}
+
+show_screenshot_menu() {
+	selected=$(printf 'Fullscreen
+Area
+Window' | dmenu "Screenshot")
+
+	if [[ -z "$selected" ]]; then
+		show_main_menu
+	else
+		case "$selected" in
+		*"Fullscreen"*) myarchy-screenshot output ;;
+		*"Area"*) myarchy-screenshot region ;;
+		*"Window"*) myarchy-screenshot window ;;
+		esac
+	fi
+}
+
+show_packages_menu() {
+	selected=$(printf 'Install Package
+Install AUR Package
+Install Flatpak user
+Install Flatpak system
+Remove Package
+Remove Flatpak user
+Remove Flatpak system' | dmenu "Packages")
+
+	if [[ -z "$selected" ]]; then
+		show_main_menu
+	else
+		case "$selected" in
+		*"Install AUR Package"*) myarchy-terminal launch-menu myarchy-pkg yay-install ;;
+		*"Install Package"*) myarchy-terminal launch-menu myarchy-pkg install ;;
+		*"Install Flatpak user"*) myarchy-terminal launch-menu myarchy-flatpak user install ;;
+		*"Install Flatpak system"*) myarchy-terminal launch-menu myarchy-flatpak system install ;;
+		*"Remove Package"*) myarchy-terminal launch-menu myarchy-pkg remove ;;
+		*"Remove Flatpak user"*) myarchy-terminal launch-menu myarchy-flatpak user remove ;;
+		*"Remove Flatpak system"*) myarchy-terminal launch-menu myarchy-flatpak system remove ;;
+		esac
+	fi
+}
+
+show_apps_menu() {
+	selected=$(printf 'Install Webapp
+Install Appimage
+Install TUI
+Remove TUI
+Remove Appimage
+Remove Webapp' | dmenu "Apps")
+
+	if [[ -z "$selected" ]]; then
+		show_main_menu
+	else
+		case "$selected" in
+		*"Install TUI"*) myarchy-terminal launch-menu myarchy-tui install ;;
+		*"Install Webapp"*) myarchy-terminal launch-menu myarchy-webapp install ;;
+		*"Install Appimage"*) myarchy-terminal launch-menu myarchy-appimage install ;;
+		*"Remove TUI"*) myarchy-terminal launch-menu myarchy-tui remove ;;
+		*"Remove Webapp"*) myarchy-terminal launch-menu myarchy-webapp remove ;;
+		*"Remove Appimage"*) myarchy-terminal launch-menu myarchy-appimage remove ;;
+		esac
+	fi
+}
+
+show_drives_menu() {
+	selected=$(myarchy-drive list | dmenu "Drives")
+
+	if [[ -z "$selected" ]]; then
+		show_main_menu
+	else
+		mount_point=$(myarchy-drive mountpoint $selected)
+		if [[ -z "$mount_point" ]]; then
+			myarchy-drive mount $selected
+		else
+			myarchy-drive unmount $selected
+		fi
+	fi
+}
+
+show_edit_config_menu() {
+	selected=$(printf 'Hyprland apps' | dmenu "Edit config")
+
+	if [[ -z "$selected" ]]; then
+		show_main_menu
+	else
+		# TODO: perhaps it's not very maintainable to hardcode paths here
+		case "$selected" in
+		*"Hyprland apps"*) myarchy-terminal launch nvim $MYARCHY_DIR/files/config/hypr/hyprland/apps.conf ;;
+		esac
+	fi
+}
+
+show_main_menu() {
+	selected=$(printf 'Theme
+Wallpaper
+Cursor
+Emoji
+System
+Bluetooth
+Network
+Audio
+Screenshot
+Monitor
+Info
+Snapshot system
+Packages
+Apps
+Refresh
+Deploy
+Update
+Drives
+Edit config' | dmenu "▶")
+
+	case "$selected" in
+	*"Theme"*) show_select_theme_menu ;;
+	*"Wallpaper"*) show_select_wallpaper_menu ;;
+	*"Cursor"*) show_select_cursor_menu ;;
+	*"Emoji"*) rofi -modi emoji -show emoji -display-emoji "Emoji" ;;
+	*"System"*) show_system_menu ;;
+	*"Screenshot"*) show_screenshot_menu ;;
+	*"Bluetooth"*) myarchy-terminal launch bluetuith --no-warning ;;
+	*"Network"*) myarchy-terminal launch nmtui ;;
+	*"Audio"*) myarchy-terminal launch wiremix ;;
+	*"Monitor"*) myarchy-terminal launch-big btop ;;
+	*"Info"*) myarchy-terminal launch-menu fastfetch ;;
+	*"Snapshot system"*) myarchy-terminal launch-menu myarchy-snapshot create ;;
+	*"Packages"*) show_packages_menu ;;
+	*"Apps"*) show_apps_menu ;;
+	*"Refresh"*) myarchy-terminal launch-menu myarchy-refresh all ;;
+	*"Deploy"*) myarchy-terminal launch-menu myarchy-deploy all ;;
+	*"Update"*) myarchy-terminal launch-menu myarchy-update all ;;
+	*"Drives"*) show_drives_menu ;;
+	*"Edit config"*) show_edit_config_menu ;;
+	*) exit 0 ;;
+	esac
+}
+
+show_main_menu

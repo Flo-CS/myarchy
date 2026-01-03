@@ -1,0 +1,15 @@
+#!/usr/bin/env bash
+
+update_all() {
+	$MYARCHY_DIR/install/install
+}
+
+case "$1" in
+all)
+	update_all
+	;;
+*)
+	echo "Usage: $0 all"
+	exit 1
+	;;
+esac

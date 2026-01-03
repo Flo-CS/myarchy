@@ -1,0 +1,607 @@
+#!/usr/bin/env python3
+"""Palette management utilities for myarchy.
+
+Commands:
+  show              - display palette entries for a theme (uses theme palette)
+  normalize-files   - align/report colors to a palette by similarity (dry-run by default)
+  remap-files       - mapping from a base theme palette to a target theme palette (dry-run by default)
+
+Compatibility aliases:
+  preview -> show
+  normalize -> normalize-files
+  remap   -> remap-files
+"""
+
+from __future__ import annotations
+
+import argparse
+import os
+import re
+import shutil
+import subprocess
+import sys
+from collections import Counter, defaultdict
+from dataclasses import dataclass
+from pathlib import Path
+from typing import Dict, Iterable, Iterator, List, NoReturn, Optional, Sequence, Tuple
+
+# Maximum possible RGB distance (~sqrt(3*255^2) ≈ 441). Use 442 to guarantee coverage.
+MAX_DISTANCE = 442
+
+# Regexes shared by parsing and scanning.
+HEX_PATTERN = re.compile(r"#(?:[0-9a-fA-F]{6}|[0-9a-fA-F]{8})")
+RGBA_PATTERN = re.compile(r"(rgba?\([^)]*\))", re.IGNORECASE)
+
+
+# ---------- Error handling & paths ----------
+def fail(msg: str, code: int = 1) -> NoReturn:
+    print(msg, file=sys.stderr)
+    raise SystemExit(code)
+
+
+def _base_dir() -> Path:
+    env_dir = os.environ.get("MYARCHY_DIR")
+    if env_dir:
+        return Path(env_dir)
+    return Path(__file__).resolve().parents[2]
+
+
+THEMES_DIR = _base_dir() / "files" / "themes"
+
+
+def require_theme(theme: str) -> Path:
+    if not theme:
+        fail("Theme name is required.")
+    theme_dir = THEMES_DIR / theme
+    if not theme_dir.is_dir():
+        fail(f"Theme '{theme}' does not exist.")
+    return theme_dir
+
+
+def palette_path(theme_dir: Path) -> Path:
+    return theme_dir / "palette.txt"
+
+
+# ---------- Color helpers ----------
+def normalize_color(color: str) -> str:
+    """Lowercase and strip whitespace to create a canonical color token."""
+    return re.sub(r"\s+", "", color.strip()).lower()
+
+
+def parse_rgb(color: str) -> Optional[Tuple[int, int, int]]:
+    """Parse a color token into an RGB tuple, ignoring alpha if present."""
+    token = normalize_color(color)
+
+    hex_match = re.fullmatch(r"#([0-9a-f]{6})([0-9a-f]{2})?", token)
+    if hex_match:
+        hex_part = hex_match.group(1)
+        return int(hex_part[0:2], 16), int(hex_part[2:4], 16), int(hex_part[4:6], 16)
+
+    rgba_hex_match = re.fullmatch(r"rgba?\(#?([0-9a-f]{6})([0-9a-f]{2})?\)", token)
+    if rgba_hex_match:
+        hex_part = rgba_hex_match.group(1)
+        return int(hex_part[0:2], 16), int(hex_part[2:4], 16), int(hex_part[4:6], 16)
+
+    rgba_hex_dec_alpha = re.fullmatch(r"rgba?\(#?([0-9a-f]{6}),([0-9.]+)\)", token)
+    if rgba_hex_dec_alpha:
+        hex_part = rgba_hex_dec_alpha.group(1)
+        return int(hex_part[0:2], 16), int(hex_part[2:4], 16), int(hex_part[4:6], 16)
+
+    rgba_match = re.fullmatch(r"(rgba?)\((\d{1,3}),(\d{1,3}),(\d{1,3})(,[0-9.]+)?\)", token)
+    if rgba_match:
+        r, g, b = (int(rgba_match.group(i)) for i in range(2, 5))
+        if any(channel > 255 for channel in (r, g, b)):
+            return None
+        return r, g, b
+
+    return None
+
+
+def rgb_to_hex(rgb: Tuple[int, int, int]) -> str:
+    return "#{:02x}{:02x}{:02x}".format(*rgb)
+
+
+def render_swatch(color: str) -> str:
+    """Return a swatch (gum if available, else ANSI truecolor)."""
+    rgb = parse_rgb(color)
+    if not rgb:
+        return ""
+
+    if shutil.which("gum"):
+        try:
+            out = subprocess.run(
+                ["gum", "style", f"--background={rgb_to_hex(rgb)}", "--padding=0 2", " "],
+                capture_output=True,
+                check=True,
+                text=True,
+            )
+            gum_out = out.stdout.rstrip("\n")
+            if gum_out:
+                swatch = gum_out + " "
+                if swatch.strip():
+                    return swatch
+        except subprocess.SubprocessError:
+            pass
+
+    r, g, b = rgb
+    if sys.stdout.isatty():
+        bg = f"\033[48;2;{r};{g};{b}m  \033[0m"
+        fg = f"\033[38;2;{r};{g};{b}m██\033[0m"
+        swatch = f"{bg}{fg} "
+        if swatch.strip():
+            return swatch
+    return f"[{rgb_to_hex(rgb)}] "
+
+
+def format_replacement(src: str, target_hex: str) -> str:
+    """Render target_hex using the original format of src (preserve alpha component)."""
+    token = normalize_color(src)
+    target = normalize_color(target_hex)
+
+    if re.fullmatch(r"#[0-9a-f]{6}", token):
+        return target
+
+    if re.fullmatch(r"#[0-9a-f]{8}", token):
+        alpha = token[7:9]
+        return f"{target}{alpha}"
+
+    rgba_hex = re.fullmatch(r"(rgba?)\((#?)([0-9a-f]{6})([0-9a-f]{2})?\)", token)
+    if rgba_hex:
+        prefix = rgba_hex.group(1).lower()
+        has_hash = rgba_hex.group(2)
+        alpha = rgba_hex.group(4) or ""
+        rgb_hex = target.lstrip("#")
+        if prefix == "rgba" and alpha:
+            return f"rgba({has_hash}{rgb_hex}{alpha})"
+        return f"rgb({has_hash}{rgb_hex})"
+
+    rgba_hex_with_dec_alpha = re.fullmatch(r"(rgba?)\((#?)([0-9a-f]{6}),([0-9.]+)\)", token)
+    if rgba_hex_with_dec_alpha:
+        prefix = rgba_hex_with_dec_alpha.group(1).lower()
+        has_hash = rgba_hex_with_dec_alpha.group(2)
+        alpha_dec = rgba_hex_with_dec_alpha.group(4)
+        rgb_hex = target.lstrip("#")
+        return f"{prefix}({has_hash}{rgb_hex},{alpha_dec})"
+
+    rgba_dec = re.fullmatch(
+        r"(rgba?)\((\d{1,3}),(\d{1,3}),(\d{1,3})(,([0-9.]+))?\)", token, flags=re.IGNORECASE
+    )
+    if rgba_dec:
+        prefix = rgba_dec.group(1).lower()
+        alpha = rgba_dec.group(6)
+        rgb = parse_rgb(target)
+        if not rgb:
+            return target
+        if prefix == "rgba" and alpha is not None:
+            return f"rgba({rgb[0]},{rgb[1]},{rgb[2]},{alpha})"
+        return f"rgb({rgb[0]},{rgb[1]},{rgb[2]})"
+
+    return target
+
+
+# ---------- Palette models ----------
+@dataclass(frozen=True)
+class PaletteEntry:
+    color: str
+    label: str = ""
+
+
+@dataclass
+class ThemeUsage:
+    total: Counter[str]
+    per_file: Counter[Tuple[str, str]]
+
+
+def read_palette_entries(palette_file: Path) -> List[PaletteEntry]:
+    if not palette_file.is_file():
+        fail(f"Palette file not found: {palette_file}")
+
+    entries: List[PaletteEntry] = []
+    try:
+        lines = palette_file.read_text(encoding="utf-8").splitlines()
+    except OSError as exc:
+        fail(f"Failed to read palette file {palette_file}: {exc}")
+
+    for line in lines:
+        stripped = line.strip()
+        if not stripped or stripped.startswith("//") or stripped.startswith(";") or stripped.startswith("##"):
+            continue
+        parts = stripped.split(None, 1)
+        token = parts[0]
+        label = parts[1].strip() if len(parts) > 1 else ""
+        if not re.fullmatch(r"#[0-9a-fA-F]{6}", token):
+            print(f"Skipping invalid palette entry: {line}", file=sys.stderr)
+            continue
+        entries.append(PaletteEntry(token.lower(), label))
+
+    if not entries:
+        fail(f"Palette is empty at {palette_file}")
+
+    return entries
+
+
+def palette_colors(entries: Sequence[PaletteEntry]) -> List[str]:
+    return [entry.color for entry in entries]
+
+
+def label_map(entries: Sequence[PaletteEntry]) -> Dict[str, str]:
+    mapping: Dict[str, str] = {}
+    seen_duplicates = set()
+    for entry in entries:
+        if not entry.label:
+            continue
+        if entry.label in mapping and entry.label not in seen_duplicates:
+            print(f"Duplicate label '{entry.label}' found; using first occurrence.", file=sys.stderr)
+            seen_duplicates.add(entry.label)
+            continue
+        mapping.setdefault(entry.label, entry.color)
+    return mapping
+
+
+# ---------- Theme scanning ----------
+ColorMatch = Tuple[str, str, str]  # (normalized, raw, relative_file)
+
+
+def extract_colors(theme_dir: Path) -> Iterator[ColorMatch]:
+    """Yield (normalized, raw, rel_path) for each color occurrence in a theme."""
+    for path in theme_dir.rglob("*"):
+        if not path.is_file():
+            continue
+        try:
+            data = path.read_text(encoding="utf-8", errors="ignore")
+        except OSError:
+            continue
+
+        rel = str(path.relative_to(theme_dir))
+
+        for match in HEX_PATTERN.finditer(data):
+            raw = match.group(0)
+            yield normalize_color(raw), raw, rel
+
+        for match in RGBA_PATTERN.finditer(data):
+            raw = match.group(1)
+            yield normalize_color(raw), raw, rel
+
+
+def collect_counts(theme_dir: Path) -> ThemeUsage:
+    total: Counter[str] = Counter()
+    per_file: Counter[Tuple[str, str]] = Counter()
+    for norm, _raw, rel in extract_colors(theme_dir):
+        total[norm] += 1
+        per_file[(norm, rel)] += 1
+    return ThemeUsage(total=total, per_file=per_file)
+
+
+def usage_maps(theme_dir: Path) -> Tuple[Counter[str], Dict[str, List[Tuple[str, int]]]]:
+    usage = Counter()
+    files_by_color: Dict[str, List[Tuple[str, int]]] = defaultdict(list)
+    counts = collect_counts(theme_dir)
+    usage.update(counts.total)
+
+    for (color_key, rel), count in list(counts.per_file.items()):
+        if rel == "palette.txt":
+            usage[color_key] -= count
+            if usage[color_key] <= 0:
+                usage.pop(color_key, None)
+            continue
+        files_by_color[color_key].append((rel, count))
+
+    return usage, files_by_color
+
+
+# ---------- Core operations ----------
+def compute_nearest_palette(
+    palette: Sequence[str], color: str
+) -> Tuple[Optional[str], Optional[int]]:
+    rgb = parse_rgb(color)
+    if not rgb:
+        return None, None
+
+    best = None
+    best_dist = None
+    for entry in palette:
+        prgb = parse_rgb(entry)
+        if not prgb:
+            continue
+        dist = (rgb[0] - prgb[0]) ** 2 + (rgb[1] - prgb[1]) ** 2 + (rgb[2] - prgb[2]) ** 2
+        if best_dist is None or dist < best_dist:
+            best_dist = dist
+            best = entry
+    return best, best_dist
+
+
+def replace_in_files(theme_dir: Path, replacements: Dict[str, str]) -> None:
+    patterns = {color: re.compile(re.escape(color), flags=re.IGNORECASE) for color in replacements}
+    for path in theme_dir.rglob("*"):
+        if not path.is_file():
+            continue
+        try:
+            content = path.read_text(encoding="utf-8", errors="ignore")
+        except OSError:
+            continue
+
+        original = content
+        for color, target in replacements.items():
+            content = patterns[color].sub(target, content)
+
+        if content != original:
+            try:
+                path.write_text(content, encoding="utf-8")
+            except OSError as exc:
+                print(f"Failed to write {path}: {exc}", file=sys.stderr)
+
+
+def describe_files(color: str, file_count: Counter[Tuple[str, str]]) -> str:
+    entries = []
+    for (c, rel), count in file_count.items():
+        if c != color:
+            continue
+        entries.append(f"{rel}({count})")
+    return ", ".join(entries)
+
+
+def plan_normalize(theme_dir: Path, threshold: int) -> Tuple[Dict[str, str], Dict[str, str], ThemeUsage]:
+    palette_file = palette_path(theme_dir)
+    palette_entries = read_palette_entries(palette_file)
+    palette_list = palette_colors(palette_entries)
+    palette_set = set(palette_list)
+
+    counts = collect_counts(theme_dir)
+    threshold_sq = threshold * threshold
+
+    replace_map: Dict[str, str] = {}
+    formatted_map: Dict[str, str] = {}
+
+    for color in counts.total:
+        if color in palette_set:
+            continue
+        rgb = parse_rgb(color)
+        if not rgb:
+            continue
+        best, best_dist = compute_nearest_palette(palette_list, color)
+        if best is None or best_dist is None or best_dist > threshold_sq:
+            continue
+        formatted = format_replacement(color, best)
+        if formatted == color:
+            continue
+        replace_map[color] = best
+        formatted_map[color] = formatted
+
+    return replace_map, formatted_map, counts
+
+
+def plan_remap(theme_dir: Path, base_dir: Path) -> Tuple[Dict[str, str], Dict[str, str], Dict[str, str], ThemeUsage]:
+    from_entries = read_palette_entries(palette_path(base_dir))
+    to_entries = read_palette_entries(palette_path(theme_dir))
+
+    if len(from_entries) != len(to_entries):
+        fail(
+            f"Palette sizes differ (from={len(from_entries)}, to={len(to_entries)}). "
+            "Align them before remapping."
+        )
+
+    counts = collect_counts(theme_dir)
+
+    from_labels = label_map(from_entries)
+    to_labels = label_map(to_entries)
+    common_labels = [label for label in from_labels if label in to_labels]
+
+    replace_map: Dict[str, str] = {}
+    formatted_map: Dict[str, str] = {}
+    label_for_src: Dict[str, str] = {}
+
+    for label in common_labels:
+        src = from_labels[label]
+        dst = to_labels[label]
+        if src == dst:
+            continue
+        replace_map[src] = dst
+        formatted_map[src] = format_replacement(src, dst)
+        label_for_src[src] = label
+
+    for idx, from_entry in enumerate(from_entries):
+        src = from_entry.color
+        dst_entry = to_entries[idx]
+        dst = dst_entry.color
+        if src in replace_map or src == dst:
+            continue
+        replace_map[src] = dst
+        formatted_map[src] = format_replacement(src, dst)
+        if dst_entry.label:
+            label_for_src[src] = dst_entry.label
+
+    colors_by_rgb: Dict[Tuple[int, int, int], List[str]] = defaultdict(list)
+    for color in counts.total:
+        rgb = parse_rgb(color)
+        if rgb:
+            colors_by_rgb[rgb].append(color)
+
+    for src, dst in replace_map.items():
+        src_rgb = parse_rgb(src)
+        if not src_rgb:
+            continue
+        for variant in colors_by_rgb.get(src_rgb, []):
+            if variant in formatted_map:
+                continue
+            formatted_map[variant] = format_replacement(variant, dst)
+
+    return replace_map, formatted_map, label_for_src, counts
+
+
+# ---------- Commands ----------
+def command_show(args: argparse.Namespace) -> None:
+    theme_dir = require_theme(args.theme)
+    palette_file = palette_path(theme_dir)
+    entries = read_palette_entries(palette_file)
+    usage, files_by_color = usage_maps(theme_dir)
+
+    print(f"Palette from {palette_file}:")
+    for entry in entries:
+        swatch = render_swatch(entry.color)
+        uses = usage.get(normalize_color(entry.color), 0)
+        if entry.label:
+            print(f"  {swatch}{entry.color} {entry.label} (uses: {uses})")
+        else:
+            print(f"  {swatch}{entry.color} (uses: {uses})")
+        if args.details:
+            per_files = files_by_color.get(normalize_color(entry.color), [])
+            for rel, count in sorted(per_files):
+                print(f"      {rel} ({count})")
+
+
+def command_normalize_files(args: argparse.Namespace) -> None:
+    theme_dir = require_theme(args.theme)
+    if args.threshold < 0:
+        fail("Threshold must be a non-negative integer.")
+
+    replace_map, formatted_map, counts = plan_normalize(theme_dir, args.threshold)
+    palette_file = palette_path(theme_dir)
+
+    if not replace_map:
+        print("No colors within threshold to replace.", file=sys.stderr)
+        return
+
+    print(f"Planned replacements (distance <= {args.threshold}):")
+    for color, target in replace_map.items():
+        rendered = formatted_map[color]
+        files_line = describe_files(color, counts.per_file)
+        src_sw = render_swatch(color)
+        dst_sw = render_swatch(rendered)
+        print(
+            f"  {src_sw}{color} -> {dst_sw}{rendered} "
+            f"(count={counts.total[color]}) files: {files_line}"
+        )
+
+    if not args.apply:
+        print("Dry run. Use --apply to write changes.", file=sys.stderr)
+        return
+
+    replacements = {color: formatted_map[color] for color in replace_map}
+    replace_in_files(theme_dir, replacements)
+    print(f"Applied palette replacements using {palette_file}.")
+
+
+def command_remap_files(args: argparse.Namespace) -> None:
+    theme_dir = require_theme(args.theme)
+    base_dir = require_theme(args.from_theme)
+    replace_map, formatted_map, label_for_src, counts = plan_remap(theme_dir, base_dir)
+
+    if not replace_map:
+        print("No remaps to apply (palettes identical?).", file=sys.stderr)
+        return
+
+    print("Planned palette remap (matching by label when available, otherwise by position):")
+    for src, dst in replace_map.items():
+        rendered = formatted_map[src]
+        src_sw = render_swatch(src)
+        dst_sw = render_swatch(rendered)
+        label_note = f" [{label_for_src[src]}]" if src in label_for_src else ""
+        print(f"  {src_sw}{src}{label_note} -> {dst_sw}{rendered}")
+
+    if not args.apply:
+        print("Dry run. Use --write to apply changes.", file=sys.stderr)
+        return
+
+    replacements = dict(formatted_map)
+    replace_in_files(theme_dir, replacements)
+    print(f"Applied palette remap using {palette_path(base_dir)} -> {palette_path(theme_dir)}.")
+
+
+# ---------- CLI ----------
+def add_alias(subparsers: argparse._SubParsersAction, name: str, target_func) -> None:
+    alias = subparsers.add_parser(name, help=argparse.SUPPRESS)
+    alias.add_argument("theme")
+    alias.add_argument("--details", action="store_true", help=argparse.SUPPRESS)
+    alias.set_defaults(func=target_func)
+
+
+def build_parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(
+        description="Palette management utilities for myarchy.",
+        usage=(
+            "myarchy-palette {\n"
+            "  show <theme>\n"
+            "  normalize-files <theme> [--threshold <n>] [--write]\n"
+            "  remap-files <theme> --from-theme <base_theme> [--write]\n"
+            "}"
+        ).replace("\n", "\n  "),
+    )
+    subparsers = parser.add_subparsers(dest="command", required=True)
+
+    show = subparsers.add_parser("show", help="Show palette entries for a theme")
+    show.add_argument("theme")
+    show.add_argument(
+        "--details",
+        action="store_true",
+        help="List files (within the theme) where each palette color is used",
+    )
+    show.set_defaults(func=command_show)
+    add_alias(subparsers, "preview", command_show)
+
+    normalize = subparsers.add_parser(
+        "normalize-files", help="Normalize/report colors toward a palette (dry-run by default)"
+    )
+    normalize.add_argument("theme")
+    normalize.add_argument(
+        "--threshold",
+        type=int,
+        default=MAX_DISTANCE,
+        help=f"RGB distance threshold (default {MAX_DISTANCE}, max to always pick nearest)",
+    )
+    normalize.add_argument("--write", action="store_true", dest="apply", help="Write changes to files")
+    normalize.add_argument("--apply", action="store_true", dest="apply", help=argparse.SUPPRESS)
+    normalize.set_defaults(func=command_normalize_files)
+
+    normalize_alias = subparsers.add_parser("normalize", help=argparse.SUPPRESS)
+    normalize_alias.add_argument("theme")
+    normalize_alias.add_argument(
+        "--threshold",
+        type=int,
+        default=MAX_DISTANCE,
+        help=f"RGB distance threshold (default {MAX_DISTANCE}, max to always pick nearest)",
+    )
+    normalize_alias.add_argument("--write", action="store_true", dest="apply", help=argparse.SUPPRESS)
+    normalize_alias.add_argument("--apply", action="store_true", dest="apply", help=argparse.SUPPRESS)
+    normalize_alias.set_defaults(func=command_normalize_files)
+
+    remap = subparsers.add_parser(
+        "remap-files",
+        help=(
+            "Remap colors using palette labels (falls back to position). "
+            "Base palette is from --from-theme, target from <theme>. Dry-run by default."
+        ),
+    )
+    remap.add_argument("theme")
+    remap.add_argument(
+        "--from-theme",
+        dest="from_theme",
+        required=True,
+        help="Base theme to take source palette from (uses its palette.txt)",
+    )
+    remap.add_argument("--write", action="store_true", dest="apply", help="Write changes to files")
+    remap.add_argument("--apply", action="store_true", dest="apply", help=argparse.SUPPRESS)
+    remap.set_defaults(func=command_remap_files)
+
+    remap_alias = subparsers.add_parser("remap", help=argparse.SUPPRESS)
+    remap_alias.add_argument("theme")
+    remap_alias.add_argument(
+        "--from-theme",
+        dest="from_theme",
+        required=True,
+        help="Base theme to take source palette from (uses its palette.txt)",
+    )
+    remap_alias.add_argument("--write", action="store_true", dest="apply", help=argparse.SUPPRESS)
+    remap_alias.add_argument("--apply", action="store_true", dest="apply", help=argparse.SUPPRESS)
+    remap_alias.set_defaults(func=command_remap_files)
+
+    return parser
+
+
+def main(argv: Optional[Sequence[str]] = None) -> None:
+    parser = build_parser()
+    args = parser.parse_args(argv)
+    args.func(args)
+
+
+if __name__ == "__main__":
+    main()
