@@ -27,3 +27,11 @@ export PATH="$DEV_TOOLS_PATH/flutter/bin:$PATH"
 
 export ANDROID_AVD_HOME="$HOME/.config/.android/avd"
 export ANDROID_SDK_HOME="$DEV_TOOLS_PATH/android/sdk"
+
+function wgup() {
+	sudo wg-quick up "$1"
+}
+
+function wgdown() {
+	sudo wg-quick down "$1"
+}
