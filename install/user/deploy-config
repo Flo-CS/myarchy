@@ -67,8 +67,6 @@ myarchy-lib robust-link $SOURCE/themes/current/swayosd/theme.css ~/.config/swayo
 
 myarchy-lib robust-link $SOURCE/config/wireplumber ~/.config/wireplumber/wireplumber.conf.d
 
-myarchy-lib robust-link $SOURCE/config/keepassxc ~/.config/keepassxc
-
 myarchy-lib robust-link $SOURCE/config/user-dirs.dirs ~/.config/user-dirs.dirs
 
 myarchy-lib robust-link $SOURCE/config/mimeapps.list ~/.config/mimeapps.list
