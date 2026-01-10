@@ -9,7 +9,7 @@ install_yay_pkgs() {
 }
 
 install_terminal() {
-	install_pkgs alacritty starship neovim gum zoxide eza direnv tmux
+	install_pkgs alacritty starship vim neovim gum zoxide eza direnv tmux
 }
 
 install_flatpak() {

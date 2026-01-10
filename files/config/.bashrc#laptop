@@ -27,3 +27,5 @@ export PATH="$DEV_TOOLS_PATH/flutter/bin:$PATH"
 
 export ANDROID_AVD_HOME="$HOME/.config/.android/avd"
 export ANDROID_SDK_HOME="$DEV_TOOLS_PATH/android/sdk"
+
+export SOPS_EDITOR="vim -u NONE -U NONE -n -i NONE -c 'set nobackup nowritebackup noswapfile noundofile'"

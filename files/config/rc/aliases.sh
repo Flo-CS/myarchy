@@ -4,7 +4,6 @@ alias grep='grep --color=auto'
 alias lsa='ls --color=auto -la --group-directories-first'
 alias shutdown='systemctl poweroff'
 
-alias vi='nvim'
 alias nv='nvim'
 
 alias gs="git status"
