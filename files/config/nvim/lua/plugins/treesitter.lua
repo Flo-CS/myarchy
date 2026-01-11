@@ -23,6 +23,7 @@ return {
         'typescript',
         'astro',
         'tsx',
+        'jinja',
       },
       auto_install = true,
       highlight = {
