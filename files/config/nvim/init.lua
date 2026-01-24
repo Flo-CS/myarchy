@@ -1,4 +1,3 @@
-require 'neovide'
 require 'settings'
 require 'autocommands'
 require 'mapping'
