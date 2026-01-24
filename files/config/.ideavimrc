@@ -15,30 +15,8 @@ set notimeout
 
 set idearefactormode=keep
 
+" Native mappings
 let mapleader = " "
-
-" Plugins
-set which-key
-set quickscope
-Plug 'vim-scripts/argtextobj.vim'
-set argtextobj
-set functiontextobj
-Plug 'machakann/vim-highlightedyank'
-set highlightedyank
-Plug 'tpope/vim-commentary'
-set commentary
-set peekaboo
-Plug 'tpope/vim-surround'
-set surround
-set NERDTree
-
-" Plugins config
-let g:WhichKey_ShowVimActions = "true"
-let g:WhichKey_DefaultDelay = 500
-let g:WhichKey_FontSize = 12
-
-" Mappings
-map Q gq
 
 map <C-c> <Esc>
 map <C-c> <Action>(EditorEscape)
@@ -74,5 +52,25 @@ map <leader>Ir <Action>(IdeaVim.ReloadVimRc.reload)
 
 nmap [[ <Action>(MethodUp)
 nmap ]] <Action>(MethodDown)
+
+" Plugins
+set which-key
+set quickscope
+Plug 'vim-scripts/argtextobj.vim'
+set argtextobj
+set functiontextobj
+Plug 'machakann/vim-highlightedyank'
+set highlightedyank
+Plug 'tpope/vim-commentary'
+set commentary
+set peekaboo
+Plug 'tpope/vim-surround'
+set surround
+set NERDTree
+
+" Plugins config
+let g:WhichKey_ShowVimActions = "true"
+let g:WhichKey_DefaultDelay = 500
+let g:WhichKey_FontSize = 12
 
 
