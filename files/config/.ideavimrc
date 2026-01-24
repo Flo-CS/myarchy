@@ -35,7 +35,6 @@ set NERDTree
 " Plugins config
 let g:WhichKey_ShowVimActions = "true"
 let g:WhichKey_DefaultDelay = 500
-" let g:WhichKey_FontFamily = "JetBrains Mono"
 let g:WhichKey_FontSize = 12
 
 " Mappings
@@ -45,11 +44,7 @@ map <C-c> <Esc>
 map <C-c> <Action>(EditorEscape)
 map <C-c> <Action>(CloseActiveTab)
 
-" Does not seem to work, should be set in IDE Keymap, perhaps I need to use sethandler
-" map <C-p> <Action>(EditorUp)
-" map <C-n> <Action>(EditorDown)
 map K <Action>(ShowHoverInfo)
-" map U <Action>(QuickImplementations)
 
 map <leader>sf <Action>(GotoFile)
 map <leader>sg <Action>(FindInPath)
@@ -74,10 +69,6 @@ map <leader>td <Action>(ToggleDistractionFreeMode)
 
 map <leader>ca <Action>(RefactoringMenu)
 map <leader>cr <Action>(RenameElement)
-
-map <leader>e :NERDTreeFind<CR>
-
-map <leader>a <Action>(FileStructurePopup)
 
 map <leader>Ir <Action>(IdeaVim.ReloadVimRc.reload)
 
