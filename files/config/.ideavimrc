@@ -53,20 +53,14 @@ map <leader>Ir <Action>(IdeaVim.ReloadVimRc.reload)
 nmap [[ <Action>(MethodUp)
 nmap ]] <Action>(MethodDown)
 
-" Plugins
+" Plugins (requiring Intellij plugins)
+set anyobject
+set easymotion
 set which-key
 set quickscope
-Plug 'vim-scripts/argtextobj.vim'
-set argtextobj
-set functiontextobj
-Plug 'machakann/vim-highlightedyank'
-set highlightedyank
-Plug 'tpope/vim-commentary'
-set commentary
-set peekaboo
-Plug 'tpope/vim-surround'
+" Plugins
+set peekabo
 set surround
-set NERDTree
 
 " Plugins config
 let g:WhichKey_ShowVimActions = "true"
