@@ -59,7 +59,7 @@ set easymotion
 set which-key
 set quickscope
 " Plugins
-set peekabo
+set peekaboo
 set surround
 
 " Plugins config
