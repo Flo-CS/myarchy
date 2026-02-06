@@ -106,7 +106,7 @@ install_firewall() {
 }
 
 install_security() {
-	install_pkgs keychain sops age
+	install_pkgs keychain sops age gnome-keyring libsecret
 }
 
 install_power() {
