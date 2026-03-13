@@ -11,44 +11,33 @@
     "memory",
     "bluetooth",
     "network",
-    "pulseaudio"
+    "pulseaudio",
   ],
   "modules-center": [
     "hyprland/window",
     "hyprland/workspaces",
-    "hyprland/submap"
+    "hyprland/submap",
   ],
   "modules-right": [
     "privacy",
     "idle_inhibitor",
     "battery",
     "backlight",
-    "clock#time"
+    "clock#time",
   ],
   "cpu": {
     "interval": 5,
     "format": "󰍛",
-    "on-click": "myarchy-terminal launch-big btop"
+    "on-click": "myarchy-terminal launch-big btop",
   },
   "memory": {
     "interval": 5,
     "format": "",
-    "on-click": "myarchy-terminal launch-big btop"
+    "on-click": "myarchy-terminal launch-big btop",
   },
   "backlight": {
     "format": "{icon}",
-    "format-icons": [
-      "",
-      "",
-      "",
-      "",
-      "",
-      "",
-      "",
-      "",
-      "",
-      ""
-    ],
+    "format-icons": ["", "", "", "", "", "", "", "", "", ""],
   },
   "battery": {
     "format": "{capacity}% {icon}",
@@ -56,30 +45,8 @@
     "format-charging": "{icon}",
     "format-plugged": "",
     "format-icons": {
-      "charging": [
-        "󰢜",
-        "󰂆",
-        "󰂇",
-        "󰂈",
-        "󰢝",
-        "󰂉",
-        "󰢞",
-        "󰂊",
-        "󰂋",
-        "󰂅"
-      ],
-      "default": [
-        "󰁺",
-        "󰁻",
-        "󰁼",
-        "󰁽",
-        "󰁾",
-        "󰁿",
-        "󰂀",
-        "󰂁",
-        "󰂂",
-        "󰁹"
-      ]
+      "charging": ["󰢜", "󰂆", "󰂇", "󰂈", "󰢝", "󰂉", "󰢞", "󰂊", "󰂋", "󰂅"],
+      "default": ["󰁺", "󰁻", "󰁼", "󰁽", "󰁾", "󰁿", "󰂀", "󰂁", "󰂂", "󰁹"],
     },
     "format-full": "󰂅",
     "tooltip-format-discharging": "{power:>1.0f}W↓ {capacity}%",
@@ -87,8 +54,8 @@
     "interval": 5,
     "states": {
       "warning": 20,
-      "critical": 10
-    }
+      "critical": 10,
+    },
   },
   "systemd-failed-units": {
     "hide-on-ok": true,
@@ -104,17 +71,17 @@
       {
         "type": "screenshare",
         "tooltip": true,
-        "tooltip-icon-size": 20
+        "tooltip-icon-size": 20,
       },
       {
         "type": "audio-out",
         "tooltip": true,
-        "tooltip-icon-size": 20
+        "tooltip-icon-size": 20,
       },
       {
         "type": "audio-in",
         "tooltip": true,
-        "tooltip-icon-size": 20
+        "tooltip-icon-size": 20,
       },
     ],
   },
@@ -142,15 +109,15 @@
       "7": "7",
       "8": "8",
       "9": "9",
-      "active": "󱓻"
+      "active": "󱓻",
     },
     "persistent-workspaces": {
       "1": [],
       "2": [],
       "3": [],
       "4": [],
-      "5": []
-    }
+      "5": [],
+    },
   },
   "hyprland/submap": {
     "format": "󰌌 ",
@@ -170,12 +137,8 @@
     "scroll-step": 5,
     "format-muted": "",
     "format-icons": {
-      "default": [
-        "",
-        "",
-        ""
-      ]
-    }
+      "default": ["", "", ""],
+    },
   },
   "bluetooth": {
     "format": "",
@@ -188,13 +151,7 @@
     "on-click": "myarchy-terminal launch bluetuith --no-warning",
   },
   "network": {
-    "format-icons": [
-      "󰤯",
-      "󰤟",
-      "󰤢",
-      "󰤥",
-      "󰤨"
-    ],
+    "format-icons": ["󰤯", "󰤟", "󰤢", "󰤥", "󰤨"],
     "format": "{icon}",
     "format-wifi": "{icon}",
     "format-ethernet": "󰀂",
@@ -209,7 +166,7 @@
   "clock#time": {
     "format": "{:%A %d %B %Y %H:%M}",
     "format-alt": "{:%d/%m/%Y  %H:%M}",
-    "tooltip": false
+    "tooltip": false,
     // TODO: on click add a calendar
-  }
+  },
 }
