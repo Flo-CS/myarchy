@@ -1,5 +1,5 @@
 [Default Applications]
-x-scheme-handler/jetbrains=jetbrains-toolbox.desktop
+x-scheme-handler/jetbrains=jetbrainsd.desktop
 x-scheme-handler/pie=HTTPie.desktop
 x-scheme-handler/http=chromium.desktop
 x-scheme-handler/https=chromium.desktop
@@ -64,3 +64,4 @@ application/x-extension-xhtml=firefox.desktop;
 application/x-extension-xht=firefox.desktop;
 application/pdf=firefox.desktop;
 application/octet-stream=Alacritty.desktop;
+text/plain=vim.desktop;
