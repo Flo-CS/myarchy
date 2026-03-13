@@ -50,6 +50,9 @@ map <leader>td <Action>(ToggleDistractionFreeMode)
 map <leader>ca <Action>(RefactoringMenu)
 map <leader>cr <Action>(RenameElement)
 
+map <leader>gd <Action>(GotoDeclaration)
+map <leader>gi <Action>(GotoImplementation)
+
 map <leader>Ir <Action>(IdeaVim.ReloadVimRc.reload)
 
 nmap [[ <Action>(MethodUp)
@@ -63,6 +66,8 @@ set quickscope
 set peekaboo
 " Plugins
 set surround
+set commentary
+set highlightedyank
 
 " Plugins config
 let g:WhichKey_ShowVimActions = "true"
