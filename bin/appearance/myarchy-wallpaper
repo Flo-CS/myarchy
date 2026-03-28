@@ -25,7 +25,9 @@ list_wallpapers() {
 set_wallpaper() {
 	ln -sfT "$WALLPAPERS_DIR/$1" "$WALLPAPERS_DIR/current"
 
-	hyprctl hyprpaper reload , "$WALLPAPERS_DIR/current"
+	pkill hyprpaper
+	hyprpaper &
+	disown
 
 	save_preferred
 }
