@@ -1,0 +1,24 @@
+#!/usr/bin/env bash
+
+# Lists available GRUB boot entries or reboots to a specific one
+
+list_entries() {
+	pkexec cat /boot/grub/grub.cfg | awk -F"'" '/^\s*menuentry / {print $2}'
+}
+
+reboot_to() {
+	local entry="$1"
+	pkexec grub-reboot "$entry" && systemctl reboot
+}
+
+case "$1" in
+list) list_entries ;;
+reboot)
+	shift
+	reboot_to "$*"
+	;;
+*)
+	echo "Usage: myarchy-reboot-to <list|reboot <entry>>"
+	exit 1
+	;;
+esac

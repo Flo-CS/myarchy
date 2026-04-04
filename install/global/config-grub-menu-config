@@ -23,6 +23,12 @@ if grep -q '^GRUB_BACKGROUND=' /etc/default/grub; then
 	SHOULD_BUILD_GRUB=true
 fi
 
+# TODO: will not work for now because grub and btrfs
+# if ! grep -q '^GRUB_DEFAULT=saved' /etc/default/grub; then
+# 	sudo sed -i 's/^GRUB_DEFAULT=.*/GRUB_DEFAULT=saved/' /etc/default/grub
+# 	SHOULD_BUILD_GRUB=true
+# fi
+
 if [ $SHOULD_BUILD_GRUB = true ]; then
 	echo "Updating GRUB configuration..."
 	sudo grub-mkconfig -o /boot/grub/grub.cfg

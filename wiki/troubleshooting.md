@@ -32,3 +32,9 @@ Also, if a warning appears on lauching about a invalid style override, the QT_ST
 ## Bluetooth devices need to be repaired every system change on dual boot
 
 See [https://github.com/x2es/bt-dualboot]
+
+## BTRFS and GRUB
+
+### "Sparse file not allowed" error (or something like that)
+
+GRUB does not support BTRFS filesystem, so it can't write to grubenv file, which can be used to store the next boot for example.

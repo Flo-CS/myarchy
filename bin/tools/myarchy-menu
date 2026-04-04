@@ -40,14 +40,26 @@ show_select_cursor_menu() {
 	fi
 }
 
+show_reboot_to_menu() {
+	selected=$(myarchy-reboot-to list | dmenu "Reboot to")
+
+	if [[ -z "$selected" ]]; then
+		show_system_menu
+	else
+		myarchy-reboot-to reboot "$selected"
+	fi
+}
+
 show_system_menu() {
 	selected=$(printf 'Reboot
+Reboot to
 Shutdown' | dmenu "System")
 
 	if [[ -z "$selected" ]]; then
 		show_main_menu
 	else
 		case "$selected" in
+		*"Reboot to"*) show_reboot_to_menu ;;
 		*"Reboot"*) systemctl reboot ;;
 		*"Shutdown"*) systemctl poweroff ;;
 		esac

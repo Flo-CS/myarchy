@@ -1,0 +1,3 @@
+#!/usr/bin/env bash
+
+sudo -E myarchy-lib robust-copy "$MYARCHY_DIR/install/global/files/polkit/50-myarchy-grub.rules" "/etc/polkit-1/rules.d/50-myarchy-grub.rules"

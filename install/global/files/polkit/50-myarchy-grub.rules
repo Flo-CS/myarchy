@@ -1,0 +1,17 @@
+polkit.addRule(function(action, subject) {
+    if (
+        action.id === "org.freedesktop.policykit.exec" 
+        && subject.isInGroup("wheel")
+        && subject.active
+    ) {
+        var command = action.lookup("command_line");
+
+        if (command === "/usr/bin/cat /boot/grub/grub.cfg") {
+            return polkit.Result.YES;
+        }
+
+        if (command && command.indexOf("/usr/bin/grub-reboot ") === 0) {
+            return polkit.Result.YES;
+        }
+    }
+});

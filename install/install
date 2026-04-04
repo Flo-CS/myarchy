@@ -25,8 +25,9 @@ source $MYARCHY_DIR/install/global/config-firewall
 source $MYARCHY_DIR/install/global/config-faillock
 source $MYARCHY_DIR/install/global/config-system-backups
 source $MYARCHY_DIR/install/global/config-terminal
-source $MYARCHY_DIR/install/global/config-grub-alternatives-options
-source $MYARCHY_DIR/install/global/config-grub-timeout
+source $MYARCHY_DIR/install/global/config-grub-menu-entries
+source $MYARCHY_DIR/install/global/config-grub-menu-config
+source $MYARCHY_DIR/install/global/config-grub-reboot-to
 source $MYARCHY_DIR/install/global/config-boot-splashscreen spinner_alt
 source $MYARCHY_DIR/install/global/config-login-manager
 
