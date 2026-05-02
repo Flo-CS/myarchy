@@ -53,7 +53,9 @@ show_reboot_to_menu() {
 show_system_menu() {
 	selected=$(printf 'Reboot
 Reboot to
-Shutdown' | dmenu "System")
+Shutdown
+Sleep
+' | dmenu "System")
 
 	if [[ -z "$selected" ]]; then
 		show_main_menu
@@ -62,6 +64,7 @@ Shutdown' | dmenu "System")
 		*"Reboot to"*) show_reboot_to_menu ;;
 		*"Reboot"*) systemctl reboot ;;
 		*"Shutdown"*) systemctl poweroff ;;
+		*"Sleep"*) systemctl suspend ;;
 		esac
 	fi
 }

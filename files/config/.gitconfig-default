@@ -4,7 +4,7 @@
 	autoSetupRemote = true
 [diff]
 	algorithm = histogram
-	colorMoved = plain
+	colorMoved = false
 	mnemonicPrefix = true
 	tool = nvimdiff
 	guitool = nvimdiff
@@ -31,3 +31,7 @@
 	diffFilter = delta --color-only
 [delta]
 	navigate = true
+	hunk-header-style = omit # Git can't infer hunk header correctly for some languages and it's more confusing than useful, so we remove it entirely
+	line-numbers = true
+ 
+ # vim: set ft=gitconfig:

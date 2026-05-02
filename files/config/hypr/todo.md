@@ -1,0 +1,4 @@
+- Double click to move floating PiP windows
+- Move PiP windows automatically to another place
+- Add styles to all gtk windows
+- Remove all the borders of floating windows
