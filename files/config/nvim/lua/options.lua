@@ -54,8 +54,6 @@ vim.opt.linebreak = true
 vim.opt.iskeyword:append('-')
 
 -- Code folding
-vim.opt.foldmethod = 'expr'
-vim.opt.foldexpr = 'nvim_treesitter#foldexpr()'
 vim.opt.foldlevel = 99
 vim.opt.foldnestmax = 4
 

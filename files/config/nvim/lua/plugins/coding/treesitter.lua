@@ -1,46 +1,50 @@
 return {
   {
     'nvim-treesitter/nvim-treesitter',
+    branch = 'main',
     lazy = false,
     build = ':TSUpdate',
     dependencies = {
       'nvim-treesitter/nvim-treesitter-textobjects',
     },
-    opts = {
-      ensure_installed = {},
-      auto_install = true,
-      folds = { enable = true },
-      highlight = { enable = true },
-      indent = { enable = true },
-      incremental_selection = {
-        enable = true,
-        keymaps = {
-          init_selection = '<C-space>',
-          node_incremental = '<C-space>',
-          scope_incremental = false,
-          node_decremental = '<bs>',
-        },
-      },
-    },
+    config = function()
+      require('nvim-treesitter').install {}
+
+      vim.api.nvim_create_autocmd('FileType', {
+        group = vim.api.nvim_create_augroup('treesitter.setup', {}),
+        callback = function(args)
+          local buf = args.buf
+          local filetype = args.match
+
+          local language = vim.treesitter.language.get_lang(filetype) or filetype
+          if not vim.treesitter.language.add(language) then
+            return
+          end
+
+          -- highlight
+          vim.treesitter.start(buf, language)
+          -- fold
+          vim.wo.foldmethod = 'expr'
+          vim.wo.foldexpr = 'v:lua.vim.treesitter.foldexpr()'
+          -- indent
+          vim.bo[buf].indentexpr = "v:lua.require'nvim-treesitter'.indentexpr()"
+        end,
+      })
+    end,
   },
   {
     'nvim-treesitter/nvim-treesitter-textobjects',
+    branch = 'main',
     lazy = false,
     opts = {
-      select = {
-        lookahead = true,
-      },
-      move = {
-        set_jumps = true,
-      },
+      select = { lookahead = true },
+      move = { set_jumps = true },
     },
     config = function(_, opts)
       require('nvim-treesitter-textobjects').setup(opts)
-
       local select = require('nvim-treesitter-textobjects.select')
       local move = require('nvim-treesitter-textobjects.move')
 
-      -- select
       local selections = {
         ['ak'] = '@block.outer',
         ['ik'] = '@block.inner',
@@ -61,12 +65,27 @@ return {
         end, { desc = 'Select ' .. query })
       end
 
-      -- move
       local moves = {
-        goto_next_start = { [']k'] = '@block.outer', [']f'] = '@function.outer', [']a'] = '@parameter.inner' },
-        goto_next_end = { [']K'] = '@block.outer', [']F'] = '@function.outer', [']A'] = '@parameter.inner' },
-        goto_previous_start = { ['[k'] = '@block.outer', ['[f'] = '@function.outer', ['[a'] = '@parameter.inner' },
-        goto_previous_end = { ['[K'] = '@block.outer', ['[F'] = '@function.outer', ['[A'] = '@parameter.inner' },
+        goto_next_start = {
+          [']k'] = '@block.outer',
+          [']f'] = '@function.outer',
+          [']a'] = '@parameter.inner',
+        },
+        goto_next_end = {
+          [']K'] = '@block.outer',
+          [']F'] = '@function.outer',
+          [']A'] = '@parameter.inner',
+        },
+        goto_previous_start = {
+          ['[k'] = '@block.outer',
+          ['[f'] = '@function.outer',
+          ['[a'] = '@parameter.inner',
+        },
+        goto_previous_end = {
+          ['[K'] = '@block.outer',
+          ['[F'] = '@function.outer',
+          ['[A'] = '@parameter.inner',
+        },
       }
       for method, maps in pairs(moves) do
         for lhs, query in pairs(maps) do
