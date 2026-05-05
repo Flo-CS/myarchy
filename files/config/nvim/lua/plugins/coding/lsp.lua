@@ -37,6 +37,10 @@ return {
           if client and client:supports_method('textDocument/inlayHint') then
             vim.lsp.inlay_hint.enable(false, { bufnr = args.buf })
           end
+
+          vim.diagnostic.config {
+            virtual_text = true,
+          }
         end,
       })
     end,
