@@ -20,7 +20,7 @@
   ],
   "modules-right": [
     "privacy",
-    "idle_inhibitor",
+    "custom/idle-inhibitor",
     "battery",
     "backlight",
     "clock#time",
@@ -85,12 +85,11 @@
       },
     ],
   },
-  "idle_inhibitor": {
-    "format": "{icon}",
-    "format-icons": {
-      "activated": "󰈈",
-      "deactivated": "",
-    },
+   "custom/idle-inhibitor": {
+      "exec": "~/.config/waybar/scripts/idle-inhibitor.sh",
+      "return-type": "json",
+      "on-click": "sh -c 'if idle-inhibitor status >/dev/null 2>&1; then idle-inhibitor disable; else
+  idle-inhibitor enable; fi'"
   },
   "hyprland/workspaces": {
     "format": "{icon}",

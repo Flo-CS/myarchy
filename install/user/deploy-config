@@ -45,6 +45,7 @@ myarchy-lib robust-link $SOURCE/themes/current/gtk/gtk-4.0/settings.ini ~/.confi
 
 myarchy-lib robust-link $SOURCE/config/waybar/config.jsonc ~/.config/waybar/config.jsonc
 myarchy-lib robust-link $SOURCE/config/waybar/style.css ~/.config/waybar/style.css
+myarchy-lib robust-link $SOURCE/config/waybar/scripts ~/.config/waybar/scripts
 myarchy-lib robust-link $SOURCE/themes/current/waybar/theme.css ~/.config/waybar/theme.css
 
 myarchy-lib robust-link $SOURCE/config/rofi/config.rasi ~/.config/rofi/config.rasi
