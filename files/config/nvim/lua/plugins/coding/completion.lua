@@ -89,7 +89,7 @@ return {
       },
       cmdline = {
         enabled = true,
-        keymap = { preset = 'cmdline' },
+        keymap = { preset = 'super-tab' },
         completion = {
           menu = { auto_show = true },
           ghost_text = { enabled = true },
