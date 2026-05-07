@@ -25,7 +25,7 @@ return {
       vim.api.nvim_create_autocmd('LspAttach', {
         callback = function(args)
           local map = function(keys, func, desc)
-            vim.keymap.set('n', keys, func, { buffer = args.buf, desc = desc })
+            vim.keymap.set({ 'n', 'v' }, keys, func, { buffer = args.buf, desc = desc })
           end
           map('<leader>gd', vim.lsp.buf.definition, 'Go to Definition')
           map('<leader>gi', vim.lsp.buf.implementation, 'Go to Implementation')
@@ -41,6 +41,21 @@ return {
           vim.diagnostic.config {
             virtual_text = true,
           }
+
+          map('<C-Space>', function()
+            if vim.treesitter.get_parser(nil, nil, { error = false }) then
+              require('vim.treesitter._select').select_parent(vim.v.count1)
+            else
+              vim.lsp.buf.selection_range(vim.v.count1)
+            end
+          end, 'Increment selection')
+          map('<BS>', function()
+            if vim.treesitter.get_parser(nil, nil, { error = false }) then
+              require('vim.treesitter._select').select_child(vim.v.count1)
+            else
+              vim.lsp.buf.selection_range(-vim.v.count1)
+            end
+          end, 'Decrement selection')
         end,
       })
     end,
