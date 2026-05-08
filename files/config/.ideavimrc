@@ -1,41 +1,155 @@
-" Helpful documentation : https://github.com/JetBrains/ideavim/wiki/
+" Helpful documentation: https://github.com/JetBrains/ideavim/wiki/
+" Tip: discover any action's name with :actionlist <pattern>
 
-set scrolloff=15
-
+set scrolloff=10
+set sidescrolloff=10
 set incsearch
+set hlsearch
 set ignorecase
 set smartcase
-
 set ideajoin
-
-set clipboard+=unnamedplus
+set ideaput
+set clipboard+=unnamed,unnamedplus
 set number relativenumber
-
+set cursorline
 set notimeout
-
 set idearefactormode=keep
+set undolevels=10000
+set visualbell
+set noerrorbells
 
-" set whichwrap+=<,>,h,l
+set iskeyword+=-
 
-" Native mappings
+set anyobject
+set easymotion
+set which-key
+set quickscope
+set peekaboo
+set surround
+set commentary
+set highlightedyank
+set argtextobj
+set textobj-entire
+set textobj-indent
+set matchit
+set NERDTree
+
+let g:WhichKey_ShowVimActions = "true"
+let g:WhichKey_DefaultDelay = 300
+let g:WhichKey_FontSize = 12
+
 let mapleader = " "
+let maplocalleader = " "
 
 map <C-c> <Esc>
 map <C-c> <Action>(EditorEscape)
 map <C-c> <Action>(CloseActiveTab)
 
+" --- Better up/down ----------------------------------------
+nnoremap <expr> j v:count == 0 ? 'gj' : 'j'
+nnoremap <expr> k v:count == 0 ? 'gk' : 'k'
+xnoremap <expr> j v:count == 0 ? 'gj' : 'j'
+xnoremap <expr> k v:count == 0 ? 'gk' : 'k'
+nnoremap <expr> <Down> v:count == 0 ? 'gj' : 'j'
+nnoremap <expr> <Up>   v:count == 0 ? 'gk' : 'k'
+
+" --- Move lines -------------------------------------------
+nnoremap <C-S-j> <Action>(MoveLineDown)
+nnoremap <C-S-k> <Action>(MoveLineUp)
+inoremap <C-S-j> <Action>(MoveLineDown)
+inoremap <C-S-k> <Action>(MoveLineUp)
+vnoremap <C-S-j> <Action>(MoveLineDown)
+vnoremap <C-S-k> <Action>(MoveLineUp)
+
+" --- Better search nav -------------------------------
+nnoremap n nzv
+nnoremap N Nzv
+
+" --- Clear hlsearch on Esc -------------------------------------------------
+nnoremap <Esc> :nohlsearch<CR><Esc>
+
+" --- Keep selection when indenting -----------------------------------------
+xnoremap < <gv
+xnoremap > >gv
+
+" --- Select whole buffer ---------------------------------------------------
+nnoremap <C-a> ggVG
+
+" --- Method navigation ----------------------------------------------
+nmap [[ <Action>(MethodUp)
+nmap ]] <Action>(MethodDown)
+
+" --- Hover documentation ---------------------------------------------------
 map K <Action>(ShowHoverInfo)
 
+" --- Explorer ------------------
+map <leader>e <Action>(ActivateProjectToolWindow)
+
+" --- Search -----------------------------------------
 map <leader>sf <Action>(GotoFile)
 map <leader>sg <Action>(FindInPath)
 map <leader>sc <Action>(Find)
 map <leader>se <Action>(SearchEverywhere)
 map <leader>sa <Action>(GotoAction)
+map <leader>sk <Action>(GotoAction)
 map <leader>ss <Action>(GotoSymbol)
 map <leader>sw <Action>(Switcher)
+map <leader>sb <Action>(RecentFiles)
+map <leader>sd <Action>(ActivateProblemsViewToolWindow)
+map <leader>sh <Action>(HelpTopics)
+map <leader>st <Action>(ActivateTODOToolWindow)
 
+" --- Goto -------------------------------------------------
+map <leader>gd <Action>(GotoDeclaration)
+map <leader>gi <Action>(GotoImplementation)
+map <leader>gr <Action>(FindUsages)
+map <leader>gt <Action>(GotoTypeDeclaration)
+map <leader>gs <Action>(GotoSuperMethod)
+
+" --- Code -------------------------------------------------------
+map <leader>ca <Action>(ShowIntentionActions)
+map <leader>cr <Action>(RenameElement)
+map <leader>cf <Action>(ReformatCode)
+map <leader>co <Action>(FileStructurePopup)
+map <leader>cs <Action>(FileStructurePopup)
+map <leader>cS <Action>(ActivateStructureToolWindow)
+map <leader>ci <Action>(OptimizeImports)
+map <leader>cg <Action>(Generate)
+map <leader>cR <Action>(RefactoringMenu)
+map <leader>cm <Action>(ExtractMethod)
+map <leader>cv <Action>(IntroduceVariable)
+map <leader>cn <Action>(Inline)
+
+" --- Diagnostics / lists -------------------------
+map <leader>xx <Action>(ActivateProblemsViewToolWindow)
+map <leader>xX <Action>(ShowErrorDescription)
+map <leader>xt <Action>(ActivateTODOToolWindow)
+nnoremap ]d <Action>(GotoNextError)
+nnoremap [d <Action>(GotoPreviousError)
+
+" --- Git hunks --------------------------------------
+nnoremap ]h <Action>(VcsShowNextChangeMarker)
+nnoremap [h <Action>(VcsShowPrevChangeMarker)
+map <leader>ghp <Action>(VcsShowCurrentChangeMarker)
+map <leader>ghs <Action>(Git.Stage)
+map <leader>ghr <Action>(Vcs.RollbackChangedLines)
+map <leader>ghb <Action>(Annotate)
+map <leader>ghB <Action>(Annotate)
+map <leader>ghd <Action>(Compare.SameVersion)
+map <leader>ghD <Action>(Compare.LastVersion)
+
+" --- Run --------------------------------------------------------
+map <leader>rr <Action>(RunMenu)
+map <leader>rR <Action>(Run)
+map <leader>rt <Action>(RunClass)
+map <leader>rT <Action>(DebugClass)
+map <leader>rs <Action>(Stop)
+map <leader>rb <Action>(CompileDirty)
+
+" --- Debug ------------------------------------------------------
 map <leader>dd <Action>(ChooseDebugConfiguration)
 map <leader>db <Action>(ToggleLineBreakpoint)
+map <leader>dB <Action>(ViewBreakpoints)
 map <leader>dr <Action>(Resume)
 map <leader>dc <Action>(RunToCursor)
 map <leader>do <Action>(StepOver)
@@ -43,35 +157,10 @@ map <leader>di <Action>(StepInto)
 map <leader>dO <Action>(StepOut)
 map <leader>ds <Action>(StreamTracerAction)
 
-map <leader>rr <Action>(RunMenu)
-
+" --- Toggles ----------------------------------------------------
 map <leader>td <Action>(ToggleDistractionFreeMode)
+map <leader>tz <Action>(ToggleZenMode)
 
-map <leader>ca <Action>(RefactoringMenu)
-map <leader>cr <Action>(RenameElement)
-
-map <leader>gd <Action>(GotoDeclaration)
-map <leader>gi <Action>(GotoImplementation)
-
+" --- Reload .ideavimrc -----------------------------------------------------
 map <leader>Ir <Action>(IdeaVim.ReloadVimRc.reload)
-
-nmap [[ <Action>(MethodUp)
-nmap ]] <Action>(MethodDown)
-
-" Plugins (requiring Intellij plugins)
-set anyobject
-set easymotion
-set which-key
-set quickscope
-set peekaboo
-" Plugins
-set surround
-set commentary
-set highlightedyank
-
-" Plugins config
-let g:WhichKey_ShowVimActions = "true"
-let g:WhichKey_DefaultDelay = 500
-let g:WhichKey_FontSize = 12
-
 
