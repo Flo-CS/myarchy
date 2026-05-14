@@ -17,5 +17,4 @@ hyprshot -m $type --raw |
     --output-filename "$OUTPUT_DIR/$OUTPUT_FILENAME" \
     --early-exit \
     --actions-on-enter save-to-clipboard \
-    --save-after-copy \
     --copy-command 'wl-copy'

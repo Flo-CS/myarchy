@@ -35,7 +35,7 @@ install_sync_tools() {
 	install_pkgs rclone syncthing rsync
 }
 
-install_nodejs() {
+install_nvm() {
 	install_pkgs nvm
 }
 
@@ -167,7 +167,7 @@ install_git
 install_net_tools
 install_files_tools
 install_sync_tools
-install_nodejs
+install_nvm
 install_wayland
 install_boot
 install_login_manager

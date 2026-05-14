@@ -67,4 +67,19 @@ return {
       time_interval = 7,
     },
   },
+  {
+    'catgoose/nvim-colorizer.lua',
+    event = 'BufReadPre',
+    --- @module 'colorizer'
+    --- @type colorizer.Options
+    opts = {
+      options = {
+        parsers = {
+          hex = { default = true },
+          rgb = { enable = true },
+          hsl = { enable = true },
+        },
+      },
+    },
+  },
 }
