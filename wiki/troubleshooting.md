@@ -1,9 +1,5 @@
 # Troubleshooting
 
-## No sound
-
-Try to install the sof-firmware package. sof-firmware is a collection of open source linux firmwares for commercial hardwares like Intel sound chips
-
 ## Unable to compile Hyprland plugins
 
 I had problem with version 0.48.1 of Hyprland, I wansn't able to compile plugins, there is two reasons:
@@ -15,7 +11,7 @@ Second, all the *-devel packages for the hyprland dependencies must be installed
 
 ## Black screen just after the grub menu
 
-### Option 1: Monitor issue (FreeSync/HDMI)
+### Monitor issue (FreeSync/HDMI)
 
 Solution 1: disable FreeSync in the monitor settings and activate the HDMI compatibility mode (if available).
 Solution 2: use DisplayPort instead of HDMI. But be careful, because FreeSync can still be enabled for DisplayPort, and it can cause different issues, like extreme flickering or screen tearing, so disable it also.

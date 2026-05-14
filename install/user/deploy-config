@@ -2,6 +2,9 @@
 
 set -eEo pipefail
 
+myarchy-theme init
+myarchy-wallpaper init
+
 SOURCE="$MYARCHY_DIR/files"
 
 myarchy-lib robust-link $SOURCE/config/systemd ~/.config/systemd

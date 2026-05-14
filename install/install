@@ -7,16 +7,11 @@ set -eEo pipefail
 export MYARCHY_DIR="$HOME/.local/share/myarchy"
 export MYARCHY_INSTANCE_ID=${MYARCHY_INSTANCE_ID:-$(gum input --header "Enter your myarchy instance ID used to identify specific local configurations (e.g. 'desktop', 'laptop')")}
 
-export DEV_TOOLS_PATH="$HOME/dev/tools"
-mkdir -p $DEV_TOOLS_PATH
-
 # GLOBAL / SYSTEM
 
 source $MYARCHY_DIR/install/global/deploy-myarchy-lib
-myarchy-lib init
 
-sudo pacman -Syu --noconfirm
-source $MYARCHY_DIR/install/global/install-packages # TODO: packages also contains some packages for user environment (like flutter)
+source $MYARCHY_DIR/install/global/install-packages
 
 source $MYARCHY_DIR/install/global/config-sudoers
 source $MYARCHY_DIR/install/global/config-bluetooth
@@ -33,12 +28,9 @@ source $MYARCHY_DIR/install/global/config-login-manager
 
 # USER
 
+source $MYARCHY_DIR/install/user/install-packages
+
 source $MYARCHY_DIR/install/user/deploy-bin
-
-# TODO: perhaps move them to install ?
-myarchy-theme init
-myarchy-wallpaper init
-
 source $MYARCHY_DIR/install/user/deploy-config
 source $MYARCHY_DIR/install/user/deploy-applications
 

@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+
+install_flatpak() {
+	flatpak remote-add --user --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo
+}
+
+install_nodejs() {
+	source /usr/share/nvm/init-nvm.sh
+	nvm install --lts || echo "nvm install failed, maybe nvm is not properly configured" >&2
+}
+
+install_flatpak
+install_nodejs

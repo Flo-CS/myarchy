@@ -15,7 +15,7 @@ if [[ -n $windows_boot_partition_path ]]; then
     fi
 
     echo "Windows Boot Manager UUID: $windows_boot_partition_uuid"
-    sudo -E myarchy-lib robust-insert-with-marker /etc/grub.d/40_custom "windows" "
+    sudo myarchy-lib robust-insert-with-marker /etc/grub.d/40_custom "windows" "
     menuentry 'Windows Boot Manager' --class windows --class os {
         search --fs-uuid --no-floppy --set=root $windows_boot_partition_uuid
         chainloader /EFI/Microsoft/Boot/bootmgfw.efi

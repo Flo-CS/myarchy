@@ -20,22 +20,6 @@ list_themes() {
 	fd --glob "*" "$THEMES_DIR/" --format {/} --max-depth 1
 }
 
-add_theme() {
-	local new_theme="$1"
-	local base_theme="$2"
-
-	cp -r "$THEMES_DIR/$base_theme" "$THEMES_DIR/$new_theme"
-
-	if [[ -f "$THEMES_DIR/$base_theme/palette.txt" ]]; then
-		cp "$THEMES_DIR/$base_theme/palette.txt" "$THEMES_DIR/$new_theme/palette.txt"
-		echo "Copied palette from '$base_theme'. Edit $THEMES_DIR/$new_theme/palette.txt for the new colors."
-		echo "When ready, remap old colors to the new palette:"
-		echo "  myarchy-palette remap-files $new_theme --from-theme $base_theme --write"
-	fi
-
-	echo "Created theme '$new_theme' from '$base_theme'."
-}
-
 set_theme() {
 	ln -sfT "$THEMES_DIR/$1" "$THEMES_DIR/current"
 
@@ -53,14 +37,11 @@ get)
 list)
 	list_themes
 	;;
-add)
-	add_theme "$2" "$3"
-	;;
 set)
 	set_theme "$2"
 	;;
 *)
-	echo "Usage: myarchy-theme {init|get|list|add <new_theme> [base_theme]|set <theme>}" >&2
+	echo "Usage: myarchy-theme {init|get|list|set <theme>}" >&2
 	exit 1
 	;;
 esac
