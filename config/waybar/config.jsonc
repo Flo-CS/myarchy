@@ -88,14 +88,12 @@
    "custom/idle-inhibitor": {
       "exec": "~/.config/waybar/scripts/idle-inhibitor.sh",
       "return-type": "json",
-      "on-click": "sh -c 'if idle-inhibitor status >/dev/null 2>&1; then idle-inhibitor disable; else
-  idle-inhibitor enable; fi'"
+      "on-click": "sh -c 'if idle-inhibitor status >/dev/null 2>&1; then idle-inhibitor disable; else idle-inhibitor enable; fi'"
   },
   "hyprland/workspaces": {
     "format": "{icon}",
-    "on-click": "activate",
-    "on-scroll-up": "hyprctl dispatch workspace e+1",
-    "on-scroll-down": "hyprctl dispatch workspace e-1",
+    "on-scroll-up": "hyprctl dispatch 'hl.dsp.focus({workspace = \"e+1\"})'",
+    "on-scroll-down": "hyprctl dispatch 'hl.dsp.focus({workspace = \"e-1\"})'",
     "format-icons": {
       "urgent": "",
       "default": "",
