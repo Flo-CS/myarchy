@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
-THEME_CURSOR="$MYARCHY_DIR/files/themes/current/cursor"
-THEME_DIR="$MYARCHY_DIR/files/themes/current"
+THEME_CURSOR="$MYARCHY_DIR/themes/current/cursor"
+THEME_DIR="$MYARCHY_DIR/themes/current"
 
 list() {
 	find /usr/share/icons ~/.local/share/icons ~/.icons \

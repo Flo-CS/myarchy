@@ -53,8 +53,8 @@ EOF
 	echo "Application '$app_name' created successfully!"
 
 	if [ -n "$MYARCHY_DIR" ] && gum confirm "Do you also want to copy it in your myarchy files ?"; then
-		cp "$desktop_file" "$MYARCHY_DIR/files/applications/"
-		cp "$icon_path" "$MYARCHY_DIR/files/applications/icons/"
+		cp "$desktop_file" "$MYARCHY_DIR/applications/"
+		cp "$icon_path" "$MYARCHY_DIR/applications/icons/"
 	fi
 }
 

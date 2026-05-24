@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 
-WALLPAPERS_DIR="$MYARCHY_DIR/files/wallpapers"
+WALLPAPERS_DIR="$MYARCHY_DIR/wallpapers"
 
-PREFERRED_WALLPAPER_FILE="$MYARCHY_DIR/files/themes/current/preferred-wallpaper"
+PREFERRED_WALLPAPER_FILE="$MYARCHY_DIR/themes/current/preferred-wallpaper"
 
 init_wallpaper() {
 	if [[ ! -f "$WALLPAPERS_DIR/current" ]]; then
