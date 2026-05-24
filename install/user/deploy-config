@@ -26,8 +26,8 @@ myarchy-lib robust-link $SOURCE/config/gum/gum.sh ~/.config/gum/gum.sh
 myarchy-lib robust-link $SOURCE/themes/current/gum/theme.sh ~/.config/gum/theme.sh
 
 myarchy-lib robust-link $SOURCE/config/hypr/hyprland ~/.config/hypr/hyprland
-myarchy-lib robust-link $SOURCE/config/hypr/hyprland.conf#$MYARCHY_INSTANCE_ID ~/.config/hypr/hyprland.conf
-myarchy-lib robust-link $SOURCE/themes/current/hypr/hyprland-theme.conf ~/.config/hypr/hyprland/theme.conf
+myarchy-lib robust-link $SOURCE/config/hypr/hyprland.lua#$MYARCHY_INSTANCE_ID ~/.config/hypr/hyprland.lua
+myarchy-lib robust-link $SOURCE/themes/current/hypr/hyprland-theme.lua ~/.config/hypr/hyprland/theme.lua
 
 myarchy-lib robust-link $SOURCE/config/hypr/hyprlock ~/.config/hypr/hyprlock
 myarchy-lib robust-link $SOURCE/config/hypr/hyprlock.conf#$MYARCHY_INSTANCE_ID ~/.config/hypr/hyprlock.conf
