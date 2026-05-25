@@ -2,7 +2,7 @@
 
 WALLPAPERS_DIR="$MYARCHY_DIR/wallpapers"
 
-PREFERRED_WALLPAPER_FILE="$MYARCHY_DIR/themes/current/preferred-wallpaper"
+PREFERRED_WALLPAPER_FILE="$MYARCHY_DIR/themes/current/wallpaper"
 
 init_wallpaper() {
 	if [[ ! -f "$WALLPAPERS_DIR/current" ]]; then
