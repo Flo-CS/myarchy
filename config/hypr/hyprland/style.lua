@@ -3,7 +3,7 @@ hl.config({
 		gaps_in = 5,
 		gaps_out = 10,
 		gaps_workspaces = 10,
-		border_size = 2,
+		border_size = 1,
 		resize_on_border = true,
 		extend_border_grab_area = 30,
 		snap = {
@@ -14,7 +14,7 @@ hl.config({
 	},
 
 	decoration = {
-		rounding = 0,
+		rounding = 8,
 		active_opacity = 0.95,
 		inactive_opacity = 0.90,
 		fullscreen_opacity = 1.0,
