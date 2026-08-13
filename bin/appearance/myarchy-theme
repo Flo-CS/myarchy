@@ -1,30 +1,113 @@
 #!/usr/bin/env bash
 
 THEMES_DIR="$MYARCHY_DIR/themes"
+TEMPLATES_DIR="$THEMES_DIR/templates"
+
+# Symlink to the directory of the current theme
+CURRENT_DIR="$THEMES_DIR/current"
 
 init_theme() {
-	if [[ ! -d "$THEMES_DIR/current" ]]; then
+	if [[ ! -L "$CURRENT_DIR" ]]; then
 		echo "Setting default theme"
 		set_theme "$(list_themes | head -n 1)"
 	fi
+
+	render_theme
 }
 
 get_theme() {
-	local theme_path=$(readlink -f "$THEMES_DIR/current")
+	local theme_path=$(readlink -f "$CURRENT_DIR")
 	local theme_name=$(basename "$theme_path")
 
 	echo "$theme_name"
 }
 
 list_themes() {
-	fd --glob "*" "$THEMES_DIR/" --format {/} --max-depth 1
+	fd --glob "*" "$THEMES_DIR/" --format {/} --max-depth 1 --type directory --exclude current --exclude templates
 }
 
 set_theme() {
-	ln -sfT "$THEMES_DIR/$1" "$THEMES_DIR/current"
+	render_theme "$1"
 
 	myarchy-wallpaper apply-preferred
 	myarchy-cursor apply-preferred
+}
+
+get_var() {
+	sed -nE "s@^$1=(.*)\$@\1@p" "$CURRENT_DIR/vars.txt"
+}
+
+set_var() {
+	sed -i -E "s@^$1=.*@$1=$(escape_replacement "$2")@" "$CURRENT_DIR/vars.txt"
+}
+
+# Escapes a value so that it can be used as a sed replacement
+escape_replacement() {
+	printf '%s' "$1" | sed 's/[\\&@]/\\&/g'
+}
+
+# Renders $TEMPLATES_DIR/<software>/<name>.tpl to $THEMES_DIR/<theme>/<software>/<name>,
+# then points $CURRENT_DIR at the theme directory. Substitutes:
+#   {{color|hex}} -> #rrggbb    {{color|hex:aa}} -> #rrggbbaa
+#   {{color|raw}} -> rrggbb     {{color|raw:aa}} -> rrggbbaa
+#   {{var}}       -> value from vars.txt (plus the built-in {{theme-name}})
+render_theme() {
+	local theme_name="${1:-$(get_theme)}"
+	local theme_dir="$THEMES_DIR/$theme_name"
+	local palette_file="$theme_dir/palette.txt"
+	local vars_file="$theme_dir/vars.txt"
+
+	if [[ ! -f "$palette_file" || ! -f "$vars_file" ]]; then
+		echo "Theme $theme_name is missing palette.txt or vars.txt" >&2
+		exit 1
+	fi
+
+	local sed_script=$(mktemp)
+	local output_dir=$(mktemp -d)
+
+	while read -r color name || [[ -n "$color" ]]; do
+		[[ -z "$name" ]] && continue
+
+		color=$(escape_replacement "${color#\#}")
+
+		printf '%s\n' "s@\{\{$name\|hex(:([0-9a-fA-F]{2}))?\}\}@#$color\2@g" >>"$sed_script"
+		printf '%s\n' "s@\{\{$name\|raw(:([0-9a-fA-F]{2}))?\}\}@$color\2@g" >>"$sed_script"
+	done <"$palette_file"
+
+	printf '%s\n' "s@\{\{theme-name\}\}@$(escape_replacement "$theme_name")@g" >>"$sed_script"
+
+	while IFS='=' read -r key value || [[ -n "$key" ]]; do
+		[[ -z "$key" || "$key" == \#* ]] && continue
+
+		printf '%s\n' "s@\{\{$key\}\}@$(escape_replacement "$value")@g" >>"$sed_script"
+	done <"$vars_file"
+
+	local template output
+	while read -r template; do
+		output="$output_dir/${template#$TEMPLATES_DIR/}"
+		output="${output%.tpl}"
+
+		mkdir -p "$(dirname "$output")"
+		sed -E -f "$sed_script" "$template" >"$output"
+		# Some renders are executed rather than sourced, keep the template mode
+		chmod --reference="$template" "$output"
+	done < <(find "$TEMPLATES_DIR" -name "*.tpl")
+
+	local unresolved=$(grep -rhoE '\{\{[^}]*\}\}' "$output_dir" | sort -u | tr '\n' ' ')
+	if [[ -n "$unresolved" ]]; then
+		echo "Theme $theme_name does not define: $unresolved" >&2
+		rm -rf "$sed_script" "$output_dir"
+		exit 1
+	fi
+
+	# A theme directory only holds flat source files, everything below it is rendered
+	find "$theme_dir" -mindepth 1 -maxdepth 1 -type d -exec rm -rf {} +
+	cp -r "$output_dir"/. "$theme_dir"
+	ln -sfT "$theme_name" "$CURRENT_DIR"
+
+	rm -rf "$sed_script" "$output_dir"
+
+	echo "Rendered theme $theme_name"
 }
 
 case "$1" in
@@ -40,8 +123,17 @@ list)
 set)
 	set_theme "$2"
 	;;
+render)
+	render_theme "$2"
+	;;
+get-var)
+	get_var "$2"
+	;;
+set-var)
+	set_var "$2" "$3"
+	;;
 *)
-	echo "Usage: myarchy-theme {init|get|list|set <theme>}" >&2
+	echo "Usage: myarchy-theme {init|get|list|set <theme>|render [theme]|get-var <key>|set-var <key> <value>}" >&2
 	exit 1
 	;;
 esac

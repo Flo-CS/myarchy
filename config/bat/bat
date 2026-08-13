@@ -1,3 +1,3 @@
---theme="current"
+--theme="theme"
 --style="changes,header-filename,numbers,snip"
 --color=always

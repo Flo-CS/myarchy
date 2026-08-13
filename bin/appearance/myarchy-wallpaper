@@ -2,8 +2,6 @@
 
 WALLPAPERS_DIR="$MYARCHY_DIR/wallpapers"
 
-PREFERRED_WALLPAPER_FILE="$MYARCHY_DIR/themes/current/wallpaper"
-
 init_wallpaper() {
 	if [[ ! -f "$WALLPAPERS_DIR/current" ]]; then
 		echo "Setting default wallpaper"
@@ -33,7 +31,7 @@ set_wallpaper() {
 }
 
 apply_preferred() {
-	wallpaper_name=$(cat "$PREFERRED_WALLPAPER_FILE")
+	wallpaper_name=$(myarchy-theme get-var wallpaper)
 
 	if [ -z "$wallpaper_name" ]; then
 		echo "No wallpaper name found in the current theme."
@@ -46,7 +44,7 @@ apply_preferred() {
 save_preferred() {
 	wallpaper_name=$(get_wallpaper)
 
-	echo "$wallpaper_name" >"$PREFERRED_WALLPAPER_FILE"
+	myarchy-theme set-var wallpaper "$wallpaper_name"
 }
 
 case "$1" in

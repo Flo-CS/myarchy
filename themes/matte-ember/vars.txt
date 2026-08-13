@@ -1,0 +1,11 @@
+wallpaper=matte-black.jpg
+
+cursor-name=capitaine-cursors-light
+cursor-size=40
+
+gtk-theme=Granite
+gtk-icon-theme=breeze
+gtk-font=Adwaita Sans 11
+gtk-prefer-dark=1
+
+nvim-colorscheme=bamboo

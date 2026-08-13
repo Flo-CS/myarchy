@@ -1,1 +1,6 @@
-current
+# Symlink to the current theme directory
+/current
+
+# Configs rendered from templates/ into each theme directory
+/*/*/
+!/templates/*/
