@@ -4,7 +4,7 @@ hl.monitor({
 	output = "",
 	mode = "preferred",
 	position = "auto",
-	scale = "auto",
+	scale = profile.scale,
 })
 
 hl.on("hyprland.start", function()

@@ -6,6 +6,7 @@ PROFILE = {
 	brightness_increment = 5,
 	sensitivity = -0.5,
 	ultrawide = true,
+	scale = "auto",
 }
 
 require("hyprland.hyprland")
