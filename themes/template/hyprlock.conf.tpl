@@ -1,0 +1,7 @@
+$theme_foreground = rgba({{foreground-strong|raw:ff}})
+$theme_outline = rgba({{outline|raw:ff}})
+$theme_input_bg = rgba({{surface-2|raw:80}})
+$theme_shadow = rgba({{shadow|raw:ff}})
+$theme_accent = rgba({{accent|raw:ff}})
+$theme_alert = rgba({{alert|raw:ff}})
+$theme_capslock = rgba({{foreground-strong|raw:ff}})

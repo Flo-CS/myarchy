@@ -1,0 +1,3 @@
+@define-color foreground {{foreground-strong|hex}};
+@define-color background {{surface-1|hex}};
+@define-color background-alt {{surface-2|hex}};

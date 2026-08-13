@@ -173,7 +173,7 @@ configuration {
     font:   "Rubik 13";
 
     background-color:   transparent;
-    text-color:         @fg0;
+    text-color:         @foreground;
 
     margin:     0;
     padding:    0;
@@ -181,14 +181,14 @@ configuration {
 }
 
 window {
-    background-color:   @bg0;
+    background-color:   @surface;
 
     location:       center;
     width:          640;
     border-radius:  0;
 
     border:         2px;
-    border-color:   @border1;
+    border-color:   @outline;
 }
 
 inputbar {
@@ -200,7 +200,7 @@ inputbar {
 
 
 prompt {
-    text-color: @fg0;
+    text-color: @foreground;
     // padding: 0 8px 0 0;
 }
 
@@ -217,13 +217,13 @@ icon-search, entry, element-icon, element-text {
 entry {
     font:   inherit;
     placeholder         : "";
-    placeholder-color   : @fg1;
+    placeholder-color   : @foreground-muted;
 }
 
 message {
     border:             2px 0 0;
-    border-color:       @bg0;
-    background-color:   @bg0;
+    border-color:       @surface;
+    background-color:   @surface;
 }
 
 textbox {
@@ -236,7 +236,7 @@ listview {
 
     fixed-height:   false;
     border:         1px 0 0;
-    border-color:   @bg0;
+    border-color:   @surface;
 }
 
 element {
@@ -246,16 +246,16 @@ element {
 }
 
 element normal active {
-    text-color: @fg1;
+    text-color: @foreground-muted;
 }
 
 element alternate active {
-    text-color: @fg1;
+    text-color: @foreground-muted;
 }
 
 element selected normal, element selected active {
-    background-color:   @bg1;
-    text-color:         @fg0;
+    background-color:   @surface-selected;
+    text-color:         @foreground;
 }
 
 element-icon {
