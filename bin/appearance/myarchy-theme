@@ -107,7 +107,27 @@ render_theme() {
 
 	rm -rf "$sed_script" "$output_dir"
 
+	apply_desktop_settings
+
 	echo "Rendered theme $theme_name"
+}
+
+# Mirrors the theme into dconf, which is what xdg-desktop-portal exposes as
+# org.freedesktop.appearance. Apps asking the portal for the system color scheme
+# (Firefox, Chromium, Electron, GTK4) ignore the gtk .ini files and read this instead.
+apply_desktop_settings() {
+	command -v gsettings >/dev/null || return 0
+
+	local color_scheme="prefer-light"
+	[[ "$(get_var gtk-prefer-dark)" == "1" ]] && color_scheme="prefer-dark"
+
+	local interface="org.gnome.desktop.interface"
+	gsettings set "$interface" color-scheme "$color_scheme"
+	gsettings set "$interface" gtk-theme "$(get_var gtk-theme)"
+	gsettings set "$interface" icon-theme "$(get_var gtk-icon-theme)"
+	gsettings set "$interface" font-name "$(get_var gtk-font)"
+	gsettings set "$interface" cursor-theme "$(get_var cursor-name)"
+	gsettings set "$interface" cursor-size "$(get_var cursor-size)"
 }
 
 case "$1" in
