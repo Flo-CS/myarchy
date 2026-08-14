@@ -22,14 +22,3 @@ hl.config({
 	},
 })
 
-hl.window_rule({
-	name = "theme-single-tiled-border",
-	match = { float = false, workspace = "w[tv1]" },
-	border_color = "rgba({{outline|raw:ff}})",
-})
-
-hl.window_rule({
-	name = "theme-single-fullscreen-border",
-	match = { float = false, workspace = "f[1]" },
-	border_color = "rgba({{outline|raw:ff}})",
-})
