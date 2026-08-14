@@ -46,7 +46,7 @@ escape_replacement() {
 	printf '%s' "$1" | sed 's/[\\&@]/\\&/g'
 }
 
-# Renders $TEMPLATES_DIR/<software>/<name>.tpl to $THEMES_DIR/<theme>/<software>/<name>,
+# Renders $TEMPLATES_DIR/<software>/<name> to $THEMES_DIR/<theme>/<software>/<name>,
 # then points $CURRENT_DIR at the theme directory. Substitutes:
 #   {{color|hex}} -> #rrggbb    {{color|hex:aa}} -> #rrggbbaa
 #   {{color|raw}} -> rrggbb     {{color|raw:aa}} -> rrggbbaa
@@ -85,13 +85,12 @@ render_theme() {
 	local template output
 	while read -r template; do
 		output="$output_dir/${template#$TEMPLATES_DIR/}"
-		output="${output%.tpl}"
 
 		mkdir -p "$(dirname "$output")"
 		sed -E -f "$sed_script" "$template" >"$output"
 		# Some renders are executed rather than sourced, keep the template mode
 		chmod --reference="$template" "$output"
-	done < <(find "$TEMPLATES_DIR" -name "*.tpl")
+	done < <(find "$TEMPLATES_DIR" -type f)
 
 	local unresolved=$(grep -rhoE '\{\{[^}]*\}\}' "$output_dir" | sort -u | tr '\n' ' ')
 	if [[ -n "$unresolved" ]]; then
