@@ -2,8 +2,9 @@
 
 THEMES_DIR="$MYARCHY_DIR/themes"
 TEMPLATES_DIR="$THEMES_DIR/templates"
+RENDERED_DIR_NAME=".rendered"
 
-# Symlink to the directory of the current theme
+# Symlink to the rendered directory of the current theme
 CURRENT_DIR="$THEMES_DIR/current"
 
 init_theme() {
@@ -16,8 +17,8 @@ init_theme() {
 }
 
 get_theme() {
-	local theme_path=$(readlink -f "$CURRENT_DIR")
-	local theme_name=$(basename "$theme_path")
+	local rendered_path=$(readlink -f "$CURRENT_DIR")
+	local theme_name=$(basename "$(dirname "$rendered_path")")
 
 	echo "$theme_name"
 }
@@ -34,11 +35,11 @@ set_theme() {
 }
 
 get_var() {
-	sed -nE "s@^$1=(.*)\$@\1@p" "$CURRENT_DIR/vars.txt"
+	sed -nE "s@^$1=(.*)\$@\1@p" "$THEMES_DIR/$(get_theme)/vars.txt"
 }
 
 set_var() {
-	sed -i -E "s@^$1=.*@$1=$(escape_replacement "$2")@" "$CURRENT_DIR/vars.txt"
+	sed -i -E "s@^$1=.*@$1=$(escape_replacement "$2")@" "$THEMES_DIR/$(get_theme)/vars.txt"
 }
 
 # Escapes a value so that it can be used as a sed replacement
@@ -46,8 +47,8 @@ escape_replacement() {
 	printf '%s' "$1" | sed 's/[\\&@]/\\&/g'
 }
 
-# Renders $TEMPLATES_DIR/<software>/<name> to $THEMES_DIR/<theme>/<software>/<name>,
-# then points $CURRENT_DIR at the theme directory. Substitutes:
+# Renders $TEMPLATES_DIR/<software>/<name> to $THEMES_DIR/<theme>/$RENDERED_DIR_NAME/<software>/<name>,
+# then points $CURRENT_DIR at that rendered directory. Substitutes:
 #   {{color|hex}} -> #rrggbb    {{color|hex:aa}} -> #rrggbbaa
 #   {{color|raw}} -> rrggbb     {{color|raw:aa}} -> rrggbbaa
 #   {{var}}       -> value from vars.txt (plus the built-in {{theme-name}})
@@ -99,10 +100,10 @@ render_theme() {
 		exit 1
 	fi
 
-	# A theme directory only holds flat source files, everything below it is rendered
-	find "$theme_dir" -mindepth 1 -maxdepth 1 -type d -exec rm -rf {} +
-	cp -r "$output_dir"/. "$theme_dir"
-	ln -sfT "$theme_name" "$CURRENT_DIR"
+	rm -rf "$theme_dir/$RENDERED_DIR_NAME"
+	mkdir -p "$theme_dir/$RENDERED_DIR_NAME"
+	cp -r "$output_dir"/. "$theme_dir/$RENDERED_DIR_NAME"
+	ln -sfT "$theme_name/$RENDERED_DIR_NAME" "$CURRENT_DIR"
 
 	rm -rf "$sed_script" "$output_dir"
 
