@@ -178,6 +178,10 @@ install_login_manager() {
 	install_pkgs greetd greetd-tuigreet
 }
 
+install_wireguard() {
+	install_pkgs wireguard-tools
+}
+
 install_terminal
 install_flatpak
 install_git

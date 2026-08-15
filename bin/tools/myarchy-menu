@@ -1,10 +1,20 @@
 #!/usr/bin/env bash
-
-# The whole menu lives in a single rofi process, written as a rofi "script mode" mode.
-# Rofi keeps its window mapped and calls this script again for every action, swapping
-# the rows in place. That is the point: Hyprland attaches the blur and dim_around
-# backdrop to rofi's layer surface (config/hypr/hyprland/style.lua), so spawning a fresh
-# rofi per submenu tore the backdrop down and built it back up on every keypress.
+#
+# myarchy-menu -- the system menu, one persistent rofi window.
+#
+# The whole menu tree lives in a single rofi process, written as a rofi "script
+# mode" mode. Rofi keeps its window mapped and re-runs this script for every
+# action, swapping the rows in place. That is the point: Hyprland attaches the
+# blur and dim_around backdrop to rofi's layer surface
+# (config/hypr/hyprland/style.lua), so spawning a fresh rofi per submenu tore
+# the backdrop down and built it back up on every keypress.
+#
+# The file is laid out so the parts you edit come first:
+#
+#   MENUS    -- what each menu shows; add or remove rows here
+#   ACTIONS  -- what happens when a row is activated
+#   PICKERS  -- the few menus that need their own rofi window
+#   PLUMBING -- rofi protocol, rendering, process management, entry point
 #
 # Protocol, see rofi-script(5):
 #   ROFI_RETV=0   first call            -> print the root rows
@@ -14,73 +24,244 @@
 #   ROFI_DATA     what we sent as \0data last call: the path of the menu on screen
 # Printing no rows at all tells rofi to quit, which is how every leaf action ends.
 
-BACK_RETV=28 # kb-custom-19
+# ---------------------------------------------------------------------------
+# MENUS
+#
+# Every row is a label plus an action token; selections dispatch on the token
+# (in activate() below), never on the visible label. Row helpers, label first:
+#
+#   submenu <label> <menu-id>       descend into another menu, in place
+#   picker <label> <picker-id>      close and hand over to a standalone picker
+#   action <label> <command...>     close and run a command
+#   terminal <label> <command...>   close and run the command in a terminal
+#   terminal_big ...                same, in a big terminal window
+#   terminal_menu ...               same, in a menu-sized window that waits
+#                                   for a keypress before closing
+# ---------------------------------------------------------------------------
 
-self_path() {
-	local path
-	path=$(command -v -- "$0" 2>/dev/null) || path=$0
-	realpath -- "$path" 2>/dev/null || printf '%s' "$path"
+row() { printf '%s\t%s\n' "$2" "$1"; } # row <label> <token>, stored token-first
+
+submenu() { row "$1" "menu:$2"; }
+picker() { row "$1" "picker:$2"; }
+
+action() {
+	local label=$1
+	shift
+	row "$label" "run:$*"
 }
 
-SELF=$(self_path)
-
-launch() {
-	# rofi holds a pidfile lock and refuses to start while another instance has it, so
-	# wait for the one we just killed to actually let go
-	pkill -x rofi
-	for _ in $(seq 40); do
-		pgrep -x rofi >/dev/null || break
-		sleep 0.025
-	done
-
-	# Escape is taken out of kb-cancel and handed to the script as a hot key instead,
-	# so it can pop one level in place rather than killing the window. Ctrl+G, Ctrl+[
-	# and clicking outside still close the menu outright, from any depth.
-	exec rofi -show menu -modes "menu:$SELF" -i \
-		-kb-cancel "Control+g,Control+bracketleft" \
-		-kb-custom-19 "Escape"
+# The three variants map onto myarchy-terminal's launch styles
+terminal() {
+	local label=$1
+	shift
+	row "$label" "term:launch:$*"
 }
 
-# Run a leaf action and let rofi close. We return before rofi has actually exited, so
-# wait for it to be gone first: screenshots must not catch the panel or its dim on the
-# way out, and terminals should not open underneath a backdrop that is still up.
-detach() {
-	local rofi_pid=$PPID
-	[[ $(cat "/proc/$rofi_pid/comm" 2>/dev/null) == rofi ]] || rofi_pid=$(pgrep -x -n rofi)
+terminal_big() {
+	local label=$1
+	shift
+	row "$label" "term:launch-big:$*"
+}
 
-	# ROFI_* has to go: a picker re-enters this script, and it must not look like rofi
-	# calling its own mode
-	setsid --fork bash -c '
-		pid=$1
-		shift
-		for _ in $(seq 60); do
-			[[ -n $pid ]] && kill -0 "$pid" 2>/dev/null || break
-			sleep 0.05
+terminal_menu() {
+	local label=$1
+	shift
+	row "$label" "term:launch-menu:$*"
+}
+
+menu_entries() {
+	case "$1" in
+	main)
+		submenu "Theme" theme
+		picker "Wallpaper" wallpaper
+		submenu "Cursor" cursor
+		picker "Emoji" emoji
+		submenu "System" system
+		terminal "Bluetooth" bluetuith --no-warning
+		terminal "Network" nmtui
+		terminal "Audio" wiremix
+		submenu "Screenshot" screenshot
+		terminal_big "Monitor" btop
+		terminal_menu "Info" fastfetch
+		terminal_menu "Snapshot system" myarchy-snapshot create
+		submenu "Packages" packages
+		submenu "Apps" apps
+		terminal_menu "Refresh" myarchy-refresh all
+		terminal_menu "Deploy" myarchy-deploy all
+		terminal_menu "Update" myarchy-update all
+		submenu "Drives" drives
+		submenu "Edit config" edit-config
+		;;
+	theme)
+		local theme
+		while read -r theme; do
+			row "$theme" "theme:$theme"
+		done < <(myarchy-theme list)
+		;;
+	cursor)
+		# Picking a cursor is just a step towards its size submenu
+		local cursor
+		while read -r cursor; do
+			row "$cursor" "menu:size=$cursor"
+		done < <(myarchy-cursor list)
+		;;
+	size=*)
+		# Any other size can be typed in, see accept_custom
+		local cursor=${1#size=} size
+		for size in 16 24 32 48 64; do
+			row "$size" "cursor:$cursor:$size"
 		done
-		exec env -u ROFI_RETV -u ROFI_INFO -u ROFI_DATA "$@"
-	' _ "$rofi_pid" "$@" >/dev/null 2>&1 </dev/null &
+		;;
+	system)
+		action "Reboot" systemctl reboot
+		picker "Reboot to" reboot-to
+		action "Shutdown" systemctl poweroff
+		action "Sleep" systemctl suspend
+		;;
+	screenshot)
+		action "Fullscreen" myarchy-screenshot fullscreen
+		action "Area" myarchy-screenshot area
+		action "Window" myarchy-screenshot window
+		;;
+	packages)
+		terminal_menu "Install Package" myarchy-pkg install
+		terminal_menu "Install AUR Package" myarchy-pkg yay-install
+		terminal_menu "Install Flatpak user" myarchy-flatpak user install
+		terminal_menu "Install Flatpak system" myarchy-flatpak system install
+		terminal_menu "Remove Package" myarchy-pkg remove
+		terminal_menu "Remove Flatpak user" myarchy-flatpak user remove
+		terminal_menu "Remove Flatpak system" myarchy-flatpak system remove
+		;;
+	apps)
+		terminal_menu "Install Webapp" myarchy-webapp install
+		terminal_menu "Install Appimage" myarchy-appimage install
+		terminal_menu "Install TUI" myarchy-tui install
+		terminal_menu "Remove TUI" myarchy-tui remove
+		terminal_menu "Remove Appimage" myarchy-appimage remove
+		terminal_menu "Remove Webapp" myarchy-webapp remove
+		;;
+	drives)
+		local device rest
+		while read -r device rest; do
+			row "$device $rest" "drive:$device"
+		done < <(myarchy-drive list)
+		;;
+	edit-config)
+		# TODO: perhaps it's not very maintainable to hardcode paths here
+		terminal "Hyprland apps" nvim "$MYARCHY_DIR/config/hypr/hyprland/apps.lua"
+		;;
+	esac
 }
 
-# Hand the screen over to a picker. Unlike detach() this does not wait: the new window
-# has to map while this one is still up, or the backdrop drops out for the length of a
-# round trip and you get the same blink the script-mode rewrite was meant to remove.
-# The two rofis overlap for a frame or two, hence the separate pidfile lock.
-handoff() {
-	setsid --fork env -u ROFI_RETV -u ROFI_INFO -u ROFI_DATA "$@" >/dev/null 2>&1 </dev/null &
+# The text shown in rofi's prompt box, per menu id (parallel to menu_entries)
+menu_prompt() {
+	case "$1" in
+	theme) echo "Theme" ;;
+	cursor) echo "Cursor" ;;
+	size=*) echo "Size" ;;
+	system) echo "System" ;;
+	screenshot) echo "Screenshot" ;;
+	packages) echo "Packages" ;;
+	apps) echo "Apps" ;;
+	drives) echo "Drives" ;;
+	edit-config) echo "Edit config" ;;
+	*) echo "▶" ;;
+	esac
 }
 
+# ---------------------------------------------------------------------------
+# ACTIONS
+#
+# activate() receives the selected row's token as "<kind>:<argument>" and
+# decides what to do with it. Submenus render in place; everything else is a
+# leaf that closes the menu, via detach() or handoff() (see PLUMBING).
+# ---------------------------------------------------------------------------
+
+activate() {
+	local token=$1
+	local kind=${token%%:*} arg=${token#*:}
+	local path=${ROFI_DATA:-main}
+
+	case "$kind" in
+	menu)
+		render "$path/$arg"
+		;;
+	run)
+		detach bash -c "$arg"
+		;;
+	term)
+		# arg is "<style>:<command>"; myarchy-terminal joins the command
+		# words back together itself, so it goes over as one string
+		local style=${arg%%:*} command=${arg#*:}
+		detach myarchy-terminal "$style" "$command"
+		;;
+	picker)
+		case "$arg" in
+		# pkexec runs before this one's rofi and its polkit prompt cannot take
+		# input while the menu still holds the keyboard grab, so it has to
+		# wait its turn
+		reboot-to) detach "$SELF" --picker "$arg" ;;
+		*) handoff "$SELF" --picker "$arg" ;;
+		esac
+		;;
+	theme)
+		detach bash -c \
+			'myarchy-theme set "$1" && myarchy-deploy config && myarchy-refresh all' _ "$arg"
+		;;
+	cursor)
+		# arg is "<cursor>:<size>"
+		detach myarchy-cursor set "${arg%:*}" "${arg##*:}"
+		;;
+	drive)
+		detach bash -c '
+			if [[ -z $(myarchy-drive mountpoint "$1") ]]; then
+				myarchy-drive mount "$1"
+			else
+				myarchy-drive unmount "$1"
+			fi' _ "$arg"
+		;;
+	*)
+		render "$path"
+		;;
+	esac
+}
+
+# Text typed into the filter and accepted with Enter; only the cursor size
+# menu allows it (see the no-custom flag in render)
+accept_custom() {
+	local input=$1
+	local path=${ROFI_DATA:-main}
+	local id=${path##*/}
+
+	case "$id" in
+	size=*)
+		if [[ "$input" =~ ^[0-9]+$ ]]; then
+			detach myarchy-cursor set "${id#size=}" "$input"
+		else
+			render "$path"
+		fi
+		;;
+	*)
+		render "$path"
+		;;
+	esac
+}
+
+# ---------------------------------------------------------------------------
 # PICKERS
 #
-# The menus that cannot live inside the persistent window. All are leaves, so they cost
-# one transition, exactly as they did before.
+# The menus that cannot live inside the persistent window. All are leaves, so
+# they cost one transition, exactly as they did before.
+# ---------------------------------------------------------------------------
 
 PICKER_PIDFILE="${XDG_RUNTIME_DIR:-/tmp}/myarchy-menu-picker.pid"
 
 picker_wallpaper() {
-	# rofi renders the row icon, which is what makes this a preview. Icon size cannot be
-	# changed at runtime from script mode -- rofi-script(5) says theme snippets are "only
-	# usable for small changes" and a \0theme resize is silently ignored -- so the preview
-	# needs its own window with a -theme-str override.
+	# rofi renders the row icon, which is what makes this a preview. Icon size
+	# cannot be changed at runtime from script mode -- rofi-script(5) says theme
+	# snippets are "only usable for small changes" and a \0theme resize is
+	# silently ignored -- so the preview needs its own window with a -theme-str
+	# override.
 	local preview_theme='
 		listview { lines: 6; }
 		element { padding: 4px 16px; }
@@ -99,8 +280,9 @@ picker_wallpaper() {
 }
 
 picker_reboot_to() {
-	# myarchy-reboot-to list reads grub.cfg through pkexec, and the polkit prompt cannot
-	# take keyboard input while rofi holds the layer-shell keyboard grab.
+	# myarchy-reboot-to list reads grub.cfg through pkexec, and the polkit
+	# prompt cannot take keyboard input while rofi holds the layer-shell
+	# keyboard grab.
 	local selected
 	selected=$(myarchy-reboot-to list | rofi -dmenu -i -p "Reboot to")
 
@@ -111,117 +293,72 @@ picker_emoji() {
 	rofi -pid "$PICKER_PIDFILE" -modi emoji -show emoji -display-emoji "Emoji"
 }
 
-# MENUS
-#
-# Every row carries an action token in its `info` field, so selections dispatch on the
-# token rather than on a glob over the visible label.
+# ---------------------------------------------------------------------------
+# PLUMBING
+# ---------------------------------------------------------------------------
 
-entry() {
-	printf '%s\t%s\n' "$1" "$2"
+BACK_RETV=28 # kb-custom-19
+
+self_path() {
+	local path
+	path=$(command -v -- "$0" 2>/dev/null) || path=$0
+	realpath -- "$path" 2>/dev/null || printf '%s' "$path"
 }
 
-menu_prompt() {
-	case "$1" in
-	main) echo "▶" ;;
-	theme) echo "Theme" ;;
-	cursor) echo "Cursor" ;;
-	size=*) echo "Size" ;;
-	system) echo "System" ;;
-	screenshot) echo "Screenshot" ;;
-	packages) echo "Packages" ;;
-	apps) echo "Apps" ;;
-	drives) echo "Drives" ;;
-	edit-config) echo "Edit config" ;;
-	*) echo "▶" ;;
-	esac
+SELF=$(self_path)
+
+launch() {
+	# rofi holds a pidfile lock and refuses to start while another instance has
+	# it, so wait for the one we just killed to actually let go
+	pkill -x rofi
+	for _ in $(seq 40); do
+		pgrep -x rofi >/dev/null || break
+		sleep 0.025
+	done
+
+	# Escape is taken out of kb-cancel and handed to the script as a hot key
+	# instead, so it can pop one level in place rather than killing the window.
+	# Ctrl+G, Ctrl+[ and clicking outside still close the menu outright, from
+	# any depth.
+	exec rofi -show menu -modes "menu:$SELF" -i \
+		-kb-cancel "Control+g,Control+bracketleft" \
+		-kb-custom-19 "Escape"
 }
 
-menu_entries() {
-	case "$1" in
-	main)
-		entry "menu:theme" "Theme"
-		entry "picker:wallpaper" "Wallpaper"
-		entry "menu:cursor" "Cursor"
-		entry "picker:emoji" "Emoji"
-		entry "menu:system" "System"
-		entry "term:launch:bluetuith --no-warning" "Bluetooth"
-		entry "term:launch:nmtui" "Network"
-		entry "term:launch:wiremix" "Audio"
-		entry "menu:screenshot" "Screenshot"
-		entry "term:launch-big:btop" "Monitor"
-		entry "term:launch-menu:fastfetch" "Info"
-		entry "term:launch-menu:myarchy-snapshot create" "Snapshot system"
-		entry "menu:packages" "Packages"
-		entry "menu:apps" "Apps"
-		entry "term:launch-menu:myarchy-refresh all" "Refresh"
-		entry "term:launch-menu:myarchy-deploy all" "Deploy"
-		entry "term:launch-menu:myarchy-update all" "Update"
-		entry "menu:drives" "Drives"
-		entry "menu:edit-config" "Edit config"
-		;;
-	theme)
-		local theme
-		while read -r theme; do
-			entry "theme:$theme" "$theme"
-		done < <(myarchy-theme list)
-		;;
-	cursor)
-		# Picking a cursor is just a step towards its size submenu
-		local cursor
-		while read -r cursor; do
-			entry "menu:size=$cursor" "$cursor"
-		done < <(myarchy-cursor list)
-		;;
-	size=*)
-		# Any other size can be typed in, see accept_custom
-		local cursor=${1#size=} size
-		for size in 16 24 32 48 64; do
-			entry "cursor:$cursor:$size" "$size"
+# Run a leaf action and let rofi close. We return before rofi has actually
+# exited, so wait for it to be gone first: screenshots must not catch the panel
+# or its dim on the way out, and terminals should not open underneath a
+# backdrop that is still up.
+detach() {
+	local rofi_pid=$PPID
+	[[ $(cat "/proc/$rofi_pid/comm" 2>/dev/null) == rofi ]] || rofi_pid=$(pgrep -x -n rofi)
+
+	# ROFI_* has to go: a picker re-enters this script, and it must not look
+	# like rofi calling its own mode
+	setsid --fork bash -c '
+		pid=$1
+		shift
+		for _ in $(seq 60); do
+			[[ -n $pid ]] && kill -0 "$pid" 2>/dev/null || break
+			sleep 0.05
 		done
-		;;
-	system)
-		entry "run:systemctl reboot" "Reboot"
-		entry "picker:reboot-to" "Reboot to"
-		entry "run:systemctl poweroff" "Shutdown"
-		entry "run:systemctl suspend" "Sleep"
-		;;
-	screenshot)
-		entry "run:myarchy-screenshot fullscreen" "Fullscreen"
-		entry "run:myarchy-screenshot area" "Area"
-		entry "run:myarchy-screenshot window" "Window"
-		;;
-	packages)
-		entry "term:launch-menu:myarchy-pkg install" "Install Package"
-		entry "term:launch-menu:myarchy-pkg yay-install" "Install AUR Package"
-		entry "term:launch-menu:myarchy-flatpak user install" "Install Flatpak user"
-		entry "term:launch-menu:myarchy-flatpak system install" "Install Flatpak system"
-		entry "term:launch-menu:myarchy-pkg remove" "Remove Package"
-		entry "term:launch-menu:myarchy-flatpak user remove" "Remove Flatpak user"
-		entry "term:launch-menu:myarchy-flatpak system remove" "Remove Flatpak system"
-		;;
-	apps)
-		entry "term:launch-menu:myarchy-webapp install" "Install Webapp"
-		entry "term:launch-menu:myarchy-appimage install" "Install Appimage"
-		entry "term:launch-menu:myarchy-tui install" "Install TUI"
-		entry "term:launch-menu:myarchy-tui remove" "Remove TUI"
-		entry "term:launch-menu:myarchy-appimage remove" "Remove Appimage"
-		entry "term:launch-menu:myarchy-webapp remove" "Remove Webapp"
-		;;
-	drives)
-		local device rest
-		while read -r device rest; do
-			entry "drive:$device" "$device $rest"
-		done < <(myarchy-drive list)
-		;;
-	edit-config)
-		# TODO: perhaps it's not very maintainable to hardcode paths here
-		entry "term:launch:nvim $MYARCHY_DIR/config/hypr/hyprland/apps.lua" "Hyprland apps"
-		;;
-	esac
+		exec env -u ROFI_RETV -u ROFI_INFO -u ROFI_DATA "$@"
+	' _ "$rofi_pid" "$@" >/dev/null 2>&1 </dev/null &
 }
 
-# RENDERING
+# Hand the screen over to a picker. Unlike detach() this does not wait: the new
+# window has to map while this one is still up, or the backdrop drops out for
+# the length of a round trip and you get the same blink the script-mode rewrite
+# was meant to remove. The two rofis overlap for a frame or two, hence the
+# separate pidfile lock.
+handoff() {
+	setsid --fork env -u ROFI_RETV -u ROFI_INFO -u ROFI_DATA "$@" >/dev/null 2>&1 </dev/null &
+}
 
+# Print a menu to rofi: options first, then one line per row. $1 is the menu's
+# path from the root (e.g. "main/cursor/size=Bibata"), which travels through
+# ROFI_DATA so the next invocation knows where it is; the menu id is its last
+# segment.
 render() {
 	local path=$1 selection=${2:--1}
 	local id=${path##*/} rows
@@ -243,7 +380,8 @@ render() {
 		printf '\0new-selection\x1f%d\n' "$selection"
 	fi
 
-	# An empty list means "quit" to rofi, so an empty submenu needs something to show
+	# An empty list means "quit" to rofi, so an empty submenu needs something
+	# to show
 	if [[ -z "$rows" ]]; then
 		printf 'Nothing here\0nonselectable\x1ftrue\x1finfo\x1fnoop:\n'
 		return
@@ -255,6 +393,8 @@ render() {
 	done <<<"$rows"
 }
 
+# Position of the row carrying the given token in a menu, for restoring the
+# selection on the way back up
 row_index() {
 	menu_entries "$1" | awk -F'\t' -v want="$2" '
 		$1 == want { print NR - 1; found = 1; exit }
@@ -271,71 +411,12 @@ go_back() {
 	render "$parent" "$(row_index "${parent##*/}" "menu:$child")"
 }
 
-activate() {
-	local token=$1
-	local kind=${token%%:*} rest=${token#*:}
-	local path=${ROFI_DATA:-main}
-
-	case "$kind" in
-	menu)
-		render "$path/$rest"
-		;;
-	run)
-		detach bash -c "$rest"
-		;;
-	term)
-		# myarchy-terminal joins its command with "$*", so it takes one string
-		detach myarchy-terminal "${rest%%:*}" "${rest#*:}"
-		;;
-	picker)
-		case "$rest" in
-		# pkexec runs before this one's rofi and its polkit prompt cannot take input
-		# while the menu still holds the keyboard grab, so it has to wait its turn
-		reboot-to) detach "$SELF" --picker "$rest" ;;
-		*) handoff "$SELF" --picker "$rest" ;;
-		esac
-		;;
-	theme)
-		detach bash -c \
-			'myarchy-theme set "$1" && myarchy-deploy config && myarchy-refresh all' _ "$rest"
-		;;
-	cursor)
-		detach myarchy-cursor set "${rest%:*}" "${rest##*:}"
-		;;
-	drive)
-		detach bash -c '
-			if [[ -z $(myarchy-drive mountpoint "$1") ]]; then
-				myarchy-drive mount "$1"
-			else
-				myarchy-drive unmount "$1"
-			fi' _ "$rest"
-		;;
-	*)
-		render "$path"
-		;;
-	esac
-}
-
-accept_custom() {
-	local input=$1
-	local path=${ROFI_DATA:-main}
-	local id=${path##*/}
-
-	case "$id" in
-	size=*)
-		if [[ "$input" =~ ^[0-9]+$ ]]; then
-			detach myarchy-cursor set "${id#size=}" "$input"
-		else
-			render "$path"
-		fi
-		;;
-	*)
-		render "$path"
-		;;
-	esac
-}
-
+# ---------------------------------------------------------------------------
 # ENTRY POINT
+#
+# Without ROFI_RETV we were run by hand (or by ourselves, for a picker);
+# with it, rofi is calling us as its script mode.
+# ---------------------------------------------------------------------------
 
 if [[ -z ${ROFI_RETV+x} ]]; then
 	case "${1-}" in
