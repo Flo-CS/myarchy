@@ -5,35 +5,73 @@ set -eEo pipefail
 # VARS
 
 export MYARCHY_DIR="$HOME/.local/share/myarchy"
+
+STATE_DIR="$HOME/.local/state/myarchy"
+STEPS_FILE="$STATE_DIR/install-steps"
+LOG_FILE="$STATE_DIR/install.log"
+
+mkdir -p "$STATE_DIR"
+
+CURRENT_STEP="preflight"
+trap 'echo "install failed at step: $CURRENT_STEP (see $LOG_FILE)" >&2' ERR
+
+# Skips steps already done by a previous failed run. MYARCHY_FORCE=1 replays them.
+step() {
+	local name="$1"
+	shift
+
+	if [ -z "$MYARCHY_FORCE" ] && grep -Fxq "$name" "$STEPS_FILE" 2>/dev/null; then
+		echo "== skip $name"
+		return 0
+	fi
+
+	CURRENT_STEP="$name"
+	echo "== $name"
+	source "$MYARCHY_DIR/install/$name" "$@"
+	echo "$name" >>"$STEPS_FILE"
+}
+
+source $MYARCHY_DIR/install/preflight
+
 export MYARCHY_INSTANCE_ID=${MYARCHY_INSTANCE_ID:-$(gum input --header "Enter your myarchy instance ID used to identify specific local configurations (e.g. 'desktop', 'laptop')")}
+
+# After the prompt so gum keeps its tty
+exec > >(tee -a "$LOG_FILE") 2>&1
 
 # GLOBAL / SYSTEM
 
-source $MYARCHY_DIR/install/global/deploy-myarchy-lib
+step global/deploy-myarchy-lib
 
-source $MYARCHY_DIR/install/global/install-packages
+step global/config-pacman
 
-source $MYARCHY_DIR/install/global/config-sudoers
-source $MYARCHY_DIR/install/global/config-bluetooth
-source $MYARCHY_DIR/install/global/config-docker
-source $MYARCHY_DIR/install/global/config-firewall
-source $MYARCHY_DIR/install/global/config-faillock
-source $MYARCHY_DIR/install/global/config-system-backups
-source $MYARCHY_DIR/install/global/config-terminal
-source $MYARCHY_DIR/install/global/config-grub-menu-entries
-source $MYARCHY_DIR/install/global/config-grub-menu-config
-source $MYARCHY_DIR/install/global/config-grub-reboot-to
-source $MYARCHY_DIR/install/global/config-boot-splashscreen spinner_alt
-source $MYARCHY_DIR/install/global/config-login-manager
+step global/install-packages
+
+step global/config-sudoers
+step global/config-bluetooth
+step global/config-docker
+step global/config-firewall
+step global/config-faillock
+step global/config-system-backups
+step global/config-terminal
+step global/config-power
+step global/config-grub-menu-entries
+step global/config-grub-menu-config
+step global/config-grub-reboot-to
+step global/config-boot-splashscreen spinner_alt
+step global/config-login-manager
 
 # USER
 
-source $MYARCHY_DIR/install/user/install-packages
+step user/install-packages
 
-source $MYARCHY_DIR/install/user/deploy-bin
-source $MYARCHY_DIR/install/user/deploy-config
-source $MYARCHY_DIR/install/user/deploy-applications
+step user/deploy-bin
+step user/deploy-config
+step user/deploy-applications
 
-source $MYARCHY_DIR/install/user/config-battery-and-power
+step user/install-idle-inhibitor
+
+step user/config-battery-and-power
+
+rm -f "$STEPS_FILE"
 
 myarchy-refresh all

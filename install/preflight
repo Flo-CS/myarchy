@@ -1,0 +1,16 @@
+#!/usr/bin/env bash
+
+actual_dir=$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)
+if [ "$actual_dir" != "$MYARCHY_DIR" ]; then
+	echo "myarchy must be cloned to $MYARCHY_DIR, found it at $actual_dir" >&2
+	exit 1
+fi
+
+sudo pacman -S --noconfirm --needed git base-devel gum
+
+if ! command -v yay >/dev/null; then
+	yay_build_dir=$(mktemp -d)
+	git clone https://aur.archlinux.org/yay.git "$yay_build_dir/yay"
+	(cd "$yay_build_dir/yay" && makepkg -si --noconfirm)
+	rm -rf "$yay_build_dir"
+fi

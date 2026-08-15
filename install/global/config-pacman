@@ -1,0 +1,19 @@
+#!/usr/bin/env bash
+
+CONFIG_FILE="/etc/pacman.conf"
+
+sudo myarchy-lib backup-file "$CONFIG_FILE"
+
+for option in Color ILoveCandy VerbosePkgLists CheckSpace; do
+	if grep -qE "^\s*$option\s*$" "$CONFIG_FILE"; then
+		continue
+	fi
+
+	if grep -qE "^\s*#\s*$option\s*$" "$CONFIG_FILE"; then
+		sudo sed -i -E "s/^\s*#\s*$option\s*$/$option/" "$CONFIG_FILE"
+	else
+		sudo sed -i "0,/^\[options\]/s//[options]\n$option/" "$CONFIG_FILE"
+	fi
+
+	echo "enabled $option in $CONFIG_FILE"
+done

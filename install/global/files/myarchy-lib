@@ -4,7 +4,8 @@ BACKUPS_DIR="/var/backups"
 
 init() {
 	sudo mkdir -p $BACKUPS_DIR
-	sudo chmod 777 $BACKUPS_DIR
+	sudo chown "$USER:$USER" $BACKUPS_DIR
+	sudo chmod 755 $BACKUPS_DIR
 }
 
 version_ge() {
@@ -55,7 +56,12 @@ robust_link() {
 	backup_file "$link_name"
 	rm -rf "$link_name" && echo "removed $link_name"
 	mkdir -p "$(dirname "$link_name")"
-	ln -sT "$target" "$link_name" && echo "symlinked $link_name -> $target" || echo "failed to create symlink $target $link_name"
+	if ! test -e "$target"; then
+		echo "cannot symlink $link_name, target does not exist: $target" >&2
+		return 1
+	fi
+
+	ln -sT "$target" "$link_name" && echo "symlinked $link_name -> $target"
 }
 
 robust_insert_with_marker() {

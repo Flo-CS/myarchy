@@ -1,5 +1,9 @@
 #!/usr/bin/env bash
 
+# EndeavourOS ships firewalld, which would fight ufw over nftables
+sudo systemctl disable --now firewalld.service || echo "firewalld is not enabled, skipping"
+sudo pacman -Rns --noconfirm firewalld || echo "firewalld is already uninstalled, skipping"
+
 # Allow nothing in, everything out
 sudo ufw default deny incoming
 sudo ufw default allow outgoing

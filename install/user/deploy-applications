@@ -5,7 +5,7 @@ mkdir -p "$HOME/.local/share/applications" "$HOME/.local/share/applications/icon
 shopt -s nullglob
 
 # Copy desktop files
-desktop_files=("$MYARCHY_DIR/applications"/*.desktop)
+desktop_files=("$MYARCHY_DIR/applications"/*.desktop "$MYARCHY_DIR/applications/hidden"/*.desktop)
 if [ ${#desktop_files[@]} -gt 0 ]; then
 	echo "Copying desktop files..."
 	for file in "${desktop_files[@]}"; do

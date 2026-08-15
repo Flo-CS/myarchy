@@ -7,7 +7,7 @@ sudo myarchy-lib robust-copy \
 	"$MYARCHY_DIR/install/global/files/greetd/config.toml" \
 	/etc/greetd/config.toml
 
-# Enable greetd service
-sudo systemctl enable greetd.service
+# --force to take over display-manager.service from the ISO's own login manager
+sudo systemctl enable --force greetd.service
 
 echo "✓ Login manager configured. Reboot to use greetd."

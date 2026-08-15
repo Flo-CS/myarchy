@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+
+export MYARCHY_DIR="$HOME/.local/share/myarchy"
+
+# Guarded: pacman's rust does not create ~/.cargo/env, only rustup does
+[ -f "$HOME/.cargo/env" ] && . "$HOME/.cargo/env"
+
+source ~/.config/rc/profile.sh

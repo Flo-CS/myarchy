@@ -2,6 +2,8 @@
 
 set -eEo pipefail
 
+mkdir -p "$HOME/.local/bin"
+
 find "$MYARCHY_DIR/bin" -type f -exec cp -f --remove-destination -t $HOME/.local/bin {} +
 
 export PATH="$HOME/.local/bin:$PATH"

@@ -38,7 +38,7 @@ myarchy-lib robust-link $SOURCE/config/hypr/hypridle.conf ~/.config/hypr/hypridl
 myarchy-lib robust-link $SOURCE/config/hypr/hyprpaper.conf ~/.config/hypr/hyprpaper.conf
 
 myarchy-lib robust-link $SOURCE/config/btop/btop.conf ~/.config/btop/btop.conf
-myarchy-lib robust-link $SOURCE/themes/current/btop/btop.theme ~/.config/btop/theme.theme
+myarchy-lib robust-link $SOURCE/themes/current/btop/btop.theme ~/.config/btop/themes/theme.theme
 
 myarchy-lib robust-link $SOURCE/config/kvantum/kvantum.kvconfig ~/.config/Kvantum/kvantum.kvconfig
 # Kvantum expects a real theme directory holding <dir-name>.kvconfig and <dir-name>.svg
@@ -81,11 +81,16 @@ myarchy-lib robust-link $SOURCE/config/mimeapps.list ~/.config/mimeapps.list
 myarchy-lib robust-link $SOURCE/config/.ideavimrc ~/.ideavimrc
 
 myarchy-lib robust-link $SOURCE/config/rc ~/.config/rc
+myarchy-lib robust-link $SOURCE/config/.profile-default ~/.profile-default
 myarchy-lib robust-link $SOURCE/config/.profile#$MYARCHY_INSTANCE_ID ~/.profile
+myarchy-lib robust-link $SOURCE/config/.bashrc-default ~/.bashrc-default
 myarchy-lib robust-link $SOURCE/config/.bashrc#$MYARCHY_INSTANCE_ID ~/.bashrc
+myarchy-lib robust-link $SOURCE/config/.bash_profile-default ~/.bash_profile-default
 myarchy-lib robust-link $SOURCE/config/.bash_profile#$MYARCHY_INSTANCE_ID ~/.bash_profile
 
 myarchy-lib robust-link $SOURCE/config/.gitconfig-default ~/.gitconfig-default
 myarchy-lib robust-link $SOURCE/config/.gitconfig#$MYARCHY_INSTANCE_ID ~/.gitconfig
 
 myarchy-lib robust-link $SOURCE/config/.inputrc ~/.inputrc
+
+systemctl --user daemon-reload

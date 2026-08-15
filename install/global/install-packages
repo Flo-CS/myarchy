@@ -27,6 +27,22 @@ install_net_tools() {
 	install_pkgs curl
 }
 
+install_rust() {
+	install_pkgs rust
+}
+
+install_browser() {
+	install_pkgs firefox
+}
+
+install_file_manager() {
+	install_pkgs thunar
+}
+
+install_xdg() {
+	install_pkgs xdg-user-dirs xdg-utils
+}
+
 install_files_tools() {
 	install_pkgs bat fd ripgrep fzf jq go-yq python-j2cli unzip xz zip yazi
 }
@@ -48,7 +64,7 @@ install_wayland() {
 }
 
 install_boot() {
-	install_pkgs plymouth
+	install_pkgs plymouth os-prober
 	install_yay_pkgs plymouth-theme-spinner-alt-git
 }
 
@@ -113,14 +129,15 @@ install_power() {
 }
 
 install_fonts() {
-	install_pkgs ttf-jetbrains-mono-nerd ttf-nerd-fonts-symbols
+	install_pkgs ttf-jetbrains-mono-nerd ttf-nerd-fonts-symbols adwaita-fonts noto-fonts noto-fonts-emoji
 }
 
 install_audio() {
-	install_pkgs sof-firmware pipewire wireplumber pipewire-audio pipewire-pulse pipewire-jack wiremix
+	install_pkgs sof-firmware pipewire wireplumber pipewire-audio pipewire-pulse pipewire-jack pipewire-alsa wiremix pavucontrol alsa-utils
 }
 
 install_bluetooth() {
+	install_pkgs bluez bluez-utils
 	install_yay_pkgs bluetuith-bin
 }
 
@@ -165,6 +182,10 @@ install_terminal
 install_flatpak
 install_git
 install_net_tools
+install_rust
+install_browser
+install_file_manager
+install_xdg
 install_files_tools
 install_sync_tools
 install_nvm

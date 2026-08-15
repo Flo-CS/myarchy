@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 
-export MYARCHY_DIR="$HOME/.local/share/myarchy"
 export MYARCHY_INSTANCE_ID="laptop"
 
-. "$HOME/.cargo/env"
+export LIBVA_DRIVER_NAME=nvidia
+export __GLX_VENDOR_LIBRARY_NAME=nvidia
 
-source ~/.config/rc/profile.sh
+source ~/.bash_profile-default
