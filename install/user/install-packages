@@ -13,6 +13,10 @@ install_nodejs() {
 	nvm install --lts || echo "nvm install failed, maybe nvm is not properly configured" >&2
 }
 
+install_rust() {
+	rustup toolchain install stable
+}
+
 install_localsend() {
 	install_yay_pkgs localsend-bin
 }

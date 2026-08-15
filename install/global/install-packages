@@ -28,7 +28,7 @@ install_net_tools() {
 }
 
 install_rust() {
-	install_pkgs rust
+	install_pkgs rustup rust-analyzer
 }
 
 install_browser() {
