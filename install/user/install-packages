@@ -1,5 +1,9 @@
 #!/usr/bin/env bash
 
+install_yay_pkgs() {
+	yay -S --needed --answerclean None --answerdiff All "$@"
+}
+
 install_flatpak() {
 	flatpak remote-add --user --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo
 }
@@ -9,5 +13,10 @@ install_nodejs() {
 	nvm install --lts || echo "nvm install failed, maybe nvm is not properly configured" >&2
 }
 
+install_localsend() {
+	install_yay_pkgs localsend-bin
+}
+
 install_flatpak
 install_nodejs
+install_localsend

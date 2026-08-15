@@ -18,6 +18,7 @@ hl.config({
 		active_opacity = 0.95,
 		inactive_opacity = 0.90,
 		fullscreen_opacity = 1.0,
+		dim_around = 0.5,
 
 		blur = {
 			enabled = true,
@@ -80,7 +81,7 @@ hl.animation({ leaf = "fade", enabled = true, speed = 2, bezier = "md3_decel" })
 
 hl.animation({ leaf = "layersIn", enabled = true, speed = 2, bezier = "menu_decel", style = "slide" })
 hl.animation({ leaf = "layersOut", enabled = true, speed = 1, bezier = "menu_accel" })
-hl.animation({ leaf = "fadeLayersIn", enabled = true, speed = 1, bezier = "menu_decel" })
+hl.animation({ leaf = "fadeLayersIn", enabled = true, speed = 2.5, bezier = "menu_decel" })
 hl.animation({ leaf = "fadeLayersOut", enabled = true, speed = 0.5, bezier = "menu_accel" })
 hl.animation({ leaf = "workspaces", enabled = true, speed = 3, bezier = "menu_decel", style = "slide" })
 
@@ -101,6 +102,9 @@ hl.layer_rule({
 	match = { namespace = "rofi" },
 	blur = true,
 	ignore_alpha = 0.2,
+	dim_around = true,
+	-- rofi's surface is the panel itself, so the global "slide" has no edge to slide from
+	animation = "popin 92%",
 })
 
 -- BASELINE WINDOW RULES

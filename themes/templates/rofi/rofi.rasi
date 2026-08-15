@@ -5,5 +5,5 @@
     foreground:         {{foreground-strong|hex}};
     foreground-muted:   {{foreground|hex:80}};
 
-    outline:            {{outline|hex}};
+    outline:            {{outline-strong|hex}};
 }

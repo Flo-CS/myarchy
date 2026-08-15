@@ -20,12 +20,19 @@ list_wallpapers() {
 	fd --glob "*" "$WALLPAPERS_DIR/" --format {/}
 }
 
-set_wallpaper() {
-	ln -sfT "$WALLPAPERS_DIR/$1" "$WALLPAPERS_DIR/current"
+get_wallpapers_dir() {
+	echo "$WALLPAPERS_DIR"
+}
 
-	pkill hyprpaper
-	hyprpaper &
-	disown
+set_wallpaper() {
+	wallpaper_path="$WALLPAPERS_DIR/$1"
+
+	ln -sfT "$wallpaper_path" "$WALLPAPERS_DIR/current"
+
+	if ! hyprctl hyprpaper wallpaper ",$wallpaper_path" >/dev/null 2>&1; then
+		hyprpaper &
+		disown
+	fi
 
 	save_preferred
 }
@@ -57,6 +64,9 @@ get)
 list)
 	list_wallpapers
 	;;
+dir)
+	get_wallpapers_dir
+	;;
 set)
 	set_wallpaper "$2"
 	;;
@@ -67,7 +77,7 @@ save-preferred)
 	save_preferred
 	;;
 *)
-	echo "Usage: $0 {get|list|set <wallpaper_name>|apply-preferred|save-preferred|init}" >&2
+	echo "Usage: $0 {get|list|dir|set <wallpaper_name>|apply-preferred|save-preferred|init}" >&2
 	exit 1
 	;;
 esac

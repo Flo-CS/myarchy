@@ -2,9 +2,10 @@
 
 dmenu() {
 	local prompt=$1
+	shift
 
 	pkill -x rofi
-	rofi -dmenu -p "$prompt" -i
+	rofi -dmenu -p "$prompt" -i "$@"
 }
 
 show_select_theme_menu() {
@@ -20,7 +21,20 @@ show_select_theme_menu() {
 }
 
 show_select_wallpaper_menu() {
-	selected=$(myarchy-wallpaper list | dmenu "Wallpaper")
+	# rofi renders the image given as the row icon, which acts as a preview
+	local preview_theme='
+		listview { lines: 6; }
+		element { padding: 4px 16px; }
+		element-icon { size: 72px; }
+	'
+	local wallpapers_dir
+	wallpapers_dir=$(myarchy-wallpaper dir)
+
+	selected=$(myarchy-wallpaper list |
+		while read -r wallpaper; do
+			printf '%s\0icon\x1f%s\n' "$wallpaper" "$wallpapers_dir/$wallpaper"
+		done |
+		dmenu "Wallpaper" -show-icons -theme-str "$preview_theme")
 
 	if [[ -z "$selected" ]]; then
 		show_main_menu
