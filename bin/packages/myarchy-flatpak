@@ -13,6 +13,7 @@ install_flatpak_pkg() {
   pkg_to_install=$(
     flatpak remote-ls $SCOPE_ARGS "$REMOTE" --app --columns=application,name |
       fzf --multi \
+        --header 'Tab: mark multiple   Enter: confirm   Esc: cancel' \
         --with-nth=2.. \
         --preview "flatpak remote-info $SCOPE_ARGS $REMOTE {1}" \
         --preview-window 'down:65%:wrap' \
@@ -37,6 +38,7 @@ remove_flatpak_pkg() {
   pkg_to_remove=$(
     flatpak list $SCOPE_ARGS --app --columns=application,name |
       fzf --multi \
+        --header 'Tab: mark multiple   Enter: confirm   Esc: cancel' \
         --with-nth=2.. \
         --preview "flatpak info {1}" \
         --preview-window 'down:65%:wrap' \

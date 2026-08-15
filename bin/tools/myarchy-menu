@@ -1,221 +1,362 @@
 #!/usr/bin/env bash
 
-dmenu() {
-	local prompt=$1
-	shift
+# The whole menu lives in a single rofi process, written as a rofi "script mode" mode.
+# Rofi keeps its window mapped and calls this script again for every action, swapping
+# the rows in place. That is the point: Hyprland attaches the blur and dim_around
+# backdrop to rofi's layer surface (config/hypr/hyprland/style.lua), so spawning a fresh
+# rofi per submenu tore the backdrop down and built it back up on every keypress.
+#
+# Protocol, see rofi-script(5):
+#   ROFI_RETV=0   first call            -> print the root rows
+#   ROFI_RETV=1   row activated         -> $1 is the label, ROFI_INFO the action token
+#   ROFI_RETV=2   custom text accepted  -> $1 is whatever was typed
+#   ROFI_RETV=28  kb-custom-19          -> Escape, remapped in launch() to mean "back"
+#   ROFI_DATA     what we sent as \0data last call: the path of the menu on screen
+# Printing no rows at all tells rofi to quit, which is how every leaf action ends.
 
+BACK_RETV=28 # kb-custom-19
+
+self_path() {
+	local path
+	path=$(command -v -- "$0" 2>/dev/null) || path=$0
+	realpath -- "$path" 2>/dev/null || printf '%s' "$path"
+}
+
+SELF=$(self_path)
+
+launch() {
+	# rofi holds a pidfile lock and refuses to start while another instance has it, so
+	# wait for the one we just killed to actually let go
 	pkill -x rofi
-	rofi -dmenu -p "$prompt" -i "$@"
+	for _ in $(seq 40); do
+		pgrep -x rofi >/dev/null || break
+		sleep 0.025
+	done
+
+	# Escape is taken out of kb-cancel and handed to the script as a hot key instead,
+	# so it can pop one level in place rather than killing the window. Ctrl+G, Ctrl+[
+	# and clicking outside still close the menu outright, from any depth.
+	exec rofi -show menu -modes "menu:$SELF" -i \
+		-kb-cancel "Control+g,Control+bracketleft" \
+		-kb-custom-19 "Escape"
 }
 
-show_select_theme_menu() {
-	selected=$(myarchy-theme list | dmenu "Theme")
+# Run a leaf action and let rofi close. We return before rofi has actually exited, so
+# wait for it to be gone first: screenshots must not catch the panel or its dim on the
+# way out, and terminals should not open underneath a backdrop that is still up.
+detach() {
+	local rofi_pid=$PPID
+	[[ $(cat "/proc/$rofi_pid/comm" 2>/dev/null) == rofi ]] || rofi_pid=$(pgrep -x -n rofi)
 
-	if [[ -z "$selected" ]]; then
-		show_main_menu
-	else
-		myarchy-theme set "$selected"
-		myarchy-deploy config
-		myarchy-refresh all
-	fi
+	# ROFI_* has to go: a picker re-enters this script, and it must not look like rofi
+	# calling its own mode
+	setsid --fork bash -c '
+		pid=$1
+		shift
+		for _ in $(seq 60); do
+			[[ -n $pid ]] && kill -0 "$pid" 2>/dev/null || break
+			sleep 0.05
+		done
+		exec env -u ROFI_RETV -u ROFI_INFO -u ROFI_DATA "$@"
+	' _ "$rofi_pid" "$@" >/dev/null 2>&1 </dev/null &
 }
 
-show_select_wallpaper_menu() {
-	# rofi renders the image given as the row icon, which acts as a preview
+# Hand the screen over to a picker. Unlike detach() this does not wait: the new window
+# has to map while this one is still up, or the backdrop drops out for the length of a
+# round trip and you get the same blink the script-mode rewrite was meant to remove.
+# The two rofis overlap for a frame or two, hence the separate pidfile lock.
+handoff() {
+	setsid --fork env -u ROFI_RETV -u ROFI_INFO -u ROFI_DATA "$@" >/dev/null 2>&1 </dev/null &
+}
+
+# PICKERS
+#
+# The menus that cannot live inside the persistent window. All are leaves, so they cost
+# one transition, exactly as they did before.
+
+PICKER_PIDFILE="${XDG_RUNTIME_DIR:-/tmp}/myarchy-menu-picker.pid"
+
+picker_wallpaper() {
+	# rofi renders the row icon, which is what makes this a preview. Icon size cannot be
+	# changed at runtime from script mode -- rofi-script(5) says theme snippets are "only
+	# usable for small changes" and a \0theme resize is silently ignored -- so the preview
+	# needs its own window with a -theme-str override.
 	local preview_theme='
 		listview { lines: 6; }
 		element { padding: 4px 16px; }
 		element-icon { size: 72px; }
 	'
-	local wallpapers_dir
+	local wallpapers_dir selected
 	wallpapers_dir=$(myarchy-wallpaper dir)
 
 	selected=$(myarchy-wallpaper list |
 		while read -r wallpaper; do
 			printf '%s\0icon\x1f%s\n' "$wallpaper" "$wallpapers_dir/$wallpaper"
 		done |
-		dmenu "Wallpaper" -show-icons -theme-str "$preview_theme")
+		rofi -pid "$PICKER_PIDFILE" -dmenu -i -p "Wallpaper" -show-icons -theme-str "$preview_theme")
 
-	if [[ -z "$selected" ]]; then
-		show_main_menu
-	else
-		myarchy-wallpaper set "$selected"
-	fi
+	[[ -n "$selected" ]] && myarchy-wallpaper set "$selected"
 }
 
-show_select_cursor_menu() {
-	selected=$(myarchy-cursor list | dmenu "Cursor")
+picker_reboot_to() {
+	# myarchy-reboot-to list reads grub.cfg through pkexec, and the polkit prompt cannot
+	# take keyboard input while rofi holds the layer-shell keyboard grab.
+	local selected
+	selected=$(myarchy-reboot-to list | rofi -dmenu -i -p "Reboot to")
 
-	if [[ -z "$selected" ]]; then
-		show_main_menu
-	else
-		size=$(rofi -dmenu -p "Enter size:")
-		myarchy-cursor set $selected $size
-	fi
+	[[ -n "$selected" ]] && myarchy-reboot-to reboot "$selected"
 }
 
-show_reboot_to_menu() {
-	selected=$(myarchy-reboot-to list | dmenu "Reboot to")
-
-	if [[ -z "$selected" ]]; then
-		show_system_menu
-	else
-		myarchy-reboot-to reboot "$selected"
-	fi
+picker_emoji() {
+	rofi -pid "$PICKER_PIDFILE" -modi emoji -show emoji -display-emoji "Emoji"
 }
 
-show_system_menu() {
-	selected=$(printf 'Reboot
-Reboot to
-Shutdown
-Sleep
-' | dmenu "System")
+# MENUS
+#
+# Every row carries an action token in its `info` field, so selections dispatch on the
+# token rather than on a glob over the visible label.
 
-	if [[ -z "$selected" ]]; then
-		show_main_menu
-	else
-		case "$selected" in
-		*"Reboot to"*) show_reboot_to_menu ;;
-		*"Reboot"*) systemctl reboot ;;
-		*"Shutdown"*) systemctl poweroff ;;
-		*"Sleep"*) systemctl suspend ;;
-		esac
-	fi
+entry() {
+	printf '%s\t%s\n' "$1" "$2"
 }
 
-show_screenshot_menu() {
-	selected=$(printf 'Fullscreen
-Area
-Window' | dmenu "Screenshot")
-
-	if [[ -z "$selected" ]]; then
-		show_main_menu
-	else
-		case "$selected" in
-		*"Fullscreen"*) myarchy-screenshot fullscreen ;;
-		*"Area"*) myarchy-screenshot area ;;
-		*"Window"*) myarchy-screenshot window ;;
-		esac
-	fi
-}
-
-show_packages_menu() {
-	selected=$(printf 'Install Package
-Install AUR Package
-Install Flatpak user
-Install Flatpak system
-Remove Package
-Remove Flatpak user
-Remove Flatpak system' | dmenu "Packages")
-
-	if [[ -z "$selected" ]]; then
-		show_main_menu
-	else
-		case "$selected" in
-		*"Install AUR Package"*) myarchy-terminal launch-menu myarchy-pkg yay-install ;;
-		*"Install Package"*) myarchy-terminal launch-menu myarchy-pkg install ;;
-		*"Install Flatpak user"*) myarchy-terminal launch-menu myarchy-flatpak user install ;;
-		*"Install Flatpak system"*) myarchy-terminal launch-menu myarchy-flatpak system install ;;
-		*"Remove Package"*) myarchy-terminal launch-menu myarchy-pkg remove ;;
-		*"Remove Flatpak user"*) myarchy-terminal launch-menu myarchy-flatpak user remove ;;
-		*"Remove Flatpak system"*) myarchy-terminal launch-menu myarchy-flatpak system remove ;;
-		esac
-	fi
-}
-
-show_apps_menu() {
-	selected=$(printf 'Install Webapp
-Install Appimage
-Install TUI
-Remove TUI
-Remove Appimage
-Remove Webapp' | dmenu "Apps")
-
-	if [[ -z "$selected" ]]; then
-		show_main_menu
-	else
-		case "$selected" in
-		*"Install TUI"*) myarchy-terminal launch-menu myarchy-tui install ;;
-		*"Install Webapp"*) myarchy-terminal launch-menu myarchy-webapp install ;;
-		*"Install Appimage"*) myarchy-terminal launch-menu myarchy-appimage install ;;
-		*"Remove TUI"*) myarchy-terminal launch-menu myarchy-tui remove ;;
-		*"Remove Webapp"*) myarchy-terminal launch-menu myarchy-webapp remove ;;
-		*"Remove Appimage"*) myarchy-terminal launch-menu myarchy-appimage remove ;;
-		esac
-	fi
-}
-
-show_drives_menu() {
-	selected=$(myarchy-drive list | dmenu "Drives")
-
-	if [[ -z "$selected" ]]; then
-		show_main_menu
-	else
-		mount_point=$(myarchy-drive mountpoint $selected)
-		if [[ -z "$mount_point" ]]; then
-			myarchy-drive mount $selected
-		else
-			myarchy-drive unmount $selected
-		fi
-	fi
-}
-
-show_edit_config_menu() {
-	selected=$(printf 'Hyprland apps' | dmenu "Edit config")
-
-	if [[ -z "$selected" ]]; then
-		show_main_menu
-	else
-		# TODO: perhaps it's not very maintainable to hardcode paths here
-		case "$selected" in
-		*"Hyprland apps"*) myarchy-terminal launch nvim $MYARCHY_DIR/config/hypr/hyprland/apps.lua ;;
-		esac
-	fi
-}
-
-show_main_menu() {
-	selected=$(printf 'Theme
-Wallpaper
-Cursor
-Emoji
-System
-Bluetooth
-Network
-Audio
-Screenshot
-Monitor
-Info
-Snapshot system
-Packages
-Apps
-Refresh
-Deploy
-Update
-Drives
-Edit config' | dmenu "▶")
-
-	case "$selected" in
-	*"Theme"*) show_select_theme_menu ;;
-	*"Wallpaper"*) show_select_wallpaper_menu ;;
-	*"Cursor"*) show_select_cursor_menu ;;
-	*"Emoji"*) rofi -modi emoji -show emoji -display-emoji "Emoji" ;;
-	*"System"*) show_system_menu ;;
-	*"Screenshot"*) show_screenshot_menu ;;
-	*"Bluetooth"*) myarchy-terminal launch bluetuith --no-warning ;;
-	*"Network"*) myarchy-terminal launch nmtui ;;
-	*"Audio"*) myarchy-terminal launch wiremix ;;
-	*"Monitor"*) myarchy-terminal launch-big btop ;;
-	*"Info"*) myarchy-terminal launch-menu fastfetch ;;
-	*"Snapshot system"*) myarchy-terminal launch-menu myarchy-snapshot create ;;
-	*"Packages"*) show_packages_menu ;;
-	*"Apps"*) show_apps_menu ;;
-	*"Refresh"*) myarchy-terminal launch-menu myarchy-refresh all ;;
-	*"Deploy"*) myarchy-terminal launch-menu myarchy-deploy all ;;
-	*"Update"*) myarchy-terminal launch-menu myarchy-update all ;;
-	*"Drives"*) show_drives_menu ;;
-	*"Edit config"*) show_edit_config_menu ;;
-	*) exit 0 ;;
+menu_prompt() {
+	case "$1" in
+	main) echo "▶" ;;
+	theme) echo "Theme" ;;
+	cursor) echo "Cursor" ;;
+	size=*) echo "Size" ;;
+	system) echo "System" ;;
+	screenshot) echo "Screenshot" ;;
+	packages) echo "Packages" ;;
+	apps) echo "Apps" ;;
+	drives) echo "Drives" ;;
+	edit-config) echo "Edit config" ;;
+	*) echo "▶" ;;
 	esac
 }
 
-show_main_menu
+menu_entries() {
+	case "$1" in
+	main)
+		entry "menu:theme" "Theme"
+		entry "picker:wallpaper" "Wallpaper"
+		entry "menu:cursor" "Cursor"
+		entry "picker:emoji" "Emoji"
+		entry "menu:system" "System"
+		entry "term:launch:bluetuith --no-warning" "Bluetooth"
+		entry "term:launch:nmtui" "Network"
+		entry "term:launch:wiremix" "Audio"
+		entry "menu:screenshot" "Screenshot"
+		entry "term:launch-big:btop" "Monitor"
+		entry "term:launch-menu:fastfetch" "Info"
+		entry "term:launch-menu:myarchy-snapshot create" "Snapshot system"
+		entry "menu:packages" "Packages"
+		entry "menu:apps" "Apps"
+		entry "term:launch-menu:myarchy-refresh all" "Refresh"
+		entry "term:launch-menu:myarchy-deploy all" "Deploy"
+		entry "term:launch-menu:myarchy-update all" "Update"
+		entry "menu:drives" "Drives"
+		entry "menu:edit-config" "Edit config"
+		;;
+	theme)
+		local theme
+		while read -r theme; do
+			entry "theme:$theme" "$theme"
+		done < <(myarchy-theme list)
+		;;
+	cursor)
+		# Picking a cursor is just a step towards its size submenu
+		local cursor
+		while read -r cursor; do
+			entry "menu:size=$cursor" "$cursor"
+		done < <(myarchy-cursor list)
+		;;
+	size=*)
+		# Any other size can be typed in, see accept_custom
+		local cursor=${1#size=} size
+		for size in 16 24 32 48 64; do
+			entry "cursor:$cursor:$size" "$size"
+		done
+		;;
+	system)
+		entry "run:systemctl reboot" "Reboot"
+		entry "picker:reboot-to" "Reboot to"
+		entry "run:systemctl poweroff" "Shutdown"
+		entry "run:systemctl suspend" "Sleep"
+		;;
+	screenshot)
+		entry "run:myarchy-screenshot fullscreen" "Fullscreen"
+		entry "run:myarchy-screenshot area" "Area"
+		entry "run:myarchy-screenshot window" "Window"
+		;;
+	packages)
+		entry "term:launch-menu:myarchy-pkg install" "Install Package"
+		entry "term:launch-menu:myarchy-pkg yay-install" "Install AUR Package"
+		entry "term:launch-menu:myarchy-flatpak user install" "Install Flatpak user"
+		entry "term:launch-menu:myarchy-flatpak system install" "Install Flatpak system"
+		entry "term:launch-menu:myarchy-pkg remove" "Remove Package"
+		entry "term:launch-menu:myarchy-flatpak user remove" "Remove Flatpak user"
+		entry "term:launch-menu:myarchy-flatpak system remove" "Remove Flatpak system"
+		;;
+	apps)
+		entry "term:launch-menu:myarchy-webapp install" "Install Webapp"
+		entry "term:launch-menu:myarchy-appimage install" "Install Appimage"
+		entry "term:launch-menu:myarchy-tui install" "Install TUI"
+		entry "term:launch-menu:myarchy-tui remove" "Remove TUI"
+		entry "term:launch-menu:myarchy-appimage remove" "Remove Appimage"
+		entry "term:launch-menu:myarchy-webapp remove" "Remove Webapp"
+		;;
+	drives)
+		local device rest
+		while read -r device rest; do
+			entry "drive:$device" "$device $rest"
+		done < <(myarchy-drive list)
+		;;
+	edit-config)
+		# TODO: perhaps it's not very maintainable to hardcode paths here
+		entry "term:launch:nvim $MYARCHY_DIR/config/hypr/hyprland/apps.lua" "Hyprland apps"
+		;;
+	esac
+}
+
+# RENDERING
+
+render() {
+	local path=$1 selection=${2:--1}
+	local id=${path##*/} rows
+
+	rows=$(menu_entries "$id")
+
+	printf '\0use-hot-keys\x1ftrue\n'
+	printf '\0data\x1f%s\n' "$path"
+	printf '\0prompt\x1f%s\n' "$(menu_prompt "$id")"
+
+	case "$id" in
+	size=*) printf '\0no-custom\x1ffalse\n' ;;
+	*) printf '\0no-custom\x1ftrue\n' ;;
+	esac
+
+	# Coming back from a submenu, land on the row that led into it
+	if ((selection >= 0)); then
+		printf '\0keep-selection\x1ftrue\n'
+		printf '\0new-selection\x1f%d\n' "$selection"
+	fi
+
+	# An empty list means "quit" to rofi, so an empty submenu needs something to show
+	if [[ -z "$rows" ]]; then
+		printf 'Nothing here\0nonselectable\x1ftrue\x1finfo\x1fnoop:\n'
+		return
+	fi
+
+	local token label
+	while IFS=$'\t' read -r token label; do
+		printf '%s\0info\x1f%s\n' "$label" "$token"
+	done <<<"$rows"
+}
+
+row_index() {
+	menu_entries "$1" | awk -F'\t' -v want="$2" '
+		$1 == want { print NR - 1; found = 1; exit }
+		END { if (!found) print -1 }'
+}
+
+go_back() {
+	local path=${ROFI_DATA:-main}
+
+	# Nothing left to pop at the root: print no rows and rofi closes
+	[[ "$path" == */* ]] || return 0
+
+	local child=${path##*/} parent=${path%/*}
+	render "$parent" "$(row_index "${parent##*/}" "menu:$child")"
+}
+
+activate() {
+	local token=$1
+	local kind=${token%%:*} rest=${token#*:}
+	local path=${ROFI_DATA:-main}
+
+	case "$kind" in
+	menu)
+		render "$path/$rest"
+		;;
+	run)
+		detach bash -c "$rest"
+		;;
+	term)
+		# myarchy-terminal joins its command with "$*", so it takes one string
+		detach myarchy-terminal "${rest%%:*}" "${rest#*:}"
+		;;
+	picker)
+		case "$rest" in
+		# pkexec runs before this one's rofi and its polkit prompt cannot take input
+		# while the menu still holds the keyboard grab, so it has to wait its turn
+		reboot-to) detach "$SELF" --picker "$rest" ;;
+		*) handoff "$SELF" --picker "$rest" ;;
+		esac
+		;;
+	theme)
+		detach bash -c \
+			'myarchy-theme set "$1" && myarchy-deploy config && myarchy-refresh all' _ "$rest"
+		;;
+	cursor)
+		detach myarchy-cursor set "${rest%:*}" "${rest##*:}"
+		;;
+	drive)
+		detach bash -c '
+			if [[ -z $(myarchy-drive mountpoint "$1") ]]; then
+				myarchy-drive mount "$1"
+			else
+				myarchy-drive unmount "$1"
+			fi' _ "$rest"
+		;;
+	*)
+		render "$path"
+		;;
+	esac
+}
+
+accept_custom() {
+	local input=$1
+	local path=${ROFI_DATA:-main}
+	local id=${path##*/}
+
+	case "$id" in
+	size=*)
+		if [[ "$input" =~ ^[0-9]+$ ]]; then
+			detach myarchy-cursor set "${id#size=}" "$input"
+		else
+			render "$path"
+		fi
+		;;
+	*)
+		render "$path"
+		;;
+	esac
+}
+
+# ENTRY POINT
+
+if [[ -z ${ROFI_RETV+x} ]]; then
+	case "${1-}" in
+	--picker)
+		case "${2-}" in
+		wallpaper) picker_wallpaper ;;
+		reboot-to) picker_reboot_to ;;
+		emoji) picker_emoji ;;
+		esac
+		;;
+	*)
+		launch
+		;;
+	esac
+	exit
+fi
+
+case "$ROFI_RETV" in
+0) render "main" ;;
+1) activate "${ROFI_INFO-}" ;;
+2) accept_custom "${1-}" ;;
+"$BACK_RETV") go_back ;;
+*) render "${ROFI_DATA:-main}" ;;
+esac

@@ -9,7 +9,15 @@ install_tui() {
 	# Get user input
 	app_name=$(gum input --header "Name" --placeholder "e.g., Htop, Nmtui, etc.")
 	app_exec=$(gum input --header "Launch command" --placeholder "e.g., htop, nmtui, etc.")
-	app_should_use_bash=$(gum confirm "Does it need bash session ?")
+	# gum confirm answers through its exit status and prints nothing, so capturing it
+	# always yielded an empty string: 0 is yes, 1 is no, anything else is an escape
+	gum confirm "Does it need bash session ?"
+	case $? in
+	0) app_should_use_bash=true ;;
+	1) app_should_use_bash=false ;;
+	*) exit 1 ;;
+	esac
+
 	app_class=$(gum choose --header "Window style/class" Myarchy.App Myarchy.BigApp Myarchy.TiledApp --selected Myarchy.BigApp)
 	icon_url=$(gum input --header "Icon URL" --placeholder "See https://dashboardicons.com (must use PNG!)")
 

@@ -3,6 +3,7 @@
 install_packages() {
 	pkg_to_install=$(
 		pacman -Slq | fzf --multi \
+			--header 'Tab: mark multiple   Enter: confirm   Esc: cancel' \
 			--preview 'pacman -Sii {1}' \
 			--preview-window 'down:65%:wrap' \
 			--bind 'alt-d:preview-half-page-down,alt-u:preview-half-page-up' \
@@ -18,6 +19,7 @@ install_packages() {
 install_yay_packages() {
 	pkg_to_install=$(
 		yay -Slqa | fzf --multi \
+			--header 'Tab: mark multiple   Enter: confirm   Esc: cancel' \
 			--preview 'yay -Sii {1}' \
 			--preview-window 'down:65%:wrap' \
 			--bind 'alt-d:preview-half-page-down,alt-u:preview-half-page-up' \
@@ -33,6 +35,7 @@ install_yay_packages() {
 remove_packages() {
 	pkg_to_remove=$(
 		yay -Qqe | fzf --multi \
+			--header 'Tab: mark multiple   Enter: confirm   Esc: cancel' \
 			--preview 'yay -Qi {1}' \
 			--preview-window 'down:65%:wrap' \
 			--bind 'alt-d:preview-half-page-down,alt-u:preview-half-page-up' \
