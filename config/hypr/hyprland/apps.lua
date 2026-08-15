@@ -97,6 +97,13 @@ hl.window_rule({
 })
 
 hl.window_rule({
+	name = "myarchy-menu-backdrop",
+	match = { class = "^(Myarchy.Menu)$" },
+	-- same backdrop as rofi, strength comes from decoration.dim_around
+	dim_around = true,
+})
+
+hl.window_rule({
 	name = "myarchy-menu-size",
 	match = { class = "^(Myarchy.)(Menu|App)$" },
 	size = "1000 700",
