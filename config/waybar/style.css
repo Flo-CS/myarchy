@@ -41,7 +41,7 @@ tooltip {
 }
 
 #privacy,
-#idle_inhibitor,
+#custom-idle-inhibitor,
 #battery,
 #backlight,
 #clock {
@@ -66,18 +66,6 @@ tooltip {
   opacity: 0.5;
 }
 
- #custom-idle-inhibitor {
-      padding: 0 10px;
-  }
-
-  #custom-idle-inhibitor.active {
-      color: #f5a623;
-  }
-
- #custom-idle-inhibitor.inactive {
-      color: #888888;
-  }
-
-  #custom-idle-inhibitor.error {
-      color: #e94e4e;
-  }
+#custom-idle-inhibitor.inactive {
+  opacity: 0.5;
+}
