@@ -17,25 +17,25 @@ end
 -- SYSTEM/POWER
 
 hl.bind(profile.main_mod .. " + CTRL + SHIFT + escape", hl.dsp.exec_cmd("uwsm stop"))
-hl.bind(profile.main_mod .. " + CTRL + L", hl.dsp.exec_cmd("uwsm app -- myarchy-session lock"))
+hl.bind(profile.main_mod .. " + CTRL + L", hl.dsp.exec_cmd("uwsm-app -- myarchy-session lock"))
 
 -- APP LAUNCHERS
 
-hl.bind(profile.main_mod .. " + Q", hl.dsp.exec_cmd("uwsm app -- alacritty"))
+hl.bind(profile.main_mod .. " + Q", hl.dsp.exec_cmd("uwsm-app -- alacritty"))
 hl.bind(
 	profile.main_mod .. "+ SHIFT" .. " + E",
-	hl.dsp.exec_cmd([[uwsm app -- rofi -modi emoji -show emoji -display-emoji "Emoji"]])
+	hl.dsp.exec_cmd([[uwsm-app -- rofi -modi emoji -show emoji -display-emoji "Emoji"]])
 )
-hl.bind(profile.main_mod .. "+ SHIFT" .. " + S", hl.dsp.exec_cmd("uwsm app -- myarchy-screenshot area"))
-hl.bind(profile.main_mod .. "+ SHIFT" .. " + I", hl.dsp.exec_cmd("uwsm app -- myarchy-hypr-window-info-menu"))
+hl.bind(profile.main_mod .. "+ SHIFT" .. " + S", hl.dsp.exec_cmd("uwsm-app -- myarchy-screenshot area"))
+hl.bind(profile.main_mod .. "+ SHIFT" .. " + I", hl.dsp.exec_cmd("uwsm-app -- myarchy-hypr-window-info-menu"))
 
 hl.bind(
 	profile.main_mod .. " + space",
 	hl.dsp.exec_cmd(
-		[[uwsm app -- rofi -show combi -display-combi "▶" -modes combi -combi-modes "window,drun" -show-icons]]
+		[[uwsm-app -- rofi -show combi -display-combi "▶" -modes combi -combi-modes "window,drun" -show-icons]]
 	)
 )
-hl.bind(profile.main_mod .. "+ SHIFT" .. " + space", hl.dsp.exec_cmd("uwsm app -- myarchy-menu"))
+hl.bind(profile.main_mod .. "+ SHIFT" .. " + space", hl.dsp.exec_cmd("uwsm-app -- myarchy-menu"))
 
 -- WINDOW MANAGEMENT
 

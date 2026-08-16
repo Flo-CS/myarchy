@@ -1,0 +1,14 @@
+[Unit]
+Description=On-screen display for volume, brightness and lock keys
+Documentation=https://github.com/ErikReider/SwayOSD
+PartOf=graphical-session.target
+After=graphical-session.target
+
+[Service]
+ExecCondition=/bin/sh -c '[ -n "$WAYLAND_DISPLAY" ]'
+ExecStart=/usr/bin/swayosd-server
+Restart=on-failure
+RestartSec=2
+
+[Install]
+WantedBy=graphical-session.target

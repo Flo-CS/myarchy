@@ -210,6 +210,7 @@ install_notifications
 install_screen
 install_monitoring
 install_firewall
+install_security
 install_power
 install_fonts
 install_audio
@@ -222,3 +223,4 @@ install_backup_tools
 install_docs
 install_docker
 install_python
+install_wireguard

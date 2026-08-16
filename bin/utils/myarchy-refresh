@@ -5,7 +5,7 @@ refresh_all() {
 	touch ~/.config/alacritty/alacritty.toml # Trigger reload
 
 	# Waybar
-	pkill -x waybar && setsid uwsm app -- waybar &
+	systemctl --user restart waybar.service &
 
 	# Mako
 	makoctl reload &
@@ -14,7 +14,7 @@ refresh_all() {
 	hyprctl reload &
 
 	# Swayosd
-	pkill -x swayosd-server && setsid uwsm app -- swayosd-server &
+	systemctl --user restart swayosd-server.service &
 
 	# GTK - trigger settings reload by touching settings files
 	touch ~/.config/gtk-3.0/settings.ini &

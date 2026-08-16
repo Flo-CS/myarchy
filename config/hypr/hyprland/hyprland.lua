@@ -8,15 +8,7 @@ hl.monitor({
 })
 
 hl.on("hyprland.start", function()
-	hl.exec_cmd("uwsm app -- waybar >/dev/null 2>&1 &")
-	hl.exec_cmd("hyprpaper")
-	hl.exec_cmd("hypridle")
-	hl.exec_cmd("systemctl --user start hyprpolkitagent")
-	hl.exec_cmd("uwsm app -- udiskie")
-	hl.exec_cmd("uwsm app -- mako >/dev/null 2>&1 &")
-	hl.exec_cmd("uwsm app -- swayosd-server >/dev/null 2>&1 &")
 	hl.exec_cmd("myarchy-cursor apply-preferred")
-	hl.exec_cmd("gnome-keyring-daemon --start --components=secrets,pkcs11")
 end)
 
 hl.config({
