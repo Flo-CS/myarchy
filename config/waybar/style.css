@@ -7,7 +7,7 @@
 }
 
 window#waybar {
-    /*border-bottom: 2px solid alpha(@background, 0.9);*/
+    border-bottom: 2px solid alpha(@outline, 0.8);
     background-color: alpha(@background, 0.8);
 }
 
@@ -71,13 +71,13 @@ tooltip {
   }
 
   #custom-idle-inhibitor.active {
-      color: #f5a623; 
+      color: #f5a623;
   }
 
  #custom-idle-inhibitor.inactive {
-      color: #888888;  
+      color: #888888;
   }
 
   #custom-idle-inhibitor.error {
-      color: #e94e4e; 
+      color: #e94e4e;
   }

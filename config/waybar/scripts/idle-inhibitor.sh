@@ -1,7 +1,4 @@
 #!/bin/sh
-# Translate `idle-inhibitor watch` output into waybar JSON, one event per line.
-# When the upstream watcher exits (daemon down or connection lost), emit an
-# error state and sleep briefly so waybar's respawn isn't a tight loop.
 
 idle-inhibitor watch | while IFS= read -r line; do
 	case "$line" in
