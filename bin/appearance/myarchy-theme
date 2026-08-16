@@ -32,6 +32,8 @@ set_theme() {
 
 	myarchy-wallpaper apply-preferred
 	myarchy-cursor apply-preferred
+
+	myarchy-refresh all
 }
 
 get_var() {
