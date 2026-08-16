@@ -11,8 +11,6 @@
 
 ## Packages
 
-some symlinks are incorrect in the deployed config
-
 syncthing for infra
 
 browser profiles for bookmarks and settings
