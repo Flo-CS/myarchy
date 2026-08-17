@@ -9,6 +9,22 @@ hl.monitor({
 
 hl.on("hyprland.start", function()
 	hl.exec_cmd("myarchy-cursor apply-preferred")
+	hl.exec_cmd("myarchy-display auto")
+end)
+
+-- A dock fires one event per output, so coalesce the burst into one apply.
+local function on_monitors_changed()
+	hl.timer(function()
+		hl.exec_cmd("myarchy-display auto")
+	end, { timeout = 300, type = "oneshot" })
+end
+
+hl.on("monitor.added", on_monitors_changed)
+hl.on("monitor.removed", on_monitors_changed)
+
+-- A reload re-runs the catch-all monitor rule, wiping any saved positions
+hl.on("config.reloaded", function()
+	hl.exec_cmd("myarchy-display apply")
 end)
 
 hl.config({
@@ -20,7 +36,8 @@ hl.config({
 		disable_hyprland_logo = true,
 		force_default_wallpaper = 0,
 		allow_session_lock_restore = true,
-		initial_workspace_tracking = 2,
+		-- 1 = single-shot; 2 sends every later window back to the launch workspace
+		initial_workspace_tracking = 1,
 		key_press_enables_dpms = true,
 		disable_autoreload = true,
 		enable_swallow = true,
@@ -31,6 +48,8 @@ hl.config({
 	binds = {
 		hide_special_on_workspace_change = true,
 		workspace_back_and_forth = true,
+		-- Default-on; H/J/K/L cross to the neighbouring monitor at the edge
+		window_direction_monitor_fallback = true,
 	},
 
 	ecosystem = {

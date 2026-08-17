@@ -1,0 +1,528 @@
+#!/usr/bin/env bash
+
+# Monitor layout management. Layouts are saved per set of connected screens and
+# restored on hotplug.
+
+STATE_DIR="${XDG_STATE_HOME:-$HOME/.local/state}/myarchy/display"
+LOCK_FILE="${XDG_RUNTIME_DIR:-/tmp}/myarchy-display.lock"
+STAMP_FILE="${XDG_RUNTIME_DIR:-/tmp}/myarchy-display.stamp"
+
+# --- monitor queries ---------------------------------------------------------
+
+monitors_json() {
+	hyprctl monitors all -j 2>/dev/null
+}
+
+list_monitors() {
+	monitors_json | jq -r '
+		.[] | [
+			.name,
+			(.description // ""),
+			"\(.width)x\(.height)@\(.refreshRate | floor)",
+			(if .disabled then "disabled" else "enabled" end)
+		] | @tsv'
+}
+
+list_modes() {
+	monitors_json | jq -r --arg name "$1" '
+		.[] | select(.name == $name) | .availableModes[] | sub("Hz$"; "")'
+}
+
+enabled_monitors() {
+	monitors_json | jq -r '.[] | select(.disabled | not) | .name'
+}
+
+name_of_description() {
+	monitors_json | jq -r --arg desc "$1" '
+		.[] | select(.description == $desc) | .name' | head -n 1
+}
+
+description_of_name() {
+	monitors_json | jq -r --arg name "$1" '.[] | select(.name == $name) | .description'
+}
+
+current_scale() {
+	local scale
+
+	scale=$(monitors_json | jq -r --arg name "$1" '.[] | select(.name == $name) | .scale')
+	echo "${scale:-auto}"
+}
+
+current_mode() {
+	local mode
+
+	mode=$(monitors_json | jq -r --arg name "$1" '
+		.[] | select(.name == $name) | "\(.width)x\(.height)@\(.refreshRate)"')
+	echo "${mode:-preferred}"
+}
+
+current_position() {
+	local position
+
+	position=$(monitors_json | jq -r --arg name "$1" '
+		.[] | select(.name == $name) | "\(.x)x\(.y)"')
+	echo "${position:-auto}"
+}
+
+focused_monitor() {
+	hyprctl monitors -j 2>/dev/null | jq -r '.[] | select(.focused == true).name'
+}
+
+primary_monitor() {
+	local saved name
+	saved=$(get_primary_description)
+
+	if [[ -n $saved ]]; then
+		name=$(name_of_description "$saved")
+		[[ -n $name ]] && echo "$name" && return 0
+	fi
+
+	name=$(focused_monitor)
+	[[ -n $name ]] && echo "$name" && return 0
+
+	enabled_monitors | head -n 1
+}
+
+# --- applying monitor rules --------------------------------------------------
+
+# `hyprctl keyword` is a silent no-op against a Lua config, so changes go
+# through the Lua API.
+hypr_eval() {
+	local out
+
+	# Bump before applying: the hooks fire while we are still working, and `auto`
+	# must not race in and re-apply the profile we are about to replace
+	date +%s >"$STAMP_FILE"
+
+	out=$(hyprctl eval "$1" 2>&1)
+	if [[ $out != "ok" ]]; then
+		echo "hyprctl eval failed: $out" >&2
+		return 1
+	fi
+}
+
+lua_value() {
+	if [[ $1 =~ ^-?[0-9]+(\.[0-9]+)?$ ]]; then
+		echo "$1"
+	else
+		echo "\"$1\""
+	fi
+}
+
+# monitor_rule <output> <mode> <position> <scale> [mirror]
+# `mirror` and `disabled` are sticky, so always spell them out.
+monitor_rule() {
+	local spec
+
+	spec="output = \"$1\", mode = \"$2\", position = \"$3\", scale = $(lua_value "$4")"
+	spec="$spec, mirror = \"${5-}\", disabled = false"
+
+	hypr_eval "hl.monitor({ $spec })"
+}
+
+monitor_disable() {
+	hypr_eval "hl.monitor({ output = \"$1\", disabled = true })"
+}
+
+# Enabling and disabling are asynchronous. Snapshotting before the compositor
+# catches up saves the state we just replaced, and `auto` then undoes the change.
+wait_for_disabled() {
+	local name="$1" want="$2" i actual
+
+	for ((i = 0; i < 20; i++)); do
+		actual=$(monitors_json | jq -r --arg name "$name" '.[] | select(.name == $name) | .disabled')
+		[[ $actual == "$want" ]] && return 0
+		date +%s >"$STAMP_FILE"
+		sleep 0.15
+	done
+
+	return 1
+}
+
+# The config's catch-all leaves monitors on `position = "auto"`, so Hyprland
+# re-flows any we do not mention. Pin them before moving one.
+pin_others() {
+	local skip="$1" name
+
+	while read -r name; do
+		[[ $name == "$skip" ]] && continue
+		monitor_rule "$name" "$(current_mode "$name")" "$(current_position "$name")" "$(current_scale "$name")"
+	done < <(enabled_monitors)
+}
+
+# --- profile state -----------------------------------------------------------
+
+# Keyed on descriptions, not names: DP-1/DP-2 can renumber across re-plugs.
+profile_key() {
+	monitors_json | jq -r '.[].description' | sort | sha256sum | cut -c1-12
+}
+
+profile_file() {
+	echo "$STATE_DIR/$(profile_key).tsv"
+}
+
+primary_file() {
+	echo "$STATE_DIR/$(profile_key).primary"
+}
+
+get_primary_description() {
+	local file
+	file=$(primary_file)
+
+	[[ -f $file ]] && cat "$file"
+}
+
+# The saved anchor's current name, empty when none is set. Unlike
+# primary_monitor this does not fall back, so callers can show "not set".
+get_primary_name() {
+	local saved
+	saved=$(get_primary_description)
+
+	[[ -n $saved ]] && name_of_description "$saved"
+}
+
+set_primary() {
+	local name="$1" desc
+
+	desc=$(monitors_json | jq -r --arg name "$name" '.[] | select(.name == $name) | .description')
+
+	if [[ -z $desc ]]; then
+		echo "Unknown monitor: $name" >&2
+		return 1
+	fi
+
+	mkdir -p "$STATE_DIR"
+	echo "$desc" >"$(primary_file)"
+}
+
+save_profile() {
+	# Rules land asynchronously; without this we snapshot the previous layout
+	sleep 0.3
+
+	mkdir -p "$STATE_DIR"
+
+	# `mirrorOf` reports an id, not always a name
+	monitors_json | jq -r '
+		. as $all
+		| .[]
+		| . as $m
+		| ($m.mirrorOf // "none" | tostring) as $mirror
+		| [
+			($m.description // ""),
+			(if $m.disabled then "0" else "1" end),
+			"\($m.width)x\($m.height)@\($m.refreshRate)",
+			"\($m.x)x\($m.y)",
+			($m.scale | tostring),
+			(if $mirror == "none" then "none"
+			 else (([$all[]
+				| select((.name == $mirror) or ((.id | tostring) == $mirror))
+				| .description] | first) // "none") end)
+		] | @tsv' >"$(profile_file)"
+
+	# Our own changes fire the hotplug hooks; keep `auto` from undoing them
+	date +%s >"$STAMP_FILE"
+}
+
+apply_profile() {
+	local file desc enabled mode position scale mirror name mirror_name
+
+	file=$(profile_file)
+
+	if [[ ! -f $file ]]; then
+		return 1
+	fi
+
+	while IFS=$'\t' read -r desc enabled mode position scale mirror; do
+		name=$(name_of_description "$desc")
+		[[ -z $name ]] && continue
+
+		if [[ $enabled == 0 ]]; then
+			monitor_disable "$name"
+			continue
+		fi
+
+		if [[ $mirror != "none" && -n $mirror ]]; then
+			mirror_name=$(name_of_description "$mirror")
+			[[ -z $mirror_name ]] && continue
+			monitor_rule "$name" "$mode" auto "$scale" "$mirror_name"
+		else
+			monitor_rule "$name" "$mode" "$position" "$scale"
+		fi
+	done <"$file"
+}
+
+reset_layout() {
+	rm -f "$(profile_file)" "$(primary_file)"
+
+	# The reload re-enables outputs, which fires the hotplug hooks
+	date +%s >"$STAMP_FILE"
+	hyprctl reload >/dev/null
+}
+
+# --- layouts -----------------------------------------------------------------
+
+extend() {
+	local direction="$1" primary name position
+
+	case "$direction" in
+	left | right | above | below) ;;
+	*)
+		echo "Unknown direction: $direction" >&2
+		return 1
+		;;
+	esac
+
+	case "$direction" in
+	left) position="auto-left" ;;
+	right) position="auto-right" ;;
+	above) position="auto-up" ;;
+	below) position="auto-down" ;;
+	esac
+
+	primary=$(primary_monitor)
+
+	monitor_rule "$primary" preferred 0x0 "$(current_scale "$primary")"
+
+	while read -r name; do
+		[[ $name == "$primary" ]] && continue
+		monitor_rule "$name" preferred "$position" "$(current_scale "$name")"
+	done < <(monitors_json | jq -r '.[].name')
+
+	save_profile
+}
+
+mirror() {
+	local primary name
+
+	primary=$(primary_monitor)
+
+	monitor_rule "$primary" preferred 0x0 "$(current_scale "$primary")"
+
+	while read -r name; do
+		[[ $name == "$primary" ]] && continue
+		monitor_rule "$name" preferred auto 1 "$primary"
+	done < <(monitors_json | jq -r '.[].name')
+
+	save_profile
+}
+
+# Reorders the screens along one axis and lays them edge to edge in that order.
+#
+# Placing a screen by itself is what produced Hyprland's "monitors overlap"
+# notices: it only looked at the reference, so the new rectangle could land on
+# top of a third screen. Laying the whole axis out sequentially cannot overlap,
+# and leaves the other axis alone.
+place() {
+	local name="$1" side="$2" ref="$3" layout monitor x y
+
+	case "$side" in
+	left-of | right-of | above | below) ;;
+	*)
+		echo "Unknown side: $side" >&2
+		return 1
+		;;
+	esac
+
+	if [[ $name == "$ref" ]]; then
+		echo "Cannot place a monitor relative to itself" >&2
+		return 1
+	fi
+
+	layout=$(monitors_json | jq -r --arg name "$name" --arg ref "$ref" --arg side "$side" '
+		(($side == "left-of") or ($side == "right-of")) as $horizontal
+		| [.[] | select(.disabled | not)
+			| {name, x, y, w: (.width / .scale), h: (.height / .scale)}] as $screens
+		| ($screens | map(.name)) as $names
+		| if ($names | index($name)) == null or ($names | index($ref)) == null
+		  then empty else . end
+		| ($screens
+			| sort_by(if $horizontal then .x else .y end)
+			| map(.name)
+			| . - [$name]) as $rest
+		| ($rest | index($ref)) as $at
+		| (if ($side == "left-of") or ($side == "above")
+		   then $rest[0:$at] + [$name] + $rest[$at:]
+		   else $rest[0:$at + 1] + [$name] + $rest[$at + 1:] end) as $order
+		| reduce $order[] as $n ({offset: 0, rows: []};
+			($screens[] | select(.name == $n)) as $s
+			| {
+				offset: (.offset + (if $horizontal then $s.w else $s.h end)),
+				rows: (.rows + [[
+					$n,
+					(if $horizontal then .offset else $s.x end | round),
+					(if $horizontal then $s.y else .offset end | round)
+				]])
+			})
+		| .rows[] | @tsv')
+
+	if [[ -z $layout ]]; then
+		echo "Cannot place $name $side $ref" >&2
+		return 1
+	fi
+
+	while IFS=$'\t' read -r monitor x y; do
+		monitor_rule "$monitor" "$(current_mode "$monitor")" "${x}x${y}" "$(current_scale "$monitor")"
+	done <<<"$layout"
+
+	save_profile
+}
+
+only() {
+	local keep="$1" name
+
+	if [[ -z $(description_of_name "$keep") ]]; then
+		echo "Unknown monitor: $keep" >&2
+		return 1
+	fi
+
+	monitor_rule "$keep" preferred 0x0 "$(current_scale "$keep")"
+
+	while read -r name; do
+		[[ $name == "$keep" ]] && continue
+		monitor_disable "$name"
+		wait_for_disabled "$name" true
+	done < <(monitors_json | jq -r '.[].name')
+
+	set_primary "$keep"
+	save_profile
+}
+
+enable_monitor() {
+	monitor_rule "$1" preferred auto auto
+	wait_for_disabled "$1" false
+	save_profile
+}
+
+disable_monitor() {
+	local name="$1"
+
+	if [[ $(enabled_monitors | wc -l) -le 1 ]]; then
+		notify-send "Display" "Cannot disable the last enabled screen" -i video-display
+		return 1
+	fi
+
+	monitor_disable "$name"
+	wait_for_disabled "$name" true
+	save_profile
+}
+
+toggle_monitor() {
+	local name="$1" disabled
+
+	disabled=$(monitors_json | jq -r --arg name "$name" '.[] | select(.name == $name) | .disabled')
+
+	if [[ $disabled == "true" ]]; then
+		enable_monitor "$name"
+	else
+		disable_monitor "$name"
+	fi
+}
+
+set_mode() {
+	pin_others "$1"
+	monitor_rule "$1" "$2" "$(current_position "$1")" "$(current_scale "$1")"
+	save_profile
+}
+
+set_scale() {
+	pin_others "$1"
+	monitor_rule "$1" "$(current_mode "$1")" "$(current_position "$1")" "$2"
+	save_profile
+}
+
+# --- hotplug -----------------------------------------------------------------
+
+# Entry point for the monitor.added/removed and hyprland.start hooks.
+auto() {
+	local now last name
+
+	# Enabling an output fires monitor.added again; without this we loop
+	exec 9>"$LOCK_FILE"
+	flock -n 9 || return 0
+
+	now=$(date +%s)
+	last=$(cat "$STAMP_FILE" 2>/dev/null)
+	if [[ -n $last ]] && ((now - last < 2)); then
+		return 0
+	fi
+	echo "$now" >"$STAMP_FILE"
+
+	if apply_profile; then
+		date +%s >"$STAMP_FILE"
+		return 0
+	fi
+
+	# Nothing to arrange, and no notification wanted on every login
+	if [[ $(monitors_json | jq -r 'length') -le 1 ]]; then
+		save_profile
+		date +%s >"$STAMP_FILE"
+		return 0
+	fi
+
+	extend right
+
+	name=$(enabled_monitors | tail -n 1)
+	notify-send "Screen connected" \
+		"$name extended to the right — MOD+P for display options" \
+		-i video-display -t 8000
+
+	date +%s >"$STAMP_FILE"
+}
+
+case "$1" in
+list)
+	list_monitors
+	;;
+list-modes)
+	list_modes "$2"
+	;;
+extend)
+	extend "$2"
+	;;
+place)
+	place "$2" "$3" "$4"
+	;;
+mirror)
+	mirror
+	;;
+only)
+	only "$2"
+	;;
+enable)
+	enable_monitor "$2"
+	;;
+disable)
+	disable_monitor "$2"
+	;;
+toggle)
+	toggle_monitor "$2"
+	;;
+set-mode)
+	set_mode "$2" "$3"
+	;;
+set-scale)
+	set_scale "$2" "$3"
+	;;
+primary)
+	set_primary "$2"
+	;;
+anchor)
+	get_primary_name
+	;;
+save)
+	save_profile
+	;;
+apply)
+	apply_profile
+	;;
+auto)
+	auto
+	;;
+reset)
+	reset_layout
+	;;
+*)
+	echo "Usage: $0 {list|list-modes <name>|extend <left|right|above|below>|place <name> <left-of|right-of|above|below> <ref>|mirror|only <name>|enable <name>|disable <name>|toggle <name>|set-mode <name> <mode>|set-scale <name> <scale>|primary <name>|save|apply|auto|reset}" >&2
+	exit 1
+	;;
+esac

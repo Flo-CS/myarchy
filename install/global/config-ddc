@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+
+# DDC/CI drives external monitor brightness over the video cable, which needs
+# the i2c-dev module. Access comes from ddcutil's own udev rule, which tags the
+# display-controller buses with uaccess, so no i2c group membership is needed.
+
+echo i2c-dev | sudo tee /etc/modules-load.d/i2c-dev.conf >/dev/null
+
+sudo modprobe i2c-dev

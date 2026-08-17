@@ -2,3 +2,4 @@
 @define-color background {{surface-1|hex}};
 @define-color background-alt {{surface-2|hex}};
 @define-color outline {{outline|hex}};
+@define-color accent {{accent|hex}};

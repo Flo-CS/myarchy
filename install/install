@@ -54,6 +54,7 @@ step global/config-faillock
 step global/config-system-backups
 step global/config-terminal
 step global/config-power
+step global/config-ddc
 step global/config-grub-menu-entries
 step global/config-grub-menu-config
 step global/config-grub-reboot-to

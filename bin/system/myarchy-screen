@@ -1,0 +1,186 @@
+#!/usr/bin/env bash
+
+# Backlight brightness and night light.
+# Internal panels use brightnessctl, external ones DDC/CI over the video cable.
+
+NIGHTLIGHT_STATE="${XDG_RUNTIME_DIR:-/tmp}/myarchy-nightlight-temperature"
+NIGHTLIGHT_DEFAULT=4000
+DDC_CACHE="${XDG_RUNTIME_DIR:-/tmp}/myarchy-ddc-map"
+
+# --- brightness --------------------------------------------------------------
+
+# Internal panels go through the kernel backlight, external ones over DDC/CI on
+# the video cable. ddcutil reports the DRM connector, which is the same name
+# Hyprland uses, so the two can be matched up without guessing.
+is_internal() {
+	[[ $1 == eDP-* || $1 == LVDS-* || $1 == DSI-* ]]
+}
+
+# `ddcutil detect` probes the buses and takes ~0.4s, too slow to call per
+# lookup. Cache the connector -> display map, keyed on the connected screens so
+# plugging one in invalidates it by itself.
+#
+# Laptop panels show up as "Invalid display" blocks that still carry a connector
+# line, so only record a mapping when the block actually had a number.
+ddc_map() {
+	local key
+
+	key=$(hyprctl monitors -j 2>/dev/null | jq -r '[.[].name] | sort | join(",")')
+
+	if [[ ! -s $DDC_CACHE || $(head -n 1 "$DDC_CACHE") != "$key" ]]; then
+		{
+			echo "$key"
+			ddcutil detect --brief 2>/dev/null | awk '
+				/^Display /        { display = $2 }
+				/^Invalid display/ { display = "" }
+				/DRM connector:/   {
+					if (display != "") {
+						sub(/^card[0-9]+-/, "", $3)
+						print $3 "\t" display
+					}
+				}'
+		} >"$DDC_CACHE"
+	fi
+
+	tail -n +2 "$DDC_CACHE"
+}
+
+ddc_display_for() {
+	ddc_map | awk -F'\t' -v want="$1" '$1 == want { print $2; exit }'
+}
+
+# The screens we can actually control, one name per line
+list_brightness_monitors() {
+	local name
+
+	while read -r name; do
+		if is_internal "$name" || [[ -n $(ddc_display_for "$name") ]]; then
+			echo "$name"
+		fi
+	done < <(hyprctl monitors -j 2>/dev/null | jq -r '.[].name')
+}
+
+get_brightness() {
+	local name="$1" display
+
+	if is_internal "$name"; then
+		# `-m` prints "intel_backlight,backlight,60000,50%,120000"
+		brightnessctl --class=backlight --machine-readable 2>/dev/null | cut -d, -f4 | tr -d '%'
+		return
+	fi
+
+	display=$(ddc_display_for "$name")
+	[[ -z $display ]] && return
+
+	# "VCP 10 C <current> <max>"
+	ddcutil --display "$display" getvcp 10 --brief 2>/dev/null |
+		awk '{ if ($5 > 0) printf "%d\n", ($4 * 100 / $5) }'
+}
+
+set_brightness() {
+	local name="$1" percent="$2" display max
+
+	if is_internal "$name"; then
+		brightnessctl --class=backlight set "${percent}%" >/dev/null
+		return
+	fi
+
+	display=$(ddc_display_for "$name")
+	if [[ -z $display ]]; then
+		notify-send "Brightness" "$name does not respond to DDC/CI" -i video-display
+		return 1
+	fi
+
+	max=$(ddcutil --display "$display" getvcp 10 --brief 2>/dev/null | awk '{ print $5 }')
+	ddcutil --display "$display" setvcp 10 "$((percent * ${max:-100} / 100))" >/dev/null 2>&1
+}
+
+list_brightness() {
+	printf '%s\n' 10 25 50 75 100
+}
+
+# --- night light -------------------------------------------------------------
+
+ensure_nightlight_daemon() {
+	if ! pgrep -x hyprsunset >/dev/null; then
+		if ! command -v hyprsunset >/dev/null; then
+			notify-send "Night light" "hyprsunset is not installed" -i video-display
+			return 1
+		fi
+		uwsm-app -- hyprsunset >/dev/null 2>&1 &
+		# let it claim its socket before the first request
+		sleep 0.5
+	fi
+}
+
+get_nightlight() {
+	if [[ -f $NIGHTLIGHT_STATE ]]; then
+		cat "$NIGHTLIGHT_STATE"
+	else
+		echo "off"
+	fi
+}
+
+set_nightlight() {
+	local temperature="$1"
+
+	ensure_nightlight_daemon || return 1
+
+	if ! hyprctl hyprsunset temperature "$temperature" >/dev/null; then
+		notify-send "Night light" "Could not set temperature to ${temperature}K" -i video-display
+		return 1
+	fi
+
+	echo "$temperature" >"$NIGHTLIGHT_STATE"
+}
+
+unset_nightlight() {
+	pgrep -x hyprsunset >/dev/null && hyprctl hyprsunset identity >/dev/null
+	rm -f "$NIGHTLIGHT_STATE"
+}
+
+toggle_nightlight() {
+	if [[ $(get_nightlight) == "off" ]]; then
+		set_nightlight "$NIGHTLIGHT_DEFAULT"
+	else
+		unset_nightlight
+	fi
+}
+
+list_nightlight() {
+	printf '%s\n' 6500 5000 4000 3400 2700
+}
+
+case "$1" in
+brightness-get)
+	get_brightness "$2"
+	;;
+brightness-set)
+	set_brightness "$2" "$3"
+	;;
+brightness-list)
+	list_brightness
+	;;
+brightness-monitors)
+	list_brightness_monitors
+	;;
+nightlight-get)
+	get_nightlight
+	;;
+nightlight-set)
+	set_nightlight "$2"
+	;;
+nightlight-off)
+	unset_nightlight
+	;;
+nightlight-toggle)
+	toggle_nightlight
+	;;
+nightlight-list)
+	list_nightlight
+	;;
+*)
+	echo "Usage: $0 {brightness-get <name>|brightness-set <name> <percent>|brightness-list|brightness-monitors|nightlight-get|nightlight-set <kelvin>|nightlight-off|nightlight-toggle|nightlight-list}" >&2
+	exit 1
+	;;
+esac

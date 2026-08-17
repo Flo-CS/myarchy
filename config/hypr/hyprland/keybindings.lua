@@ -36,6 +36,7 @@ hl.bind(
 	)
 )
 hl.bind(profile.main_mod .. "+ SHIFT" .. " + space", hl.dsp.exec_cmd("uwsm-app -- myarchy-menu"))
+hl.bind(profile.main_mod .. " + P", hl.dsp.exec_cmd("uwsm-app -- myarchy-menu display"))
 
 -- WINDOW MANAGEMENT
 
@@ -58,6 +59,19 @@ hl.bind(profile.main_mod .. "+ SHIFT" .. " + H", hl.dsp.window.move({ direction 
 hl.bind(profile.main_mod .. "+ SHIFT" .. " + L", hl.dsp.window.move({ direction = "r", group_aware = true }))
 hl.bind(profile.main_mod .. "+ SHIFT" .. " + K", hl.dsp.window.move({ direction = "u", group_aware = true }))
 hl.bind(profile.main_mod .. "+ SHIFT" .. " + J", hl.dsp.window.move({ direction = "d", group_aware = true }))
+
+-- MONITORS
+
+hl.bind(
+	profile.main_mod .. " + M",
+	hl.dsp.focus({ monitor = "+1" }),
+	{ description = "Focus the next monitor" }
+)
+hl.bind(
+	profile.main_mod .. "+ SHIFT" .. " + M",
+	hl.dsp.workspace.move({ monitor = "+1" }),
+	{ description = "Move the current workspace to the next monitor" }
+)
 
 -- MOUSE BINDS
 
@@ -114,6 +128,8 @@ local azerty = {
 	"ccedilla", -- 9
 	"agrave", -- 10
 }
+-- Workspaces are global: each has a home screen and stays there, so MOD+<n>
+-- is stable. Moving one between screens is explicit (MOD+SHIFT+M).
 for i, key in ipairs(azerty) do
 	hl.bind(profile.main_mod .. " + " .. key, hl.dsp.focus({ workspace = i }))
 	hl.bind(profile.main_mod .. "+ SHIFT" .. " + " .. key, hl.dsp.window.move({ workspace = i }))
@@ -121,9 +137,9 @@ end
 
 -- SCRATCHPAD
 
-hl.bind(profile.main_mod .. " + P", hl.dsp.workspace.toggle_special("scratchpad"))
+hl.bind(profile.main_mod .. " + X", hl.dsp.workspace.toggle_special("scratchpad"))
 hl.bind(
-	profile.main_mod .. "+ SHIFT" .. " + P",
+	profile.main_mod .. "+ SHIFT" .. " + X",
 	hl.dsp.window.move({ workspace = "special:scratchpad", follow = false })
 )
 

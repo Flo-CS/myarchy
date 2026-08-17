@@ -109,7 +109,7 @@ install_notifications() {
 }
 
 install_screen() {
-	install_pkgs brightnessctl
+	install_pkgs brightnessctl hyprsunset ddcutil
 }
 
 install_monitoring() {

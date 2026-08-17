@@ -5,12 +5,17 @@
 
 STATE_FILE="/tmp/myarchy-ultrawide-center-state"
 
+# `hyprctl keyword` is a silent no-op against a Lua config, hence eval.
+set_gaps() {
+	hyprctl eval "hl.workspace_rule({ workspace = \"w[t1]\", gaps_out = { top = 20, right = $1, bottom = 20, left = $1 } })"
+}
+
 if [[ -f "$STATE_FILE" ]]; then
-    # Currently centered, disable it
-    hyprctl keyword workspace "w[t1], gapsout:20 20"
-    rm "$STATE_FILE"
+	# Currently centered, disable it
+	set_gaps 20
+	rm "$STATE_FILE"
 else
-    # Currently normal, enable centering
-    hyprctl keyword workspace "w[t1], gapsout:20 600"
-    touch "$STATE_FILE"
+	# Currently normal, enable centering
+	set_gaps 600
+	touch "$STATE_FILE"
 fi

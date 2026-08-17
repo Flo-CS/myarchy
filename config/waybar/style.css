@@ -53,7 +53,9 @@ tooltip {
   font-size: 16px;
   background: transparent;
   transition: 0s all;
-  border:none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  border-radius: 0;
 }
 
 #workspaces button:hover {
@@ -64,6 +66,10 @@ tooltip {
 
 #workspaces button.empty {
   opacity: 0.5;
+}
+
+#workspaces button.hosting-monitor {
+  border-bottom-color: @accent;
 }
 
 #custom-idle-inhibitor.inactive {
