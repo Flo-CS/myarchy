@@ -66,6 +66,7 @@ tooltip {
 
 #workspaces button.empty {
   opacity: 0.5;
+  border-bottom: none;
 }
 
 #workspaces button.hosting-monitor {
