@@ -5,7 +5,8 @@ refresh_all() {
 	touch ~/.config/alacritty/alacritty.toml # Trigger reload
 
 	# Waybar
-	systemctl --user restart waybar.service &
+	# A restart drops the bar's exclusive zone, reflowing every tiled window twice
+	touch ~/.config/waybar/style.css # Trigger reload
 
 	# Mako
 	makoctl reload &
