@@ -5,7 +5,6 @@ PROFILE = {
 	volume_increment = 2,
 	brightness_increment = 5,
 	sensitivity = -0.5,
-	scale = "auto",
 }
 
 require("hyprland.hyprland")

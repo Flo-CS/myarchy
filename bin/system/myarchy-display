@@ -5,28 +5,8 @@ LOCK_FILE="${XDG_RUNTIME_DIR:-/tmp}/myarchy-display.lock"
 
 # --- backend: compositor -----------------------------------------------------
 
-# `all` is what includes disabled outputs
 mon_snapshot() {
 	hyprctl monitors all -j 2>/dev/null
-}
-
-# `keyword` is a no-op on Lua configs and `eval` answers ok for rejected rules
-mon_eval() {
-	local out
-
-	if ! out=$(hyprctl repl "$1" 2>&1); then
-		echo "monitor rule rejected: ${out:-$1}" >&2
-		return 1
-	fi
-}
-
-# `mirror` and `disabled` are sticky, so both are always spelled out
-mon_apply() {
-	mon_eval "hl.monitor({ output = \"$1\", mode = \"$2\", position = \"$3\", scale = $(lua_scalar "$4"), mirror = \"${5-}\", disabled = false })"
-}
-
-mon_disable() {
-	mon_eval "hl.monitor({ output = \"$1\", disabled = true })"
 }
 
 mon_reload() {
@@ -39,6 +19,10 @@ lua_scalar() {
 	else
 		echo "\"$1\""
 	fi
+}
+
+lua_string() {
+	printf '%s' "$1" | sed 's/[\\"]/\\&/g'
 }
 
 # --- model: queries over a snapshot ------------------------------------------
@@ -57,19 +41,6 @@ name_of_desc() {
 
 desc_of_name() {
 	jq -r --arg n "$2" '[.[] | select(.name == $n) | .description] | first // ""' <<<"$1"
-}
-
-mode_of() {
-	jq -r --arg n "$2" '
-		[.[] | select(.name == $n) | "\(.width)x\(.height)@\(.refreshRate)"] | first // "preferred"' <<<"$1"
-}
-
-position_of() {
-	jq -r --arg n "$2" '[.[] | select(.name == $n) | "\(.x)x\(.y)"] | first // "auto"' <<<"$1"
-}
-
-scale_of() {
-	jq -r --arg n "$2" '[.[] | select(.name == $n) | .scale] | first // "auto"' <<<"$1"
 }
 
 is_disabled() {
@@ -96,20 +67,19 @@ list_modes() {
 
 # --- state: profiles ---------------------------------------------------------
 
-# Descriptions, not names: DP-1/DP-2 renumber across re-plugs
 profile_key() {
 	jq -r '.[].description' <<<"$1" | sort | sha256sum | cut -c1-12
 }
 
 profile_file() {
-	echo "$STATE_DIR/$(profile_key "$1").tsv"
+	echo "$STATE_DIR/$(profile_key "$1").lua"
 }
 
 anchor_file() {
 	echo "$STATE_DIR/$(profile_key "$1").primary"
 }
 
-layout_signature() {
+layout_rows() {
 	jq -r '
 		. as $all
 		| .[]
@@ -128,9 +98,43 @@ layout_signature() {
 		] | @tsv' <<<"$1"
 }
 
-save_profile() {
+emit_rules() {
+	local desc enabled mode position scale mirror
+
+	while IFS=$'\t' read -r desc enabled mode position scale mirror; do
+		[[ -z $desc ]] && continue
+
+		if [[ $enabled == 0 ]]; then
+			printf 'hl.monitor({ output = "desc:%s", disabled = true })\n' "$(lua_string "$desc")"
+		elif [[ $mirror == none ]]; then
+			printf 'hl.monitor({ output = "desc:%s", mode = "%s", position = "%s", scale = %s, mirror = "", disabled = false })\n' \
+				"$(lua_string "$desc")" "$mode" "$position" "$(lua_scalar "$scale")"
+		else
+			printf 'hl.monitor({ output = "desc:%s", mode = "%s", position = "auto", scale = %s, mirror = "desc:%s", disabled = false })\n' \
+				"$(lua_string "$desc")" "$mode" "$(lua_scalar "$scale")" "$(lua_string "$mirror")"
+		fi
+	done
+}
+
+write_profile() {
+	local file="$1" tmp
+
 	mkdir -p "$STATE_DIR"
-	layout_signature "$1" >"$(profile_file "$1")"
+	tmp=$(mktemp "$file.XXXXXX")
+	emit_rules >"$tmp"
+	mv "$tmp" "$file"
+}
+
+link_current() {
+	ln -sfT "$(basename "$1")" "$STATE_DIR/current.lua"
+}
+
+save_profile() {
+	local file
+	file=$(profile_file "$1")
+
+	write_profile "$file" < <(layout_rows "$1")
+	link_current "$file"
 }
 
 anchor_desc() {
@@ -183,11 +187,11 @@ settle() {
 	local cur sig prev i
 
 	cur=$(mon_snapshot)
-	prev=$(layout_signature "$cur")
+	prev=$(layout_rows "$cur")
 	for ((i = 0; i < 20; i++)); do
 		sleep 0.1
 		cur=$(mon_snapshot)
-		sig=$(layout_signature "$cur")
+		sig=$(layout_rows "$cur")
 		if [[ $sig == "$prev" ]]; then
 			printf '%s' "$cur"
 			return 0
@@ -199,28 +203,30 @@ settle() {
 	return 1
 }
 
-# The catch-all rule re-flows any screen a change does not mention
-pin_others() {
-	local snap="$1" skip="$2" name
-
-	while read -r name; do
-		[[ $name == "$skip" ]] && continue
-		mon_apply "$name" "$(mode_of "$snap" "$name")" "$(position_of "$snap" "$name")" \
-			"$(scale_of "$snap" "$name")" || return 1
-	done < <(mon_enabled "$snap")
+set_field() {
+	awk -F'\t' -v OFS='\t' -v d="$2" -v i="$3" -v v="$4" '$1 == d { $i = v } 1' <<<"$1"
 }
 
-settle_and_save() {
-	local settled
+# Writing the rules is what applies them, so the layout is re-read afterwards
+# and stored as the concrete geometry the compositor settled on
+apply_layout() {
+	local rows="$1" snap file settled
+
+	snap=$(mon_snapshot)
+	file=$(profile_file "$snap")
+
+	write_profile "$file" <<<"$rows"
+	link_current "$file"
+	mon_reload
 
 	settled=$(settle) || echo "layout still moving, saving the last reading" >&2
 
-	save_profile "$settled"
+	write_profile "$file" < <(layout_rows "$settled")
 	printf '%s' "$settled"
 }
 
 extend() {
-	local direction="$1" snap anchor name position
+	local direction="$1" snap anchor position
 
 	case "$direction" in
 	left) position="auto-left" ;;
@@ -234,38 +240,36 @@ extend() {
 	esac
 
 	snap=$(mon_snapshot)
-	anchor=$(anchor_or_focused "$snap")
+	anchor=$(desc_of_name "$snap" "$(anchor_or_focused "$snap")")
 
-	mon_apply "$anchor" preferred 0x0 "$(scale_of "$snap" "$anchor")" || return 1
-
-	while read -r name; do
-		[[ $name == "$anchor" ]] && continue
-		mon_apply "$name" preferred "$position" "$(scale_of "$snap" "$name")" || return 1
-	done < <(mon_names "$snap")
-
-	settle_and_save >/dev/null
+	apply_layout "$(jq -r --arg a "$anchor" --arg p "$position" '
+		.[] | [
+			(.description // ""), "1", "preferred",
+			(if (.description // "") == $a then "0x0" else $p end),
+			(if .scale > 0 then (.scale | tostring) else "auto" end),
+			"none"
+		] | @tsv' <<<"$snap")" >/dev/null
 }
 
 # Hyprland scales the anchor by the smaller axis ratio, so sizes may differ
 mirror() {
-	local snap anchor name
+	local snap anchor
 
 	snap=$(mon_snapshot)
-	anchor=$(anchor_or_focused "$snap")
+	anchor=$(desc_of_name "$snap" "$(anchor_or_focused "$snap")")
 
-	mon_apply "$anchor" preferred 0x0 "$(scale_of "$snap" "$anchor")" || return 1
-
-	while read -r name; do
-		[[ $name == "$anchor" ]] && continue
-		mon_apply "$name" preferred auto "$(scale_of "$snap" "$name")" "$anchor" || return 1
-	done < <(mon_names "$snap")
-
-	settle_and_save >/dev/null
+	apply_layout "$(jq -r --arg a "$anchor" '
+		.[] | (.description // "") as $d | [
+			$d, "1", "preferred",
+			(if $d == $a then "0x0" else "auto" end),
+			(if .scale > 0 then (.scale | tostring) else "auto" end),
+			(if $d == $a then "none" else $a end)
+		] | @tsv' <<<"$snap")" >/dev/null
 }
 
 # Laying the whole axis out sequentially is what makes overlap impossible
 place() {
-	local name="$1" side="$2" ref="$3" snap horizontal row n x y w h offset
+	local name="$1" side="$2" ref="$3" snap horizontal n x y w h offset rows
 	local -A X Y W H
 	local -a screens=() order=()
 
@@ -314,38 +318,41 @@ place() {
 		fi
 	done
 
+	rows=$(layout_rows "$snap")
+
 	offset=0
 	for n in "${moved[@]}"; do
 		if [[ $horizontal == true ]]; then
-			mon_apply "$n" "$(mode_of "$snap" "$n")" "${offset}x${Y[$n]}" "$(scale_of "$snap" "$n")" || return 1
+			rows=$(set_field "$rows" "$(desc_of_name "$snap" "$n")" 4 "${offset}x${Y[$n]}")
 			((offset += W[$n]))
 		else
-			mon_apply "$n" "$(mode_of "$snap" "$n")" "${X[$n]}x${offset}" "$(scale_of "$snap" "$n")" || return 1
+			rows=$(set_field "$rows" "$(desc_of_name "$snap" "$n")" 4 "${X[$n]}x${offset}")
 			((offset += H[$n]))
 		fi
 	done
 
-	settle_and_save >/dev/null
+	apply_layout "$rows" >/dev/null
 }
 
 only() {
-	local keep="$1" snap settled name
+	local keep="$1" snap keep_desc settled name
 
 	snap=$(mon_snapshot)
+	keep_desc=$(desc_of_name "$snap" "$keep")
 
-	if [[ -z $(desc_of_name "$snap" "$keep") ]]; then
+	if [[ -z $keep_desc ]]; then
 		echo "Unknown monitor: $keep" >&2
 		return 1
 	fi
 
-	mon_apply "$keep" preferred 0x0 "$(scale_of "$snap" "$keep")" || return 1
-
-	while read -r name; do
-		[[ $name == "$keep" ]] && continue
-		mon_disable "$name" || return 1
-	done < <(mon_names "$snap")
-
-	settled=$(settle_and_save)
+	settled=$(apply_layout "$(jq -r --arg k "$keep_desc" '
+		.[] | (.description // "") as $d | [
+			$d,
+			(if $d == $k then "1" else "0" end),
+			"preferred", "0x0",
+			(if .scale > 0 then (.scale | tostring) else "auto" end),
+			"none"
+		] | @tsv' <<<"$snap")")
 
 	while read -r name; do
 		[[ $name == "$keep" ]] && continue
@@ -359,11 +366,23 @@ only() {
 }
 
 enable_monitor() {
-	local name="$1" settled
+	local name="$1" snap desc rows settled
 
-	mon_apply "$name" preferred auto auto || return 1
+	snap=$(mon_snapshot)
+	desc=$(desc_of_name "$snap" "$name")
 
-	settled=$(settle_and_save)
+	if [[ -z $desc ]]; then
+		echo "Unknown monitor: $name" >&2
+		return 1
+	fi
+
+	rows=$(layout_rows "$snap")
+	rows=$(set_field "$rows" "$desc" 2 1)
+	rows=$(set_field "$rows" "$desc" 3 preferred)
+	rows=$(set_field "$rows" "$desc" 4 auto)
+	rows=$(set_field "$rows" "$desc" 5 auto)
+
+	settled=$(apply_layout "$rows")
 
 	if is_disabled "$settled" "$name"; then
 		echo "$name did not switch on" >&2
@@ -372,18 +391,22 @@ enable_monitor() {
 }
 
 disable_monitor() {
-	local name="$1" snap settled
+	local name="$1" snap desc settled
 
 	snap=$(mon_snapshot)
+	desc=$(desc_of_name "$snap" "$name")
+
+	if [[ -z $desc ]]; then
+		echo "Unknown monitor: $name" >&2
+		return 1
+	fi
 
 	if [[ $(mon_enabled "$snap" | wc -l) -le 1 ]]; then
 		notify-send "Display" "Cannot disable the last enabled screen" -i video-display
 		return 1
 	fi
 
-	mon_disable "$name" || return 1
-
-	settled=$(settle_and_save)
+	settled=$(apply_layout "$(set_field "$(layout_rows "$snap")" "$desc" 2 0)")
 
 	if ! is_disabled "$settled" "$name"; then
 		echo "$name did not switch off" >&2
@@ -400,63 +423,41 @@ toggle_monitor() {
 }
 
 set_mode() {
-	local name="$1" mode="$2" snap
-
+	local snap
 	snap=$(mon_snapshot)
 
-	pin_others "$snap" "$name" || return 1
-	mon_apply "$name" "$mode" "$(position_of "$snap" "$name")" "$(scale_of "$snap" "$name")" || return 1
-
-	settle_and_save >/dev/null
+	apply_layout "$(set_field "$(layout_rows "$snap")" "$(desc_of_name "$snap" "$1")" 3 "$2")" >/dev/null
 }
 
 set_scale() {
-	local name="$1" scale="$2" snap
-
+	local snap
 	snap=$(mon_snapshot)
 
-	pin_others "$snap" "$name" || return 1
-	mon_apply "$name" "$(mode_of "$snap" "$name")" "$(position_of "$snap" "$name")" "$scale" || return 1
-
-	settle_and_save >/dev/null
+	apply_layout "$(set_field "$(layout_rows "$snap")" "$(desc_of_name "$snap" "$1")" 5 "$2")" >/dev/null
 }
 
-# 2 means nothing saved, 1 means a rule was rejected. Doing nothing on a match is
-# what stops our own writes looping back through the hotplug hooks.
+# 2 means nothing saved. Doing nothing on a match is what stops our own writes
+# looping back through the hotplug hooks.
 apply_profile() {
-	local snap="$1" file desc enabled mode position scale mirror name mirror_name
+	local snap="$1" file
 
 	file=$(profile_file "$snap")
 	[[ -f $file ]] || return 2
 
-	if [[ $(layout_signature "$snap") == "$(cat "$file")" ]]; then
+	link_current "$file"
+
+	if [[ $(layout_rows "$snap" | emit_rules) == "$(cat "$file")" ]]; then
 		return 0
 	fi
 
-	while IFS=$'\t' read -r desc enabled mode position scale mirror; do
-		name=$(name_of_desc "$snap" "$desc")
-		[[ -z $name ]] && continue
-
-		if [[ $enabled == 0 ]]; then
-			mon_disable "$name" || return 1
-			continue
-		fi
-
-		if [[ $mirror != "none" && -n $mirror ]]; then
-			mirror_name=$(name_of_desc "$snap" "$mirror")
-			[[ -z $mirror_name ]] && continue
-			mon_apply "$name" "$mode" auto "$scale" "$mirror_name" || return 1
-		else
-			mon_apply "$name" "$mode" "$position" "$scale" || return 1
-		fi
-	done <"$file"
+	mon_reload
 }
 
 reset_layout() {
 	local snap
 	snap=$(mon_snapshot)
 
-	rm -f "$(profile_file "$snap")" "$(anchor_file "$snap")"
+	rm -f "$(profile_file "$snap")" "$(anchor_file "$snap")" "$STATE_DIR/current.lua"
 	mon_reload
 }
 
@@ -469,7 +470,7 @@ auto() {
 
 	snap=$(settle)
 
-	# A rejected rule must not reach the extend below
+	# A failed reload must not reach the extend below
 	apply_profile "$snap"
 	case $? in
 	0) return 0 ;;

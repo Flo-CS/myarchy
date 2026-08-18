@@ -1,11 +1,18 @@
 local profile = PROFILE
 
+-- Only reached by a screen myarchy-display has no profile for
 hl.monitor({
 	output = "",
 	mode = "preferred",
 	position = "auto",
-	scale = profile.scale,
+	scale = "auto",
 })
+
+local state = os.getenv("XDG_STATE_HOME") or (os.getenv("HOME") .. "/.local/state")
+local saved_monitors = loadfile(state .. "/myarchy/display/current.lua")
+if saved_monitors then
+	saved_monitors()
+end
 
 hl.on("hyprland.start", function()
 	hl.exec_cmd("myarchy-cursor apply-preferred")
@@ -21,11 +28,6 @@ end
 
 hl.on("monitor.added", on_monitors_changed)
 hl.on("monitor.removed", on_monitors_changed)
-
--- A reload re-runs the catch-all monitor rule, wiping any saved positions
-hl.on("config.reloaded", function()
-	hl.exec_cmd("myarchy-display apply")
-end)
 
 hl.config({
 	dwindle = {
