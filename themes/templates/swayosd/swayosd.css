@@ -1,4 +1,4 @@
-@define-color background {{surface|hex}};
+@define-color background {{surface-1|hex}};
 @define-color border {{outline-strong|hex}};
 @define-color label {{foreground-strong|hex}};
 @define-color image {{foreground-strong|hex}};
