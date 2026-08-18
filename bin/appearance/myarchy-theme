@@ -102,9 +102,9 @@ render_theme() {
 		exit 1
 	fi
 
-	rm -rf "$theme_dir/$RENDERED_DIR_NAME"
+	# Replacing the dir would kill the inotify watches apps hold on it
 	mkdir -p "$theme_dir/$RENDERED_DIR_NAME"
-	cp -r "$output_dir"/. "$theme_dir/$RENDERED_DIR_NAME"
+	rsync -a --delete --inplace --checksum "$output_dir"/ "$theme_dir/$RENDERED_DIR_NAME"/
 	ln -sfT "$theme_name/$RENDERED_DIR_NAME" "$CURRENT_DIR"
 
 	rm -rf "$sed_script" "$output_dir"

@@ -34,6 +34,7 @@ hl.config({
 
 	misc = {
 		disable_hyprland_logo = true,
+		disable_splash_rendering = true,
 		force_default_wallpaper = 0,
 		allow_session_lock_restore = true,
 		-- 1 = single-shot; 2 sends every later window back to the launch workspace
@@ -78,15 +79,7 @@ hl.config({
 	},
 })
 
-if profile.ultrawide then
-	-- Center the lone tiled window on ultrawide monitors.
-	-- `w[t1]` selector: a workspace containing exactly one tiled window.
-	hl.workspace_rule({
-		workspace = "w[t1]",
-		gaps_out = { top = 20, right = 600, bottom = 20, left = 600 },
-	})
-	hl.bind(profile.main_mod .. " + W", hl.dsp.exec_cmd("myarchy-toggle-ultrawide-center"))
-end
+hl.bind(profile.main_mod .. " + W", hl.dsp.exec_cmd("myarchy-toggle-centered-mode"))
 
 require("hyprland.keybindings")
 require("hyprland.style")

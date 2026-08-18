@@ -99,6 +99,33 @@ list_brightness() {
 	printf '%s\n' 10 25 50 75 100
 }
 
+focused_monitor() {
+	hyprctl monitors -j 2>/dev/null | jq -r '[.[] | select(.focused == true) | .name] | first // ""'
+}
+
+# swayosd handles the backlight and OSD, but only for internal panels
+step_brightness() {
+	local delta="$1" name="$2" current target
+
+	[[ -z $name ]] && name=$(focused_monitor)
+	[[ -z $name ]] && return 1
+
+	if is_internal "$name"; then
+		swayosd-client --monitor "$name" --brightness "$delta"
+		return
+	fi
+
+	current=$(get_brightness "$name")
+	[[ -z $current ]] && return 1
+
+	target=$((current + delta))
+	((target < 0)) && target=0
+	((target > 100)) && target=100
+
+	set_brightness "$name" "$target" &&
+		notify-send "Brightness" "$name  ${target}%" -i video-display -t 2000
+}
+
 # --- night light -------------------------------------------------------------
 
 ensure_nightlight_daemon() {
@@ -157,6 +184,9 @@ brightness-get)
 	;;
 brightness-set)
 	set_brightness "$2" "$3"
+	;;
+brightness-step)
+	step_brightness "$2" "$3"
 	;;
 brightness-list)
 	list_brightness

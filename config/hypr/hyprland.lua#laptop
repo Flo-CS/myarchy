@@ -5,7 +5,6 @@ PROFILE = {
 	volume_increment = 5,
 	brightness_increment = 5,
 	sensitivity = 0,
-	ultrawide = false,
 	scale = 1,
 }
 

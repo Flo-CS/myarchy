@@ -1,0 +1,32 @@
+#!/usr/bin/env bash
+
+if ! out=$(hyprctl repl '
+	local MIN_RATIO, VERTICAL_GAP = 2, 20
+
+	local monitor = hl.get_active_monitor()
+	local width = monitor.width / monitor.scale
+	local height = monitor.height / monitor.scale
+
+	if width / height < MIN_RATIO then
+		error(monitor.name .. " is not an ultrawide")
+	end
+
+	CENTERED = CENTERED or {}
+	local rule = CENTERED[monitor.name]
+
+	if rule then
+		rule:set_enabled(not rule:is_enabled())
+		return rule:is_enabled()
+	end
+
+	local gap = math.floor((width - height * 16 / 9) / 2)
+	CENTERED[monitor.name] = hl.workspace_rule({
+		workspace = "m[" .. monitor.name .. "] w[t1]",
+		gaps_out = { top = VERTICAL_GAP, right = gap, bottom = VERTICAL_GAP, left = gap },
+	})
+	return true
+' 2>&1); then
+	notify-send "Centered mode" "${out:-failed}" -i video-display
+	echo "$out" >&2
+	exit 1
+fi

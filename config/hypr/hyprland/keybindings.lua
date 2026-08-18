@@ -81,11 +81,28 @@ hl.bind(profile.main_mod .. " + mouse:273", hl.dsp.window.resize(), { mouse = tr
 -- RESIZE SUBMAP
 
 hl.define_submap("resize", function()
-	hl.bind("L", hl.dsp.window.resize({ x = 100, y = 0, relative = true }), { repeating = true })
-	hl.bind("H", hl.dsp.window.resize({ x = -100, y = 0, relative = true }), { repeating = true })
-	hl.bind("K", hl.dsp.window.resize({ x = 0, y = -100, relative = true }), { repeating = true })
-	hl.bind("J", hl.dsp.window.resize({ x = 0, y = 100, relative = true }), { repeating = true })
-	hl.bind("catchall", hl.dsp.submap("reset"))
+	local resized = false
+
+	local function step(x, y)
+		return function()
+			resized = true
+			hl.dispatch(hl.dsp.window.resize({ x = x, y = y, relative = true }))
+		end
+	end
+
+	hl.bind("L", step(100, 0), { repeating = true })
+	hl.bind("H", step(-100, 0), { repeating = true })
+	hl.bind("K", step(0, -100), { repeating = true })
+	hl.bind("J", step(0, 100), { repeating = true })
+
+	-- catchall runs after the bind that matched, so a resize has to wave it off
+	hl.bind("catchall", function()
+		if resized then
+			resized = false
+			return
+		end
+		hl.dispatch(hl.dsp.submap("reset"))
+	end)
 end)
 hl.bind(profile.main_mod .. " + R", hl.dsp.submap("resize"))
 
@@ -160,8 +177,18 @@ hl.bind(
 -- BRIGHTNESS
 
 local bri = tostring(profile.brightness_increment)
-osd_bind("XF86MonBrightnessUp", "--brightness +" .. bri, "Brightness up")
-osd_bind("XF86MonBrightnessDown", "--brightness -" .. bri, "Brightness down")
+-- Not osd_bind: swayosd only drives the internal backlight, so external screens
+-- did nothing. myarchy-screen picks backlight or DDC/CI for the focused screen.
+local function brightness_bind(key, delta, desc)
+	hl.bind(key, hl.dsp.exec_cmd("myarchy-screen brightness-step " .. delta), {
+		locked = true,
+		repeating = true,
+		description = desc,
+	})
+end
+
+brightness_bind("XF86MonBrightnessUp", "+" .. bri, "Brightness up")
+brightness_bind("XF86MonBrightnessDown", "-" .. bri, "Brightness down")
 
 -- CAPS LOCK
 

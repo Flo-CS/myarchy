@@ -43,6 +43,29 @@ if ! grep -q 'add_dracutmodules+=" plymouth "' "$DRACUT_CONFIG_FILE"; then
 	SHOULD_REBUILD_DRACUT=true
 fi
 
+# Early KMS: without these, plymouth mode-sets late onto the wrong output
+drm_drivers() {
+	local card driver
+	for card in /sys/class/drm/card[0-9]*; do
+		[ -e "$card/device/driver" ] || continue
+		driver=$(basename "$(readlink -f "$card/device/driver")")
+		# The NVIDIA DRM stack needs all four, not just the bound one
+		if [ "$driver" = "nvidia" ]; then
+			echo "nvidia nvidia_modeset nvidia_uvm nvidia_drm"
+		else
+			echo "$driver"
+		fi
+	done | tr ' ' '\n' | sort -u | paste -sd' '
+}
+
+FORCE_DRIVERS_LINE="force_drivers+=\" $(drm_drivers) \""
+
+if ! grep -Fxq "$FORCE_DRIVERS_LINE" "$DRACUT_CONFIG_FILE"; then
+	sudo sed -i '/^force_drivers+=/d' "$DRACUT_CONFIG_FILE"
+	echo "$FORCE_DRIVERS_LINE" | sudo tee -a "$DRACUT_CONFIG_FILE"
+	SHOULD_REBUILD_DRACUT=true
+fi
+
 current_plymouth_theme=$(plymouth-set-default-theme)
 if [ "$current_plymouth_theme" != "$PLYMOUTH_THEME" ]; then
 	SHOULD_REBUILD_DRACUT=true
@@ -56,5 +79,3 @@ fi
 if [ $SHOULD_REBUILD_GRUB = true ]; then
 	sudo grub-mkconfig -o /boot/grub/grub.cfg
 fi
-
-# TODO: perhaps add early KMS loading

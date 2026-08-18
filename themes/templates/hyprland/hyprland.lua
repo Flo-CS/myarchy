@@ -1,4 +1,8 @@
 hl.config({
+	misc = {
+		background_color = "rgb({{surface|raw}})",
+	},
+
 	general = {
 		col = {
 			active_border = "rgb({{outline-strong|raw}})",
