@@ -174,6 +174,11 @@ myarchy-screen  brightness-monitors | brightness-get <name> | brightness-set <na
 - **`misc:initial_workspace_tracking = 2`** sends every later window of a process back to the
   workspace it was launched on (this is why new Firefox windows kept reappearing next to the first).
   `1` (single-shot, the default) is almost always what you want.
+- **Disabling a monitor doesn't move its workspaces off it** (hyprwm/Hyprland#5052). `MOD+<n>` then
+  does nothing for a workspace stranded on the now-off screen — waybar flickers but the switch never
+  happens, since there is no active output to show it on. `disable_monitor`/`only` in
+  `myarchy-display` now call `moveworkspacetomonitor` on every workspace living on a screen before
+  disabling it, onto the screen that stays on.
 
 ## Why the engine is bash and not Lua
 
