@@ -47,6 +47,38 @@ card2  Intel i915      eDP-1, DP-1, DP-2, HDMI-A-1, HDMI-A-2
 Check with `for d in /sys/class/drm/card*-*; do echo "$d $(cat $d/status)"; done` and
 `lspci -k | grep -A3 VGA`.
 
+### External monitor (DP-3) feels laggy
+
+Aquamarine already composites on Intel (it picks the boot_vga device), so every frame for a screen
+on the NVIDIA ports is rendered on Intel, converted to a linear buffer (`GBM: Buffer is marked as
+multigpu, forcing linear` in the Hyprland log) and copied across PCIe for scanout. That copy is the
+stutter; no env var removes it while Intel composites. Refresh rate is unrelated — the mode was
+already at the panel's maximum.
+
+Ways out, none free: drive the monitor from a port on the Intel card instead (kills the copy and
+lets the dGPU sleep while docked, but alt-mode bandwidth may cap the refresh rate), or start the
+session with NVIDIA first in `AQ_DRM_DEVICES` when docked (direct scanout on DP-3, the copy moves
+to eDP-1, dGPU never sleeps).
+
+### NVIDIA dGPU never powers down (RTD3)
+
+The driver leaves runtime D3 off on Turing by default, so the card idles at ~5 W (P8) forever —
+`runtime_suspended_time` in `/sys/bus/pci/devices/<gpu>/power/` stays at 0.
+`install/global/config-nvidia-power` opts in: `NVreg_DynamicPowerManagement=0x02` via modprobe
+(baked into the initramfs, hence the dracut rebuild) plus a udev rule setting `power/control` to
+`auto`. Takes effect on the next boot.
+
+The card can only reach D3cold with no display attached to it and under ~200 MB of VRAM in use, so
+it sleeps when undocked and wakes when DP-3 is plugged. `nvidia-persistenced` must stay disabled —
+persistence mode blocks runtime D3. Known upstream driver bug: the GPU sometimes stays in D0 after
+unplugging the external monitor until reboot.
+
+The Power menu toggles sleep at runtime by writing `power/control` through sudo in a floating
+terminal (a pkexec dialog would land under rofi's overlay layer), and shows the live state from
+`runtime_status`.
+Power profiles are a separate axis: power-profiles-daemon only drives `intel_pstate` and the ACPI
+platform profile, never the dGPU.
+
 ### Purple/magenta rectangles when the screen is reconfigured
 
 Blocks of solid magenta are a buffer being scanned out with the wrong tiling modifier — the

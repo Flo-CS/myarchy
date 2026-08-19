@@ -88,6 +88,10 @@ install_opengl() {
 	install_pkgs glu
 }
 
+install_gpu() {
+	install_pkgs nvidia-prime libva-nvidia-driver intel-media-driver
+}
+
 install_osd() {
 	install_pkgs swayosd
 }
@@ -201,6 +205,7 @@ install_qt
 install_uwsm
 install_build_tools
 install_opengl
+install_gpu
 install_hyprland
 install_osd
 install_waybar

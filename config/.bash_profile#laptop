@@ -2,7 +2,7 @@
 
 export MYARCHY_INSTANCE_ID="laptop"
 
-export LIBVA_DRIVER_NAME=nvidia
-export __GLX_VENDOR_LIBRARY_NAME=nvidia
+# Intel is the primary renderer; the dGPU is reached per-app via prime-run
+export LIBVA_DRIVER_NAME=iHD
 
 source ~/.bash_profile-default

@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+
+# RTD3 is a notebook feature: desktops lack the ACPI support and their displays
+# hang off the card anyway, so only machines with a battery get the config
+if [ -d /sys/bus/pci/drivers/nvidia ] && compgen -G "/sys/class/power_supply/BAT*" >/dev/null; then
+	if ! cmp -s "$MYARCHY_DIR/install/global/files/nvidia-pm.conf" /etc/modprobe.d/nvidia-pm.conf; then
+		sudo myarchy-lib robust-copy "$MYARCHY_DIR/install/global/files/nvidia-pm.conf" /etc/modprobe.d/nvidia-pm.conf
+		# The nvidia modules are force-loaded from the initramfs, so the option must land there too
+		sudo dracut-rebuild
+	fi
+
+	sudo myarchy-lib robust-copy "$MYARCHY_DIR/install/global/files/80-nvidia-pm.rules" /etc/udev/rules.d/80-nvidia-pm.rules
+	sudo udevadm control --reload
+fi

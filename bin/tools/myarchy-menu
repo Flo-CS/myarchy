@@ -69,6 +69,7 @@ show() {
 		row "Wallpaper" "pick wallpaper"
 		row "Cursor" "show cursor"
 		row "Display" "show display"
+		row "Power" "show power"
 		row "Emoji" "pick emoji"
 		row "System" "show system"
 		row "Bluetooth" "term bluetuith --no-warning"
@@ -202,6 +203,24 @@ show() {
 		for scale in auto 0.5 0.75 0.8 0.9 1 1.1 1.2 1.25 1.3 1.4 1.5 1.6 1.667 1.75 1.8 2 2.5 3; do
 			row "$scale" "run myarchy-display set-scale ${menu#scale=} $scale"
 		done
+		;;
+	# The GPU toggle needs sudo, and a polkit dialog would land under rofi's
+	# overlay layer, hence a terminal
+	power)
+		opt prompt "Power"
+		local profile current mark gpu
+		current=$(myarchy-power profile-get)
+		while read -r profile; do
+			mark=""
+			[[ $profile == "$current" ]] && mark="  (current)"
+			row "$profile$mark" "apply myarchy-power profile-set $profile"
+		done < <(myarchy-power profiles-list)
+		if [[ $(myarchy-battery presence) == true ]]; then
+			if gpu=$(myarchy-power gpu-sleep-get 2>/dev/null); then
+				row "GPU sleep: $gpu ($(myarchy-power gpu-state))" "term_menu myarchy-power gpu-sleep-toggle"
+			fi
+			row "Battery: $(myarchy-battery percentage)% ($(myarchy-battery state))" "reshow"
+		fi
 		;;
 	system)
 		opt prompt "System"

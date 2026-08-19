@@ -1,5 +1,11 @@
 #!/usr/bin/env bash
 
+gpu_device() {
+  local dev
+  dev=$(ls -d /sys/bus/pci/drivers/nvidia/0000:* 2>/dev/null | head -n 1)
+  [[ -n $dev ]] && echo "/sys/bus/pci/devices/$(basename "$dev")"
+}
+
 list_power_profiles() {
   powerprofilesctl list |
     awk '/^\s*[* ]\s*[a-zA-Z0-9\-]+:$/ { gsub(/^[*[:space:]]+|:$/,""); print }' |
@@ -10,8 +16,35 @@ case "$1" in
 profiles-list)
   list_power_profiles
   ;;
+profile-get)
+  powerprofilesctl get
+  ;;
+profile-set)
+  powerprofilesctl set "$2"
+  ;;
+gpu-sleep-get)
+  dev=$(gpu_device) || exit 1
+  if [[ $(<"$dev/power/control") == auto ]]; then
+    echo "enabled"
+  else
+    echo "disabled"
+  fi
+  ;;
+gpu-sleep-toggle)
+  dev=$(gpu_device) || exit 1
+  if [[ $(<"$dev/power/control") == auto ]]; then
+    value=on
+  else
+    value=auto
+  fi
+  printf '%s' "$value" | sudo tee "$dev/power/control" >/dev/null
+  ;;
+gpu-state)
+  dev=$(gpu_device) || exit 1
+  cat "$dev/power/runtime_status"
+  ;;
 *)
-  echo "Usage: $0 {list}"
+  echo "Usage: $0 {profiles-list|profile-get|profile-set <profile>|gpu-sleep-get|gpu-sleep-toggle|gpu-state}"
   exit 1
   ;;
 esac
