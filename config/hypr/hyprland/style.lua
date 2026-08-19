@@ -98,6 +98,20 @@ hl.layer_rule({
 })
 
 hl.layer_rule({
+	name = "mako-blur",
+	match = { namespace = "notifications" },
+	blur = true,
+	ignore_alpha = 0.5,
+})
+
+hl.layer_rule({
+	name = "swayosd-blur",
+	match = { namespace = "swayosd" },
+	blur = true,
+	ignore_alpha = 0.5,
+})
+
+hl.layer_rule({
 	name = "rofi-blur",
 	match = { namespace = "rofi" },
 	blur = true,
