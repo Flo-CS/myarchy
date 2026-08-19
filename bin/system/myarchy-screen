@@ -7,6 +7,16 @@ NIGHTLIGHT_STATE="${XDG_RUNTIME_DIR:-/tmp}/myarchy-nightlight-temperature"
 NIGHTLIGHT_DEFAULT=4000
 DDC_CACHE="${XDG_RUNTIME_DIR:-/tmp}/myarchy-ddc-map"
 
+# Last brightness written to a DDC/CI display, so repeated key presses don't
+# each pay for a `ddcutil getvcp` just to know where they're stepping from.
+brightness_target_file() {
+	echo "${XDG_RUNTIME_DIR:-/tmp}/myarchy-brightness-target-$1"
+}
+
+brightness_lock_file() {
+	echo "${XDG_RUNTIME_DIR:-/tmp}/myarchy-brightness-lock-$1"
+}
+
 # --- brightness --------------------------------------------------------------
 
 # Internal panels go through the kernel backlight, external ones over DDC/CI on
@@ -77,13 +87,11 @@ get_brightness() {
 		awk '{ if ($5 > 0) printf "%d\n", ($4 * 100 / $5) }'
 }
 
-set_brightness() {
+# The raw DDC/CI write, with no side effect on the target cache: the worker
+# below calls this in a loop while it may already be behind the cache, and
+# writing a stale value back to it would clobber presses that landed meanwhile.
+ddc_setvcp() {
 	local name="$1" percent="$2" display max
-
-	if is_internal "$name"; then
-		brightnessctl --class=backlight set "${percent}%" >/dev/null
-		return
-	fi
 
 	display=$(ddc_display_for "$name")
 	if [[ -z $display ]]; then
@@ -95,6 +103,39 @@ set_brightness() {
 	ddcutil --display "$display" setvcp 10 "$((percent * ${max:-100} / 100))" >/dev/null 2>&1
 }
 
+set_brightness() {
+	local name="$1" percent="$2"
+
+	if is_internal "$name"; then
+		brightnessctl --class=backlight set "${percent}%" >/dev/null
+		return
+	fi
+
+	ddc_setvcp "$name" "$percent" &&
+		echo "$percent" >"$(brightness_target_file "$name")"
+}
+
+# Serializes writes to one display: a burst of key presses only ever queues the
+# latest target, so it converges in one trailing `ddcutil setvcp` instead of one
+# per press. `flock -n` means a press during an in-flight apply just updates the
+# target file and returns — the running worker picks it up on its next loop.
+queue_brightness_apply() {
+	local name="$1" applied="" target
+
+	(
+		exec 9>"$(brightness_lock_file "$name")"
+		flock -n 9 || exit 0
+
+		while :; do
+			target=$(cat "$(brightness_target_file "$name")" 2>/dev/null)
+			[[ -z $target || $target == "$applied" ]] && exit 0
+			ddc_setvcp "$name" "$target"
+			applied=$target
+		done
+	) &
+	disown
+}
+
 list_brightness() {
 	printf '%s\n' 10 25 50 75 100
 }
@@ -103,7 +144,6 @@ focused_monitor() {
 	hyprctl monitors -j 2>/dev/null | jq -r '[.[] | select(.focused == true) | .name] | first // ""'
 }
 
-# swayosd handles the backlight and OSD, but only for internal panels
 step_brightness() {
 	local delta="$1" name="$2" current target
 
@@ -115,15 +155,21 @@ step_brightness() {
 		return
 	fi
 
-	current=$(get_brightness "$name")
+	current=$(cat "$(brightness_target_file "$name")" 2>/dev/null)
+	[[ -z $current ]] && current=$(get_brightness "$name")
 	[[ -z $current ]] && return 1
 
 	target=$((current + delta))
 	((target < 0)) && target=0
 	((target > 100)) && target=100
 
-	set_brightness "$name" "$target" &&
-		notify-send "Brightness" "$name  ${target}%" -i video-display -t 2000
+	echo "$target" >"$(brightness_target_file "$name")"
+
+	# --custom-progress bypasses brightnessctl/pulseaudio, so it can show a DDC value
+	swayosd-client --monitor "$name" --custom-progress "$(awk -v t="$target" 'BEGIN { printf "%.2f", t / 100 }')" \
+		--custom-icon display-brightness-symbolic
+
+	queue_brightness_apply "$name"
 }
 
 # --- night light -------------------------------------------------------------

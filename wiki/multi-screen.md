@@ -105,14 +105,32 @@ they go through `brightnessctl` instead.
 The hardware brightness keys go through `myarchy-screen brightness-step`, which picks the backlight
 or DDC/CI for whichever screen has focus. They used to call `swayosd-client --brightness` directly,
 which only ever drives the internal panel, so on the desktop — and on the laptop's external screen —
-the keys did nothing. Internal panels are still handed to swayosd so they keep the on-screen bar;
-external ones get a notification instead, because the slider would sit at a level the screen has not
-reached yet.
+the keys did nothing. Internal panels are still handed to `--brightness`, which reads the real
+backlight; external ones go through `--custom-progress` instead, since `--brightness` only knows
+`brightnessctl`/pulseaudio devices.
 
 DDC/CI is slow by design: ~0.5s for a write, plus whatever ramp the monitor's own firmware applies,
 so a brightness change takes 1–2 seconds to land. `ddcutil detect` costs another ~0.4s, so the
 connector → display map is cached in `$XDG_RUNTIME_DIR`, keyed on the connected screens so plugging
-one in invalidates it. This is why there is no live brightness *slider* for external screens.
+one in invalidates it.
+
+That latency is also why external steps don't read the display before showing the OSD: a
+`ddcutil getvcp` round-trip on every key press would make the bar itself lag. `myarchy-screen`
+instead keeps the last value it wrote per display in `$XDG_RUNTIME_DIR`, computes and shows the new
+target from that alone, and only then hands the write off to `queue_brightness_apply`. That function
+`flock -n`s a per-display lock file; if a write is already in flight, the press just updates the
+target file and returns instead of stacking up another `ddcutil` call. The one worker that holds the
+lock keeps re-reading the target file and re-applying until it matches what it last wrote, so a burst
+of key presses converges on one trailing write instead of one write per press — the bar keeps up
+instantly, the hardware catches up in the background. `set_brightness` writes that same cache on
+every successful call, including from the menu, so the two paths can't drift apart.
+
+The worker itself writes nothing to that cache — it calls the cache-free `ddc_setvcp` in a loop and
+tracks what it applied in a local variable instead. It has to: its `ddcutil setvcp` blocks for the
+full 1–2s DDC/CI round trip, and if it wrote the target file with the value it started that call
+with, a burst of presses landing during the wait would get overwritten back down to that stale value
+the moment the call finally returned — visible as the bar snapping backward toward the real monitor
+brightness mid-burst.
 
 ## Commands
 
