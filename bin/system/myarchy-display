@@ -6,7 +6,7 @@ LOCK_FILE="${XDG_RUNTIME_DIR:-/tmp}/myarchy-display.lock"
 # --- backend: compositor -----------------------------------------------------
 
 mon_snapshot() {
-	hyprctl monitors all -j 2>/dev/null
+	hyprctl monitors all -j 2>/dev/null | jq '[.[] | select((.description // "") != "")]'
 }
 
 mon_reload() {
@@ -102,8 +102,6 @@ emit_rules() {
 	local desc enabled mode position scale mirror
 
 	while IFS=$'\t' read -r desc enabled mode position scale mirror; do
-		[[ -z $desc ]] && continue
-
 		if [[ $enabled == 0 ]]; then
 			printf 'hl.monitor({ output = "desc:%s", disabled = true })\n' "$(lua_string "$desc")"
 		elif [[ $mirror == none ]]; then
