@@ -97,8 +97,16 @@ hl.window_rule({
 })
 
 hl.window_rule({
-	name = "myarchy-menu-backdrop",
+	name = "myarchy-menu-pin",
 	match = { class = "^(Myarchy.Menu)$" },
+	pin = true,
+})
+
+-- pinned so the window travels with the workspace: an unpinned dim_around leaves the
+-- backdrop painted over the workspace sliding in, with no damage to clear it
+hl.window_rule({
+	name = "myarchy-menu-backdrop",
+	match = { class = "^(Myarchy.Menu)$", float = true, pin = true },
 	-- same backdrop as rofi, strength comes from decoration.dim_around
 	dim_around = true,
 })
