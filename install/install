@@ -66,6 +66,7 @@ step global/config-login-manager
 
 step user/install-packages
 
+step user/build-bin
 step user/deploy-bin
 step user/deploy-config
 step user/deploy-applications

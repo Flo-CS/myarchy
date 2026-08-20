@@ -112,14 +112,13 @@ show() {
 		opt prompt "Display"
 		local name desc mode state
 		row "Extend" "show extend"
-		row "Duplicate" "run myarchy-display mirror"
 		while IFS=$'\t' read -r name desc mode state; do
-			row "Only $name" "run myarchy-display only $name"
-		done < <(myarchy-display list)
+			row "Only $name" "run myarchyctl display only $name"
+		done < <(myarchyctl display list)
 		row "Monitors" "show monitors"
 		row "Brightness" "show brightness"
 		row "Night Light" "show nightlight"
-		row "Reset" "run myarchy-display reset"
+		row "Reset" "run myarchyctl display reset"
 		;;
 	# Applied straight away, then the menu redraws, so you see each step
 	brightness)
@@ -127,48 +126,48 @@ show() {
 		local screen
 		while read -r screen; do
 			row "$screen" "show brightness=$screen"
-		done < <(myarchy-screen brightness-monitors)
+		done < <(myarchyctl screen brightness-monitors)
 		;;
 	brightness=*)
-		opt prompt "Brightness ${menu#brightness=} ($(myarchy-screen brightness-get "${menu#brightness=}")%)"
+		opt prompt "Brightness ${menu#brightness=} ($(myarchyctl screen brightness-get "${menu#brightness=}")%)"
 		local percent
-		while read -r percent; do
-			row "$percent%" "apply myarchy-screen brightness-set ${menu#brightness=} $percent"
-		done < <(myarchy-screen brightness-list)
+		for percent in 10 25 50 75 100; do
+			row "$percent%" "apply myarchyctl screen brightness-set ${menu#brightness=} $percent"
+		done
 		;;
 	nightlight)
 		local current
-		current=$(myarchy-screen nightlight-get)
-		[[ $current != off ]] && current="${current}K"
+		current=$(myarchyctl screen nightlight-get)
+		[[ $current != off ]] && current="${current}%"
 		opt prompt "Night Light ($current)"
-		row "Off" "apply myarchy-screen nightlight-off"
-		local kelvin
-		while read -r kelvin; do
-			row "${kelvin}K" "apply myarchy-screen nightlight-set $kelvin"
-		done < <(myarchy-screen nightlight-list)
+		row "Off" "apply myarchyctl screen nightlight-off"
+		local percent
+		for percent in 10 25 50 75 100; do
+			row "$percent%" "apply myarchyctl screen nightlight-set $percent"
+		done
 		;;
 	extend)
 		opt prompt "Extend"
-		row "Right" "run myarchy-display extend right"
-		row "Left" "run myarchy-display extend left"
-		row "Above" "run myarchy-display extend above"
-		row "Below" "run myarchy-display extend below"
+		row "Right" "run myarchyctl display extend right"
+		row "Left" "run myarchyctl display extend left"
+		row "Above" "run myarchyctl display extend above"
+		row "Below" "run myarchyctl display extend below"
 		;;
 	monitors)
 		opt prompt "Monitors"
 		local name desc mode state anchor mark
-		anchor=$(myarchy-display anchor)
+		anchor=$(myarchyctl display anchor)
 		while IFS=$'\t' read -r name desc mode state; do
 			mark=""
 			[[ -n $anchor && $name == "$anchor" ]] && mark="  (anchor)"
 			row "$name  $desc  $mode  $state$mark" "show monitor=$name"
-		done < <(myarchy-display list)
+		done < <(myarchyctl display list)
 		;;
 	monitor=*)
 		opt prompt "${menu#monitor=}"
 		row "Position" "show place=${menu#monitor=}"
-		row "Toggle" "run myarchy-display toggle ${menu#monitor=}"
-		row "Set As Anchor" "run myarchy-display primary ${menu#monitor=}"
+		row "Toggle" "run myarchyctl display toggle ${menu#monitor=}"
+		row "Set As Anchor" "run myarchyctl display primary ${menu#monitor=}"
 		row "Resolution" "show mode=${menu#monitor=}"
 		row "Scale" "show scale=${menu#monitor=}"
 		;;
@@ -180,8 +179,8 @@ show() {
 		opt prompt "$target $side"
 		while IFS=$'\t' read -r name desc mode state; do
 			[[ $name == "$target" ]] && continue
-			row "$name  $desc" "run myarchy-display place $target $side $name"
-		done < <(myarchy-display list)
+			row "$name  $desc" "run myarchyctl display place $target $side $name"
+		done < <(myarchyctl display list)
 		;;
 	place=*)
 		opt prompt "Position ${menu#place=}"
@@ -194,14 +193,14 @@ show() {
 		opt prompt "Resolution"
 		local mode
 		while read -r mode; do
-			row "$mode" "run myarchy-display set-mode ${menu#mode=} $mode"
-		done < <(myarchy-display list-modes "${menu#mode=}")
+			row "$mode" "run myarchyctl display set-mode ${menu#mode=} $mode"
+		done < <(myarchyctl display list-modes "${menu#mode=}")
 		;;
 	scale=*)
 		opt prompt "Scale (or type one)"
 		local scale
 		for scale in auto 0.5 0.75 0.8 0.9 1 1.1 1.2 1.25 1.3 1.4 1.5 1.6 1.667 1.75 1.8 2 2.5 3; do
-			row "$scale" "run myarchy-display set-scale ${menu#scale=} $scale"
+			row "$scale" "run myarchyctl display set-scale ${menu#scale=} $scale"
 		done
 		;;
 	# The GPU toggle needs sudo, and a polkit dialog would land under rofi's
@@ -291,7 +290,7 @@ typed() {
 	if [[ $current == size=* && $1 =~ ^[0-9]+$ ]]; then
 		run myarchy-cursor set "${current#size=}" "$1"
 	elif [[ $current == scale=* && $1 =~ ^[0-9]+(\.[0-9]+)?$ ]]; then
-		run myarchy-display set-scale "${current#scale=}" "$1"
+		run myarchyctl display set-scale "${current#scale=}" "$1"
 	else
 		reshow
 	fi

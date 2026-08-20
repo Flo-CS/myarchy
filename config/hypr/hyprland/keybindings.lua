@@ -178,13 +178,19 @@ hl.bind(
 
 local bri = tostring(profile.brightness_increment)
 -- Not osd_bind: swayosd only drives the internal backlight, so external screens
--- did nothing. myarchy-screen picks backlight or DDC/CI for the focused screen.
+-- did nothing. `myarchyctl screen` picks backlight or DDC/CI for the given screen.
 local function brightness_bind(key, delta, desc)
-	hl.bind(key, hl.dsp.exec_cmd("myarchy-screen brightness-step " .. delta), {
-		locked = true,
-		repeating = true,
-		description = desc,
-	})
+	hl.bind(
+		key,
+		hl.dsp.exec_cmd(
+			[[myarchyctl screen brightness-step ]] .. delta .. [[ "$(hyprctl monitors -j | jq -r '.[] | select(.focused == true).name')"]]
+		),
+		{
+			locked = true,
+			repeating = true,
+			description = desc,
+		}
+	)
 end
 
 brightness_bind("XF86MonBrightnessUp", "+" .. bri, "Brightness up")

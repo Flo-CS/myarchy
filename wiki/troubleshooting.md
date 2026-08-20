@@ -104,25 +104,3 @@ under `config/hypr`.
 
 Card numbers are not stable across boots; match on `/dev/dri/by-path/` if it moves.
 
-### Boot or shutdown splash on the wrong screen, or drawn twice
-
-Without the DRM drivers in the initramfs, plymouth starts on a fallback framebuffer and the real
-mode-set happens late, so on two GPUs with two screens the splash lands wherever the fallback put it.
-`install/global/config-boot-splashscreen` writes a `force_drivers` line into
-`/etc/dracut.conf.d/plymouth.conf`, detected from the running system, and rebuilds the initramfs.
-
-Verify with `lsinitrd | grep -E 'i915|nvidia'`. Re-run the step with `MYARCHY_FORCE=1` if the GPUs
-changed.
-
-## Grey screen with a changing sentence at the end of the session
-
-That is Hyprland's own background, not hyprpaper. Hyprland paints `misc:background_color` over
-anything no surface covers and, unless `misc:disable_splash_rendering` is set, a random splash line
-at the bottom — `hyprctl splash` prints the current one. `misc:force_default_wallpaper` and
-`misc:disable_hyprland_logo` only drop the image, the text is a separate switch.
-
-hyprpaper draws the wallpaper as an ordinary layer-surface on top of that. `hyprpaper.service` is
-`PartOf=graphical-session.target` and `wayland-wm@.service` is `Before=` it, so systemd stops
-hyprpaper first and the compositor last, and the background shows through in between. The splash is
-now off and `misc:background_color` is rendered from the theme's `surface`, so that frame is plain
-theme black instead.

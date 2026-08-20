@@ -1,6 +1,6 @@
 local profile = PROFILE
 
--- Only reached by a screen myarchy-display has no profile for
+-- Only reached by a screen `myarchyctl display` has no profile for
 hl.monitor({
 	output = "",
 	mode = "preferred",
@@ -16,13 +16,13 @@ end
 
 hl.on("hyprland.start", function()
 	hl.exec_cmd("myarchy-cursor apply-preferred")
-	hl.exec_cmd("myarchy-display auto")
+	hl.exec_cmd("myarchyctl display auto")
 end)
 
 -- A dock fires one event per output, so coalesce the burst into one apply.
 local function on_monitors_changed()
 	hl.timer(function()
-		hl.exec_cmd("myarchy-display auto")
+		hl.exec_cmd("myarchyctl display auto")
 	end, { timeout = 300, type = "oneshot" })
 end
 

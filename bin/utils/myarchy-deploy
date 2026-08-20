@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 
 deploy_bin() {
+	$MYARCHY_DIR/install/user/build-bin
 	$MYARCHY_DIR/install/user/deploy-bin
 }
 

@@ -102,7 +102,7 @@ quietly disappears from the Brightness menu.
 Laptop panels report `Invalid display ... Laptop displays do not support DDC/CI`, which is expected —
 they go through `brightnessctl` instead.
 
-The hardware brightness keys go through `myarchy-screen brightness-step`, which picks the backlight
+The hardware brightness keys go through `myarchyctl screen brightness-step`, which picks the backlight
 or DDC/CI for whichever screen has focus. They used to call `swayosd-client --brightness` directly,
 which only ever drives the internal panel, so on the desktop — and on the laptop's external screen —
 the keys did nothing. Internal panels are still handed to `--brightness`, which reads the real
@@ -115,7 +115,7 @@ connector → display map is cached in `$XDG_RUNTIME_DIR`, keyed on the connecte
 one in invalidates it.
 
 That latency is also why external steps don't read the display before showing the OSD: a
-`ddcutil getvcp` round-trip on every key press would make the bar itself lag. `myarchy-screen`
+`ddcutil getvcp` round-trip on every key press would make the bar itself lag. `myarchyctl screen`
 instead keeps the last value it wrote per display in `$XDG_RUNTIME_DIR`, computes and shows the new
 target from that alone, and only then hands the write off to `queue_brightness_apply`. That function
 `flock -n`s a per-display lock file; if a write is already in flight, the press just updates the
@@ -135,7 +135,7 @@ brightness mid-burst.
 ## Commands
 
 ```
-myarchy-display list | list-modes <name>
+myarchyctl display list | list-modes <name>
                 extend <left|right|above|below>
                 place <name> <left-of|right-of|above|below> <ref>
                 mirror | only <name> | enable/disable/toggle <name>
@@ -143,9 +143,9 @@ myarchy-display list | list-modes <name>
                 primary <name> | anchor
                 save | apply | auto | reset
 
-myarchy-screen  brightness-monitors | brightness-get <name> | brightness-set <name> <pct>
+myarchyctl screen  brightness-monitors | brightness-get <name> | brightness-set <name> <pct>
                 brightness-step <+-pct> [name] | brightness-list
-                nightlight-get|-set <kelvin>|-off|-toggle|-list
+                nightlight-get|-set <pct>|-off|-toggle|-list
 ```
 
 ## Hyprland gotchas found the hard way
@@ -177,7 +177,7 @@ myarchy-screen  brightness-monitors | brightness-get <name> | brightness-set <na
 - **Disabling a monitor doesn't move its workspaces off it** (hyprwm/Hyprland#5052). `MOD+<n>` then
   does nothing for a workspace stranded on the now-off screen — waybar flickers but the switch never
   happens, since there is no active output to show it on. `disable_monitor`/`only` in
-  `myarchy-display` now call `moveworkspacetomonitor` on every workspace living on a screen before
+  `myarchyctl display` now call `moveworkspacetomonitor` on every workspace living on a screen before
   disabling it, onto the screen that stays on.
 
 ## Why the engine is bash and not Lua
@@ -199,8 +199,8 @@ The rest of the Lua API is genuinely nicer and is used where it fits:
   later presses rather than redeclaring the rule.
 - **`monitor.layout_changed`** exists as a settle signal, but only inside the compositor. From
   outside, `settle()` polling for two identical readings is the equivalent.
-- **Not a speed argument.** `myarchy-display list` 9ms, `anchor` 18ms, Lua equivalent 5ms.
-- `myarchy-screen` stays bash regardless: brightnessctl, ddcutil and hyprsunset are external
+- **Not a speed argument.** `myarchyctl display list` 9ms, `anchor` 18ms, Lua equivalent 5ms.
+- `myarchyctl screen` stays bash regardless: brightnessctl, ddcutil and hyprsunset are external
   processes with no compositor state.
 
 ## Where settings live
@@ -222,11 +222,11 @@ config never reads.
 
 ## The compositor seam
 
-`myarchy-display` is laid out in layers: **backend**, **model**, **state**, **engine**,
+`myarchyctl display` is laid out in layers: **backend**, **model**, **state**, **engine**,
 **frontend**. Only the backend block knows it is talking to Hyprland — `mon_snapshot`,
 `mon_apply`, `mon_disable`, `mon_reload` and their two helpers. Everything below it works on a
 snapshot of JSON and would survive a move to another compositor; porting means rewriting that one
-block. `grep -n hyprctl bin/system/myarchy-display` should only ever hit inside it.
+block. `grep -n hyprctl rust/myarchyctl` should only ever hit inside it.
 
 Each command reads **one** snapshot and passes it down. That is not only cheaper than the old
 per-helper queries — it means every decision within a command is made against the same view,
