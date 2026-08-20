@@ -7,7 +7,13 @@ source ~/.config/rc/settings.sh
 
 [[ -f ~/.bash-preexec.sh ]] && source ~/.bash-preexec.sh
 
-eval "$(keychain --eval)"
+# keychain (python) costs ~800ms per run; reuse the cached agent env when it's still valid
+keychain_file="$HOME/.keychain/$(hostname)-sh"
+[[ -r $keychain_file ]] && source "$keychain_file"
+if [[ ! -S $SSH_AUTH_SOCK ]] || ! kill -0 "$SSH_AGENT_PID" 2>/dev/null; then
+    eval "$(keychain --eval)"
+fi
+unset keychain_file
 
 eval "$(starship init bash)"
 
@@ -19,7 +25,15 @@ eval "$(fzf --bash)"
 
 [ -f "$HOME/.cargo/env" ] && . "$HOME/.cargo/env"
 
-[ -f /usr/share/nvm/init-nvm.sh ] && . /usr/share/nvm/init-nvm.sh
+# nvm.sh takes ~400ms to source; load it lazily on first use instead
+_load_nvm() {
+    unset -f nvm node npm npx _load_nvm
+    [ -f /usr/share/nvm/init-nvm.sh ] && . /usr/share/nvm/init-nvm.sh
+}
+nvm() { _load_nvm; nvm "$@"; }
+node() { _load_nvm; node "$@"; }
+npm() { _load_nvm; npm "$@"; }
+npx() { _load_nvm; npx "$@"; }
 
 export DEV_TOOLS_PATH="$HOME/dev/tools"
 
