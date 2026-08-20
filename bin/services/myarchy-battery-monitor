@@ -2,6 +2,9 @@
 
 BAT_THRESHOLD=10
 NOTIFICATION_FLAG="/run/user/$UID/myarchy_battery_notified"
+POWER_STATE_FLAG="/run/user/$UID/myarchy_power_state"
+
+[[ "$(myarchy-battery presence)" == true ]] || exit 0
 
 bat_level=$(myarchy-battery percentage)
 bat_state=$(myarchy-battery state)
@@ -13,4 +16,12 @@ if [[ "$bat_state" == "discharging" && "$bat_level" -le "$BAT_THRESHOLD" ]]; the
 	fi
 else
 	rm -f "$NOTIFICATION_FLAG"
+fi
+
+power_state=ac
+[[ "$bat_state" == "discharging" ]] && power_state=battery
+
+if [[ "$(cat "$POWER_STATE_FLAG" 2>/dev/null)" != "$power_state" ]]; then
+	powerprofilesctl set "$([[ $power_state == battery ]] && echo power-saver || echo balanced)"
+	echo "$power_state" >"$POWER_STATE_FLAG"
 fi
