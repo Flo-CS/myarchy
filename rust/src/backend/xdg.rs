@@ -2,11 +2,13 @@ use std::env;
 use std::path::PathBuf;
 
 pub(crate) fn home() -> PathBuf {
-    PathBuf::from(env::var_os("HOME").expect("HOME is not set"))
+    PathBuf::from(env::var_os("HOME")
+        .expect("HOME is not set"))
 }
 
 pub(crate) fn myarchy_dir() -> PathBuf {
-    PathBuf::from(env::var_os("MYARCHY_DIR").expect("MYARCHY_DIR is not set"))
+    PathBuf::from(env::var_os("MYARCHY_DIR")
+        .expect("MYARCHY_DIR is not set"))
 }
 
 pub(crate) fn state_dir() -> PathBuf {

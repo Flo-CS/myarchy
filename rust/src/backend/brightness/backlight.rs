@@ -2,11 +2,11 @@ use std::process::Command;
 
 use anyhow::{bail, Context, Result};
 
-use super::Brightnessctl;
+use super::BrightnessCtl;
 
 pub(super) struct Backlight;
 
-impl Brightnessctl for Backlight {
+impl BrightnessCtl for Backlight {
     fn get(&self) -> Result<i64> {
         let out = Command::new("brightnessctl")
             .args(["--class=backlight", "--machine-readable"])
@@ -24,7 +24,7 @@ impl Brightnessctl for Backlight {
             .args(["--class=backlight", "set", &format!("{percent}%")])
             .output()?;
         if !out.status.success() {
-            bail!("brightnessctl failed to set backlight brightness");
+            bail!("failed to set backlight brightness");
         }
         Ok(())
     }

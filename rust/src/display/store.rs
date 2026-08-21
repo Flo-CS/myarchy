@@ -29,7 +29,10 @@ fn key(monitors: &[Monitor]) -> String {
 
     let mut hasher = Sha256::new();
     hasher.update(joined.as_bytes());
-    format!("{:x}", hasher.finalize())[..12].to_string()
+    hasher.finalize()[..6]
+        .iter()
+        .map(|b| format!("{b:02x}"))
+        .collect()
 }
 
 fn profile_file(monitors: &[Monitor]) -> PathBuf {

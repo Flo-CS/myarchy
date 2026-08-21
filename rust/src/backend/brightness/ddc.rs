@@ -9,63 +9,75 @@ use crate::backend::xdg;
 use crate::error::AppError;
 use crate::models::monitor::Monitor;
 
-use super::Brightnessctl;
+use super::BrightnessCtl;
 
 pub(super) struct Ddc {
     name: String,
     display: String,
 }
 
+
+fn strip_card_prefix(connector: &str) -> String {
+    if let Some(rest) = connector.strip_prefix("card") {
+        if let Some(dash) = rest.find('-') {
+            let (digits, _) = rest.split_at(dash);
+            if !digits.is_empty() && digits.bytes().all(|b| b.is_ascii_digit()) {
+                return rest[dash + 1..].to_string();
+            }
+        }
+    }
+    connector.to_string()
+}
+
+/// Laptop panels show up as "Invalid display" blocks that still carry a connector line, so a
+/// mapping is only recorded while a numbered display is open.
+fn parse_detect(text: &str) -> Vec<(String, String)> {
+    let mut found = Vec::new();
+    let mut display: Option<&str> = None;
+    for line in text.lines() {
+        if line.starts_with("Display ") {
+            display = line.split_whitespace().nth(1);
+        } else if line.starts_with("Invalid display") {
+            display = None;
+        } else if line.contains("DRM connector:") {
+            if let (Some(d), Some(raw)) = (display, line.split_whitespace().nth(2)) {
+                found.push((strip_card_prefix(raw), d.to_string()));
+            }
+        }
+    }
+    found
+}
+
+/// "VCP 10 C <current> <max>"
+fn vcp_max(text: &str) -> Option<i64> {
+    text.split_whitespace().nth(4)?.parse().ok()
+}
+
+fn vcp_percent(text: &str) -> Option<i64> {
+    let fields: Vec<&str> = text.split_whitespace().collect();
+    let current: f64 = fields.get(3).and_then(|s| s.parse().ok()).unwrap_or(0.0);
+    let max: f64 = fields.get(4).and_then(|s| s.parse().ok()).unwrap_or(0.0);
+    (max > 0.0).then(|| (current * 100.0 / max) as i64)
+}
+
+fn cache_path() -> PathBuf {
+    xdg::runtime_dir().join("screen").join("ddc-map")
+}
+fn target_file(name: &str) -> PathBuf {
+    xdg::runtime_dir()
+        .join("screen")
+        .join(format!("brightness-target-{name}"))
+}
+
+fn lock_file(name: &str) -> PathBuf {
+    xdg::runtime_dir()
+        .join("screen")
+        .join(format!("brightness-lock-{name}"))
+}
+
 impl Ddc {
     pub(super) fn new(name: String, display: String) -> Self {
         Self { name, display }
-    }
-
-    fn strip_card_prefix(connector: &str) -> String {
-        if let Some(rest) = connector.strip_prefix("card") {
-            if let Some(dash) = rest.find('-') {
-                let (digits, _) = rest.split_at(dash);
-                if !digits.is_empty() && digits.bytes().all(|b| b.is_ascii_digit()) {
-                    return rest[dash + 1..].to_string();
-                }
-            }
-        }
-        connector.to_string()
-    }
-
-    /// Laptop panels show up as "Invalid display" blocks that still carry a connector line, so a
-    /// mapping is only recorded while a numbered display is open.
-    fn parse_detect(text: &str) -> Vec<(String, String)> {
-        let mut found = Vec::new();
-        let mut display: Option<&str> = None;
-        for line in text.lines() {
-            if line.starts_with("Display ") {
-                display = line.split_whitespace().nth(1);
-            } else if line.starts_with("Invalid display") {
-                display = None;
-            } else if line.contains("DRM connector:") {
-                if let (Some(d), Some(raw)) = (display, line.split_whitespace().nth(2)) {
-                    found.push((Self::strip_card_prefix(raw), d.to_string()));
-                }
-            }
-        }
-        found
-    }
-
-    /// "VCP 10 C <current> <max>"
-    fn vcp_max(text: &str) -> Option<i64> {
-        text.split_whitespace().nth(4)?.parse().ok()
-    }
-
-    fn vcp_percent(text: &str) -> Option<i64> {
-        let fields: Vec<&str> = text.split_whitespace().collect();
-        let current: f64 = fields.get(3).and_then(|s| s.parse().ok()).unwrap_or(0.0);
-        let max: f64 = fields.get(4).and_then(|s| s.parse().ok()).unwrap_or(0.0);
-        (max > 0.0).then(|| (current * 100.0 / max) as i64)
-    }
-
-    fn cache_path() -> PathBuf {
-        xdg::runtime_dir().join("screen").join("ddc-map")
     }
 
     /// `ddcutil detect` probes the buses and takes ~0.4s, too slow to call per
@@ -80,7 +92,7 @@ impl Ddc {
         names.sort_unstable();
         let key = names.join(",");
 
-        let cache_path = Self::cache_path();
+        let cache_path = cache_path();
         let stale = match fs::read_to_string(&cache_path) {
             Ok(content) => content.lines().next() != Some(key.as_str()),
             Err(_) => true,
@@ -93,7 +105,7 @@ impl Ddc {
 
             if let Ok(detect) = Command::new("ddcutil").args(["detect", "--brief"]).output() {
                 for (connector, display) in
-                    Self::parse_detect(&String::from_utf8_lossy(&detect.stdout))
+                    parse_detect(&String::from_utf8_lossy(&detect.stdout))
                 {
                     out.push_str(&format!("{connector}\t{display}\n"));
                 }
@@ -116,23 +128,11 @@ impl Ddc {
         Ok(Self::map(monitors)?.get(name).cloned())
     }
 
-    fn target_file(name: &str) -> PathBuf {
-        xdg::runtime_dir()
-            .join("screen")
-            .join(format!("brightness-target-{name}"))
-    }
-
-    fn lock_file(name: &str) -> PathBuf {
-        xdg::runtime_dir()
-            .join("screen")
-            .join(format!("brightness-lock-{name}"))
-    }
-
     fn write_hardware(&self, percent: i64) -> Result<()> {
         let out = Command::new("ddcutil")
             .args(["--display", &self.display, "getvcp", "10", "--brief"])
             .output()?;
-        let max = Self::vcp_max(&String::from_utf8_lossy(&out.stdout)).unwrap_or(100);
+        let max = vcp_max(&String::from_utf8_lossy(&out.stdout)).unwrap_or(100);
         let value = percent * max / 100;
         let out = Command::new("ddcutil")
             .args([
@@ -152,12 +152,12 @@ impl Ddc {
     }
 }
 
-impl Brightnessctl for Ddc {
+impl BrightnessCtl for Ddc {
     fn get(&self) -> Result<i64> {
         let out = Command::new("ddcutil")
             .args(["--display", &self.display, "getvcp", "10", "--brief"])
             .output()?;
-        match Self::vcp_percent(&String::from_utf8_lossy(&out.stdout)) {
+        match vcp_percent(&String::from_utf8_lossy(&out.stdout)) {
             Some(percent) => Ok(percent),
             None => bail!("display {} did not report a usable VCP range", self.display),
         }
@@ -166,14 +166,14 @@ impl Brightnessctl for Ddc {
     fn set(&self, percent: i64) -> Result<()> {
         self.write_hardware(percent)?;
 
-        let file = Self::target_file(&self.name);
+        let file = target_file(&self.name);
         fs::create_dir_all(file.parent().unwrap())?;
         fs::write(file, percent.to_string())?;
         Ok(())
     }
 
     fn step(&self, delta: i64) -> Result<i64> {
-        let current = fs::read_to_string(Self::target_file(&self.name))
+        let current = fs::read_to_string(target_file(&self.name))
             .ok()
             .and_then(|s| s.trim().parse::<i64>().ok())
             .or_else(|| self.get().ok());
@@ -182,7 +182,7 @@ impl Brightnessctl for Ddc {
         };
         let target = (current + delta).clamp(0, 100);
 
-        let file = Self::target_file(&self.name);
+        let file = target_file(&self.name);
         fs::create_dir_all(file.parent().unwrap())?;
         fs::write(file, target.to_string())?;
 
@@ -192,7 +192,7 @@ impl Brightnessctl for Ddc {
     /// A burst of steps only ever leaves one invocation holding this lock; the rest just update
     /// the target file and return, so the holder's loop is what converges to the last one queued.
     fn settle(&self) -> Result<()> {
-        let file_path = Self::lock_file(&self.name);
+        let file_path = lock_file(&self.name);
         fs::create_dir_all(file_path.parent().unwrap())?;
         let mut file = fs::OpenOptions::new()
             .create(true)
@@ -206,7 +206,7 @@ impl Brightnessctl for Ddc {
 
         let mut applied: Option<i64> = None;
         loop {
-            let target = fs::read_to_string(Self::target_file(&self.name))
+            let target = fs::read_to_string(target_file(&self.name))
                 .ok()
                 .and_then(|s| s.trim().parse::<i64>().ok());
             let Some(target) = target else {
@@ -247,7 +247,7 @@ Invalid display
 ";
 
         assert_eq!(
-            Ddc::parse_detect(text),
+            parse_detect(text),
             vec![
                 ("DP-3".to_string(), "1".to_string()),
                 ("HDMI-A-1".to_string(), "2".to_string()),
@@ -257,12 +257,12 @@ Invalid display
 
     #[test]
     fn a_vcp_reply_becomes_a_percentage_of_the_range_the_monitor_reports() {
-        assert_eq!(Ddc::vcp_percent("VCP 10 C 50 100"), Some(50));
-        assert_eq!(Ddc::vcp_percent("VCP 10 C 128 255"), Some(50));
-        assert_eq!(Ddc::vcp_max("VCP 10 C 128 255"), Some(255));
+        assert_eq!(vcp_percent("VCP 10 C 50 100"), Some(50));
+        assert_eq!(vcp_percent("VCP 10 C 128 255"), Some(50));
+        assert_eq!(vcp_max("VCP 10 C 128 255"), Some(255));
 
-        assert_eq!(Ddc::vcp_percent("VCP 10 C 50 0"), None, "a zero range");
-        assert_eq!(Ddc::vcp_percent("VCP 10 ERR"), None, "a truncated reply");
-        assert_eq!(Ddc::vcp_percent(""), None);
+        assert_eq!(vcp_percent("VCP 10 C 50 0"), None, "a zero range");
+        assert_eq!(vcp_percent("VCP 10 ERR"), None, "a truncated reply");
+        assert_eq!(vcp_percent(""), None);
     }
 }

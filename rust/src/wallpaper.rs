@@ -13,7 +13,6 @@ pub(crate) fn dir() -> PathBuf {
 }
 
 const CURRENT_LINK_NAME: &str = "current";
-
 fn current_link() -> PathBuf {
     dir().join(CURRENT_LINK_NAME)
 }

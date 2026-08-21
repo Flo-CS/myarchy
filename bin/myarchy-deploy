@@ -9,14 +9,9 @@ deploy_config() {
 	$MYARCHY_DIR/install/user/deploy-config
 }
 
-deploy_applications() {
-	$MYARCHY_DIR/install/user/deploy-applications
-}
-
 deploy_all() {
 	deploy_bin
 	deploy_config
-	deploy_applications
 }
 
 case "$1" in

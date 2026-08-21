@@ -1,0 +1,33 @@
+# Maintainer: Florian
+pkgname=idle-inhibitor
+pkgver=0.1.0
+pkgrel=1
+pkgdesc="Idle inhibitor daemon controlled by a CLI, using D-Bus screensaver inhibit"
+arch=('x86_64')
+url=""
+license=('custom')
+depends=('dbus' 'gcc-libs')
+makedepends=('cargo')
+source=()
+sha256sums=()
+
+prepare() {
+    cd "$startdir"
+    export RUSTUP_TOOLCHAIN=stable
+    cargo fetch --locked --target "$(rustc -vV | sed -n 's/host: //p')"
+}
+
+build() {
+    cd "$startdir"
+    export RUSTUP_TOOLCHAIN=stable
+    export CARGO_TARGET_DIR=target
+    cargo build --frozen --release
+}
+
+package() {
+    cd "$startdir"
+    install -Dm755 target/release/idle-inhibitor  "$pkgdir/usr/bin/idle-inhibitor"
+    install -Dm755 target/release/idle-inhibitord "$pkgdir/usr/bin/idle-inhibitord"
+    install -Dm644 contrib/idle-inhibitor.service \
+        "$pkgdir/usr/lib/systemd/user/idle-inhibitor.service"
+}

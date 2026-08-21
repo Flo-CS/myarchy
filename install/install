@@ -69,9 +69,6 @@ step user/install-packages
 step user/build-bin
 step user/deploy-bin
 step user/deploy-config
-step user/deploy-applications
-
-step user/install-idle-inhibitor
 
 step user/config-battery-and-power
 
