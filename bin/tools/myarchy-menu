@@ -99,19 +99,20 @@ show() {
 		local cursor
 		while read -r cursor; do
 			row "$cursor" "show size=$cursor"
-		done < <(myarchy-cursor list)
+		done < <(myarchyctl cursor list)
 		;;
 	size=*)
 		opt prompt "Size"
 		local size
 		for size in 16 24 32 48 64; do
-			row "$size" "run myarchy-cursor set ${menu#size=} $size"
+			row "$size" "run myarchyctl cursor set ${menu#size=} $size"
 		done
 		;;
 	display)
 		opt prompt "Display"
 		local name desc mode state
 		row "Extend" "show extend"
+		row "Duplicate" "run myarchyctl display mirror"
 		while IFS=$'\t' read -r name desc mode state; do
 			row "Only $name" "run myarchyctl display only $name"
 		done < <(myarchyctl display list)
@@ -126,24 +127,24 @@ show() {
 		local screen
 		while read -r screen; do
 			row "$screen" "show brightness=$screen"
-		done < <(myarchyctl screen brightness-monitors)
+		done < <(myarchyctl brightness monitors)
 		;;
 	brightness=*)
-		opt prompt "Brightness ${menu#brightness=} ($(myarchyctl screen brightness-get "${menu#brightness=}")%)"
+		opt prompt "Brightness ${menu#brightness=} ($(myarchyctl brightness get "${menu#brightness=}")%)"
 		local percent
 		for percent in 10 25 50 75 100; do
-			row "$percent%" "apply myarchyctl screen brightness-set ${menu#brightness=} $percent"
+			row "$percent%" "apply myarchyctl brightness set ${menu#brightness=} $percent"
 		done
 		;;
 	nightlight)
 		local current
-		current=$(myarchyctl screen nightlight-get)
+		current=$(myarchyctl nightlight get)
 		[[ $current != off ]] && current="${current}%"
 		opt prompt "Night Light ($current)"
-		row "Off" "apply myarchyctl screen nightlight-off"
+		row "Off" "apply myarchyctl nightlight off"
 		local percent
 		for percent in 10 25 50 75 100; do
-			row "$percent%" "apply myarchyctl screen nightlight-set $percent"
+			row "$percent%" "apply myarchyctl nightlight set $percent"
 		done
 		;;
 	extend)
@@ -288,7 +289,7 @@ typed() {
 	local current rest
 	read -r current rest <<<"${ROFI_DATA:-main}"
 	if [[ $current == size=* && $1 =~ ^[0-9]+$ ]]; then
-		run myarchy-cursor set "${current#size=}" "$1"
+		run myarchyctl cursor set "${current#size=}" "$1"
 	elif [[ $current == scale=* && $1 =~ ^[0-9]+(\.[0-9]+)?$ ]]; then
 		run myarchyctl display set-scale "${current#scale=}" "$1"
 	else
@@ -303,8 +304,8 @@ PIDFILE="${XDG_RUNTIME_DIR:-/tmp}/myarchy-menu-picker.pid"
 picker_wallpaper() {
 	# Script mode can't resize row icons, hence a separate window
 	local dir selected
-	dir=$(myarchy-wallpaper dir)
-	selected=$(myarchy-wallpaper list |
+	dir=$(myarchyctl wallpaper dir)
+	selected=$(myarchyctl wallpaper list |
 		while read -r wallpaper; do
 			printf '%s\0icon\x1f%s\n' "$wallpaper" "$dir/$wallpaper"
 		done |
@@ -312,7 +313,7 @@ picker_wallpaper() {
 			listview { lines: 6; }
 			element { padding: 4px 16px; }
 			element-icon { size: 72px; }')
-	[[ -n $selected ]] && myarchy-wallpaper set "$selected"
+	[[ -n $selected ]] && myarchyctl wallpaper set "$selected"
 }
 
 picker_reboot_to() {

@@ -6,8 +6,11 @@ use std::time::Duration;
 
 use anyhow::{bail, Result};
 
+use crate::backend::xdg;
 use crate::error::AppError;
 use crate::models::nightlight::NightlightState;
+
+use super::NightLightctl;
 
 const MIN_KELVIN: i64 = 2500;
 const MAX_KELVIN: i64 = 6500;
@@ -22,22 +25,12 @@ fn percent_from_kelvin(kelvin: i64) -> i64 {
 }
 
 fn state_file() -> PathBuf {
-    super::xdg::runtime_dir()
+    xdg::runtime_dir()
         .join("screen")
         .join("nightlight-temperature")
 }
 
-pub(crate) trait NightLight {
-    fn get(&self) -> NightlightState;
-    fn set(&self, percent: i64) -> Result<()>;
-    fn unset(&self) -> Result<()>;
-}
-
-pub(crate) fn adapter() -> impl NightLight {
-    Hyprsunset
-}
-
-struct Hyprsunset;
+pub(super) struct Hyprsunset;
 
 impl Hyprsunset {
     fn running() -> bool {
@@ -79,7 +72,7 @@ impl Hyprsunset {
     }
 }
 
-impl NightLight for Hyprsunset {
+impl NightLightctl for Hyprsunset {
     fn get(&self) -> NightlightState {
         fs::read_to_string(state_file())
             .ok()
@@ -114,5 +107,31 @@ impl NightLight for Hyprsunset {
         }
         let _ = fs::remove_file(state_file());
         Ok(())
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn every_percentage_survives_the_trip_through_kelvin() {
+        assert_eq!(kelvin_from_percent(0), MAX_KELVIN, "none is daylight");
+        assert_eq!(kelvin_from_percent(100), MIN_KELVIN, "full is warmest");
+        assert_eq!(kelvin_from_percent(50), 4500);
+
+        for percent in 0..=100 {
+            assert_eq!(
+                percent_from_kelvin(kelvin_from_percent(percent)),
+                percent,
+                "percent {percent}"
+            );
+        }
+    }
+
+    #[test]
+    fn a_percentage_out_of_range_is_clamped() {
+        assert_eq!(kelvin_from_percent(-40), MAX_KELVIN);
+        assert_eq!(kelvin_from_percent(500), MIN_KELVIN);
     }
 }

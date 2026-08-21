@@ -22,7 +22,7 @@ refresh_all() {
 	touch ~/.config/gtk-4.0/settings.ini &
 
 	# Cursor - apply preferred cursor
-	myarchy-cursor apply-preferred &
+	myarchyctl cursor apply-preferred &
 
 	# Bat
 	bat cache --build &

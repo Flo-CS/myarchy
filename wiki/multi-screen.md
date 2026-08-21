@@ -45,7 +45,16 @@ notion of a primary display, so it affects nothing else — not where windows or
 Monitors list marks the current one with `(anchor)`.
 
 `Position` reorders the screens along one axis and lays them out edge to edge, so they can never
-overlap. `Extend` arranges everything in one direction at once.
+overlap, and **centers them on the other axis**. `Extend` arranges everything in one direction at
+once, and also puts every screen back on and back to its preferred mode — it is the way out of any
+layout you have got stuck in.
+
+Centering is why screens of different heights meet along the full `min(height)` band. The dead zones
+above and below it are unavoidable: two screens only share their whole edge when their **logical**
+sizes match (pixels ÷ scale), which is a scale decision, not a position one. For a `1920x1080` laptop
+beside a `3440x1440` ultrawide that would mean scaling the laptop to `0.75`, and Hyprland rejects
+scales that do not divide to an integer logical size anyway. `MOD + M` (which warps the cursor) and
+`MOD + H/J/K/L` both cross regardless of overlap.
 
 Brightness and Night Light apply immediately and leave the menu open, so you can step through the
 levels and watch the screen. That uses the `apply` helper — **a row's command cannot contain `;`**.
@@ -75,11 +84,32 @@ own native mode and does the fitting in the copy.
 
 ## How layouts are remembered
 
-`~/.local/state/myarchy/display/<key>.tsv`, where `<key>` is a hash of the connected screens'
-**descriptions** (make/model/serial), because `DP-1`/`DP-3` renumber across re-plugs.
+Two files, and only one of them is ever read back:
 
-Every mutating command snapshots the result, so the layout for a given set of screens is always the
-last one you set. It is re-applied on `monitor.added` / `monitor.removed`, on `hyprland.start`, and on
+| file | role |
+| --- | --- |
+| `~/.local/state/myarchy/display/<key>.json` | the layout — the only source of truth |
+| `~/.local/state/myarchy/display/current.lua` | rules rendered from it, loaded by `hyprland.lua`, never parsed |
+
+`<key>` is a hash of the connected screens' **descriptions** (make/model/serial), because
+`DP-1`/`DP-3` renumber across re-plugs. The anchor lives in the JSON, keyed by description too.
+
+```json
+{ "anchor": "LG Electronics LG HDR WQHD 303NTZN51357",
+  "screens": {
+    "BOE 0x08B9": { "state": "off", "mode": "1920x1080@60.003", "position": "0x1440", "scale": "1" } } }
+```
+
+`state` is `on`, `off`, or `{"mirroring": "<description>"}`. The profile stores **intent**, which is
+why a disabled screen keeps its geometry: `hyprctl` reports `0x0` and scale `0` for a screen that is
+off, so nothing else could ever recover it.
+
+Every mutating command writes the profile exactly **once**, after the layout has settled, and only
+with concrete values — symbolic requests like `preferred` or `auto-right` are sent to the compositor
+but never persisted. A command that dies half way therefore leaves the previous profile intact rather
+than a layout that can never match reality again.
+
+The layout is re-applied on `monitor.added` / `monitor.removed`, on `hyprland.start`, and on
 `config.reloaded` (so `myarchy-refresh` no longer loses your positions). A new combination of screens
 extends right and sends a notification.
 
@@ -102,7 +132,7 @@ quietly disappears from the Brightness menu.
 Laptop panels report `Invalid display ... Laptop displays do not support DDC/CI`, which is expected —
 they go through `brightnessctl` instead.
 
-The hardware brightness keys go through `myarchyctl screen brightness-step`, which picks the backlight
+The hardware brightness keys go through `myarchyctl brightness step`, which picks the backlight
 or DDC/CI for whichever screen has focus. They used to call `swayosd-client --brightness` directly,
 which only ever drives the internal panel, so on the desktop — and on the laptop's external screen —
 the keys did nothing. Internal panels are still handed to `--brightness`, which reads the real
@@ -115,7 +145,7 @@ connector → display map is cached in `$XDG_RUNTIME_DIR`, keyed on the connecte
 one in invalidates it.
 
 That latency is also why external steps don't read the display before showing the OSD: a
-`ddcutil getvcp` round-trip on every key press would make the bar itself lag. `myarchyctl screen`
+`ddcutil getvcp` round-trip on every key press would make the bar itself lag. `myarchyctl brightness`
 instead keeps the last value it wrote per display in `$XDG_RUNTIME_DIR`, computes and shows the new
 target from that alone, and only then hands the write off to `queue_brightness_apply`. That function
 `flock -n`s a per-display lock file; if a write is already in flight, the press just updates the
@@ -143,9 +173,9 @@ myarchyctl display list | list-modes <name>
                 primary <name> | anchor
                 save | apply | auto | reset
 
-myarchyctl screen  brightness-monitors | brightness-get <name> | brightness-set <name> <pct>
-                brightness-step <+-pct> [name] | brightness-list
-                nightlight-get|-set <pct>|-off|-toggle|-list
+myarchyctl brightness monitors | get <name> | set <name> <pct> | step <+-pct> [name]
+
+myarchyctl nightlight get | set <pct> | off
 ```
 
 ## Hyprland gotchas found the hard way
@@ -164,10 +194,16 @@ myarchyctl screen  brightness-monitors | brightness-get <name> | brightness-set 
   mention**, so moving one screen drags the others unless they are pinned at their current position.
 - **Rule application is asynchronous.** Reading `hyprctl monitors` straight after a write returns
   the state you just replaced. `settle()` waits for two identical readings rather than sleeping a
-  guessed interval, and everything is saved from the settled snapshot.
+  guessed interval, and everything is saved from the settled snapshot. If it never converges the
+  command errors instead of saving, so a half-applied geometry cannot become the profile.
+- **`hyprctl` exits 0 even when it cannot open the compositor socket** — it prints
+  `Couldn't open a socket (1)` and returns success. Every call goes through one helper that checks
+  for that, or a failed apply would be indistinguishable from a working one.
 - **Your own changes fire the hotplug hooks.** This used to need a two-second debounce, which also
-  swallowed genuine events. Now `apply_profile` does nothing when the layout already matches the
-  profile, so the re-entrant `auto` those hooks trigger simply finds nothing to do and stops.
+  swallowed genuine events. Now a restore does nothing when the stored layout already matches the
+  live one, so the re-entrant `auto` those hooks trigger finds nothing to do and stops. That
+  comparison is on typed values, not on the generated Lua — resting it on text meant float
+  formatting and `hyprctl`'s row order could silently break the guard.
 - **Workspaces are global**: each has a home screen, fixed where it was first opened.
   `focus({ on_current_monitor = true })` was tried and dropped — it *swaps* the two screens'
   workspaces, so switching on one screen changes what the other shows.
@@ -180,7 +216,7 @@ myarchyctl screen  brightness-monitors | brightness-get <name> | brightness-set 
   `myarchyctl display` now call `moveworkspacetomonitor` on every workspace living on a screen before
   disabling it, onto the screen that stays on.
 
-## Why the engine is bash and not Lua
+## Why the engine is not Lua
 
 Measured against Hyprland 0.56.2. The config is already Lua, so moving the layout engine into it
 looked obvious. It is not, for one reason:
@@ -200,8 +236,8 @@ The rest of the Lua API is genuinely nicer and is used where it fits:
 - **`monitor.layout_changed`** exists as a settle signal, but only inside the compositor. From
   outside, `settle()` polling for two identical readings is the equivalent.
 - **Not a speed argument.** `myarchyctl display list` 9ms, `anchor` 18ms, Lua equivalent 5ms.
-- `myarchyctl screen` stays bash regardless: brightnessctl, ddcutil and hyprsunset are external
-  processes with no compositor state.
+- `myarchyctl brightness`/`myarchyctl nightlight` are unaffected regardless: brightnessctl, ddcutil
+  and hyprsunset are external processes with no compositor state.
 
 ## Where settings live
 
@@ -222,15 +258,29 @@ config never reads.
 
 ## The compositor seam
 
-`myarchyctl display` is laid out in layers: **backend**, **model**, **state**, **engine**,
-**frontend**. Only the backend block knows it is talking to Hyprland — `mon_snapshot`,
-`mon_apply`, `mon_disable`, `mon_reload` and their two helpers. Everything below it works on a
-snapshot of JSON and would survive a move to another compositor; porting means rewriting that one
-block. `grep -n hyprctl rust/myarchyctl` should only ever hit inside it.
+`myarchyctl display` is laid out in layers:
 
-Each command reads **one** snapshot and passes it down. That is not only cheaper than the old
-per-helper queries — it means every decision within a command is made against the same view,
-instead of re-reading a compositor that may be mid-transition.
+| layer | file | knows about |
+| --- | --- | --- |
+| backend | `src/backend/compositor/hyprctl.rs` | Hyprland, and nothing else does |
+| model | `src/models/layout.rs` | `Layout`, `Mode`, `Position`, `Scale` — pure, no I/O |
+| state | `src/display/store.rs` | the profile files and the lock |
+| engine | `src/display/engine.rs` | `extend`, `place`, `only`, `mirror` — pure on a `Layout` |
+| frontend | `src/display/mod.rs` | the commands, settling, committing |
+
+The backend is the only thing that speaks `hyprctl` **or** writes `hl.monitor{}`: rendering the rules
+is as Hyprland-specific as querying the monitors, so it sits behind the same trait. Porting to
+another compositor means implementing `Compositor` and nothing else — `grep -rn hyprctl src/` should
+only ever hit inside that one file.
+
+The engine is pure. It takes a `Layout` and returns a `Layout`, so the arithmetic that decides where
+screens go is testable without a compositor, and `cargo test` covers the packing, the centering and
+the rendered rules.
+
+Each command reads **one** snapshot and passes it down, so every decision within a command is made
+against the same view instead of re-reading a compositor that may be mid-transition. Every mutating
+command also takes the same lock the hotplug hooks use, so a menu action and a re-plug cannot
+interleave.
 
 kanshi and shikane were considered: they do description-keyed profile switching on hotplug over
 `zwlr_output_manager_v1`, which Hyprland does implement. They were not adopted because Hyprland

@@ -54,7 +54,7 @@
     {
       "type": "command",
       "key": "Wallpaper",
-      "text": "myarchy-wallpaper get"
+      "text": "myarchyctl wallpaper get"
     },
     "break",
     "colors"

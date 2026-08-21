@@ -3,7 +3,7 @@
 set -eEo pipefail
 
 myarchy-theme init
-myarchy-wallpaper init
+myarchyctl wallpaper init
 
 SOURCE="$MYARCHY_DIR"
 

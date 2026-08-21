@@ -7,6 +7,10 @@ RENDERED_DIR_NAME=".rendered"
 # Symlink to the rendered directory of the current theme
 CURRENT_DIR="$THEMES_DIR/current"
 
+STATE_DIR="${XDG_STATE_HOME:-$HOME/.local/state}/myarchy"
+CURSOR_STATE_FILE="$STATE_DIR/cursor/current.json"
+WALLPAPER_STATE_FILE="$STATE_DIR/wallpaper/current"
+
 init_theme() {
 	if [[ ! -L "$CURRENT_DIR" ]]; then
 		echo "Setting default theme"
@@ -30,18 +34,35 @@ list_themes() {
 set_theme() {
 	render_theme "$1"
 
-	myarchy-wallpaper apply-preferred
-	myarchy-cursor apply-preferred
+	myarchyctl wallpaper apply-preferred
+	myarchyctl cursor apply-preferred
 
 	myarchy-refresh all
 }
 
-get_var() {
-	sed -nE "s@^$1=(.*)\$@\1@p" "$THEMES_DIR/$(get_theme)/vars.txt"
+# Live picks made via `myarchyctl cursor/wallpaper set` that override the theme's own
+# authored default for that key, without touching the theme's vars.txt.
+theme_var_override() {
+	case "$1" in
+	cursor-name)
+		[[ -f "$CURSOR_STATE_FILE" ]] && jq -r '.name // empty' "$CURSOR_STATE_FILE" 2>/dev/null
+		;;
+	cursor-size)
+		[[ -f "$CURSOR_STATE_FILE" ]] && jq -r '.size // empty' "$CURSOR_STATE_FILE" 2>/dev/null
+		;;
+	wallpaper)
+		[[ -f "$WALLPAPER_STATE_FILE" ]] && cat "$WALLPAPER_STATE_FILE"
+		;;
+	esac
 }
 
-set_var() {
-	sed -i -E "s@^$1=.*@$1=$(escape_replacement "$2")@" "$THEMES_DIR/$(get_theme)/vars.txt"
+get_var() {
+	local override=$(theme_var_override "$1")
+	if [[ -n "$override" ]]; then
+		printf '%s\n' "$override"
+		return
+	fi
+	sed -nE "s@^$1=(.*)\$@\1@p" "$THEMES_DIR/$(get_theme)/vars.txt"
 }
 
 # Escapes a value so that it can be used as a sed replacement
@@ -81,6 +102,9 @@ render_theme() {
 
 	while IFS='=' read -r key value || [[ -n "$key" ]]; do
 		[[ -z "$key" || "$key" == \#* ]] && continue
+
+		local override=$(theme_var_override "$key")
+		[[ -n "$override" ]] && value="$override"
 
 		printf '%s\n' "s@\{\{$key\}\}@$(escape_replacement "$value")@g" >>"$sed_script"
 	done <"$vars_file"
@@ -151,11 +175,8 @@ render)
 get-var)
 	get_var "$2"
 	;;
-set-var)
-	set_var "$2" "$3"
-	;;
 *)
-	echo "Usage: myarchy-theme {init|get|list|set <theme>|render [theme]|get-var <key>|set-var <key> <value>}" >&2
+	echo "Usage: myarchy-theme {init|get|list|set <theme>|render [theme]|get-var <key>}" >&2
 	exit 1
 	;;
 esac

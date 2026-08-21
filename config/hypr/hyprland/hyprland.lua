@@ -15,7 +15,7 @@ if saved_monitors then
 end
 
 hl.on("hyprland.start", function()
-	hl.exec_cmd("myarchy-cursor apply-preferred")
+	hl.exec_cmd("myarchyctl cursor apply-preferred")
 	hl.exec_cmd("myarchyctl display auto")
 end)
 

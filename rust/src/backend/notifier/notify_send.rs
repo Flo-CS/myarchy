@@ -2,17 +2,11 @@ use std::process::Command;
 
 use anyhow::{bail, Result};
 
-pub(crate) trait Notifier {
-    fn send(&self, summary: &str, body: &str, icon: &str, timeout_ms: Option<u32>) -> Result<()>;
-}
+use super::Notifierctl;
 
-pub(crate) fn adapter() -> impl Notifier {
-    NotifySend
-}
+pub(super) struct NotifySend;
 
-struct NotifySend;
-
-impl Notifier for NotifySend {
+impl Notifierctl for NotifySend {
     fn send(&self, summary: &str, body: &str, icon: &str, timeout_ms: Option<u32>) -> Result<()> {
         let mut cmd = Command::new("notify-send");
         cmd.arg(summary).arg(body).arg("-i").arg(icon);

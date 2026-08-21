@@ -23,6 +23,8 @@ eval "$(direnv hook bash)"
 
 eval "$(fzf --bash)"
 
+command -v myarchyctl >/dev/null && source <(COMPLETE=bash myarchyctl)
+
 [ -f "$HOME/.cargo/env" ] && . "$HOME/.cargo/env"
 
 # nvm.sh takes ~400ms to source; load it lazily on first use instead
