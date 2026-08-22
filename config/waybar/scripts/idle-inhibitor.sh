@@ -1,6 +1,6 @@
 #!/bin/sh
 
-idle-inhibitor watch | while IFS= read -r line; do
+myarchyctl idle watch | while IFS= read -r line; do
 	case "$line" in
 	"inhibited")
 		printf '{"text": "󰅶", "tooltip": "Idle inhibited — click to toggle", "class": "active"}\n'

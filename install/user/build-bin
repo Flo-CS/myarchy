@@ -5,5 +5,4 @@ set -eEo pipefail
 cargo build --release --manifest-path "$MYARCHY_DIR/rust/Cargo.toml" --workspace
 
 cp -f "$MYARCHY_DIR/rust/target/release/myarchyctl" "$MYARCHY_DIR/bin/myarchyctl"
-cp -f "$MYARCHY_DIR/rust/target/release/idle-inhibitor" "$MYARCHY_DIR/bin/idle-inhibitor"
 cp -f "$MYARCHY_DIR/rust/target/release/idle-inhibitord" "$MYARCHY_DIR/bin/idle-inhibitord"

@@ -1,9 +1,9 @@
-use std::error::Error;
 use std::os::unix::net::UnixStream;
 use std::process::ExitCode;
 use std::sync::mpsc;
 use std::thread;
 
+use anyhow::{Context, Result};
 use idle_inhibitor::ipc::{self, Request, Response};
 use zbus::blocking::Connection;
 
@@ -28,9 +28,10 @@ struct Daemon<'p> {
 }
 
 impl<'p> Daemon<'p> {
-    fn new(connection: &Connection) -> zbus::Result<Self> {
+    fn new(connection: &Connection) -> Result<Self> {
         Ok(Self {
-            proxy: ScreenSaverProxyBlocking::new(connection)?,
+            proxy: ScreenSaverProxyBlocking::new(connection)
+                .context("failed to connect to org.freedesktop.ScreenSaver")?,
             cookie: None,
             watchers: Vec::new(),
         })
@@ -55,7 +56,7 @@ impl<'p> Daemon<'p> {
         self.cookie.is_some()
     }
 
-    fn enable(&mut self) -> zbus::Result<()> {
+    fn enable(&mut self) -> Result<()> {
         if self.cookie.is_none() {
             self.cookie = Some(self.proxy.inhibit(APP_NAME, INHIBIT_REASON)?);
             self.broadcast(true);
@@ -63,7 +64,7 @@ impl<'p> Daemon<'p> {
         Ok(())
     }
 
-    fn disable(&mut self) -> zbus::Result<()> {
+    fn disable(&mut self) -> Result<()> {
         if let Some(cookie) = self.cookie.take() {
             self.proxy.un_inhibit(cookie)?;
             self.broadcast(false);
@@ -101,9 +102,9 @@ fn main() -> ExitCode {
     }
 }
 
-fn run() -> std::result::Result<(), Box<dyn Error>> {
-    let listener = ipc::bind()?;
-    let connection = Connection::session()?;
+fn run() -> Result<()> {
+    let listener = ipc::bind().context("failed to bind ipc socket")?;
+    let connection = Connection::session().context("failed to connect to session bus")?;
     let mut daemon = Daemon::new(&connection)?;
 
     for stream in listener.incoming() {

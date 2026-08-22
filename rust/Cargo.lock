@@ -520,7 +520,7 @@ dependencies = [
 name = "idle-inhibitor"
 version = "0.1.0"
 dependencies = [
- "clap",
+ "anyhow",
  "serde",
  "serde_json",
  "zbus",
@@ -603,6 +603,7 @@ dependencies = [
  "clap",
  "clap_complete",
  "fd-lock",
+ "idle-inhibitor",
  "serde",
  "serde_json",
  "sha2",

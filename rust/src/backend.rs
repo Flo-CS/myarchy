@@ -1,9 +1,0 @@
-pub(crate) mod brightness;
-pub(crate) mod compositor;
-pub(crate) mod cursor;
-pub(crate) mod nightlight;
-pub(crate) mod notifier;
-pub(crate) mod osd;
-pub(crate) mod theme;
-pub(crate) mod wallpaper;
-pub(crate) mod xdg;

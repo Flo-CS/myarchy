@@ -3,6 +3,7 @@ use std::net::Shutdown;
 use std::os::linux::net::SocketAddrExt;
 use std::os::unix::net::{SocketAddr, UnixListener, UnixStream};
 
+use anyhow::Result;
 use serde::{Deserialize, Serialize};
 
 pub const SOCKET_NAME: &str = "idle-inhibitor";
@@ -20,44 +21,6 @@ pub enum Response {
     Ok,
     Status(bool),
     Err(String),
-}
-
-#[derive(Debug)]
-pub enum Error {
-    Io(io::Error),
-    Codec(serde_json::Error),
-}
-
-pub type Result<T> = std::result::Result<T, Error>;
-
-impl std::fmt::Display for Error {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            Error::Io(e) => write!(f, "i/o error: {e}"),
-            Error::Codec(e) => write!(f, "codec error: {e}"),
-        }
-    }
-}
-
-impl std::error::Error for Error {
-    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
-        match self {
-            Error::Io(e) => Some(e),
-            Error::Codec(e) => Some(e),
-        }
-    }
-}
-
-impl From<io::Error> for Error {
-    fn from(e: io::Error) -> Self {
-        Error::Io(e)
-    }
-}
-
-impl From<serde_json::Error> for Error {
-    fn from(e: serde_json::Error) -> Self {
-        Error::Codec(e)
-    }
 }
 
 pub fn address() -> io::Result<SocketAddr> {
