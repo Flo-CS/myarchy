@@ -10,7 +10,7 @@ use crate::host::Host;
 use crate::{brightness, cursor, display, idle, nightlight, wallpaper};
 
 #[derive(Parser)]
-#[command(name = "myarchy-ctl")]
+#[command(name = "myarchyctl")]
 pub struct Cli {
     /// Report a failure as a desktop notification
     #[arg(long, global = true)]
