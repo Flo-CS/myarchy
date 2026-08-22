@@ -596,17 +596,37 @@ dependencies = [
 ]
 
 [[package]]
+name = "myarchy-core"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "clap",
+ "serde",
+]
+
+[[package]]
+name = "myarchy-sys"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "fd-lock",
+ "myarchy-core",
+ "serde",
+ "serde_json",
+ "sha2",
+]
+
+[[package]]
 name = "myarchyctl"
 version = "0.1.0"
 dependencies = [
  "anyhow",
  "clap",
  "clap_complete",
- "fd-lock",
  "idle-inhibitor",
- "serde",
+ "myarchy-core",
+ "myarchy-sys",
  "serde_json",
- "sha2",
 ]
 
 [[package]]

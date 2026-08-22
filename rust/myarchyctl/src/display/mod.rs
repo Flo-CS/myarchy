@@ -1,45 +1,21 @@
-pub mod brightness;
-mod engine;
-pub(crate) mod layout;
-pub(crate) mod monitor;
-pub mod resolution;
-mod store;
-
-use std::thread;
-use std::time::Duration;
+mod apply;
+pub mod cli;
 
 use anyhow::{anyhow, bail, Result};
+use myarchy_core::compositor::{CompositorCtl, Monitor};
+use myarchy_core::engine;
+use myarchy_core::error::AppError;
+use myarchy_core::layout::{Direction, Layout, Mode, Scale, Side};
+use myarchy_core::notify::{Icon, NotifierCtl};
+use myarchy_core::resolution::{Resolution, Size};
+use myarchy_sys::store;
 
-use crate::desktop::workspace::Workspace;
-use crate::display::layout::{Direction, Layout, Mode, Scale, Side};
-use crate::display::monitor::Monitor;
-use crate::display::resolution::{Resolution, Size};
-use crate::error::AppError;
+use apply::{
+    anchor_description, commit, commit_settled, confirm_off, describe, evacuate_workspaces,
+    name_of, read, restore, settle,
+};
 
-const SETTLE_TRIES: u32 = 30;
-const SETTLE_INTERVAL: Duration = Duration::from_millis(100);
-
-pub(crate) trait CompositorCtl {
-    fn monitors(&self, all: bool) -> Result<Vec<Monitor>>;
-    fn described_monitors(&self, all: bool) -> Result<Vec<Monitor>> {
-        Ok(self
-            .monitors(all)?
-            .into_iter()
-            .filter(|m| !m.description().is_empty())
-            .collect())
-    }
-
-    fn reload(&self) -> Result<()>;
-    fn workspaces(&self) -> Result<Vec<Workspace>>;
-    fn move_workspace_to_monitor(&self, workspace: &str, monitor: &str) -> Result<()>;
-    fn render_rules(&self, layout: &Layout, monitors: &[Monitor]) -> String;
-}
-
-pub(crate) trait NotifierCtl {
-    fn send(&self, summary: &str, body: &str, icon: &str, timeout_ms: Option<u32>) -> Result<()>;
-}
-
-pub(crate) fn list(compositor: &dyn CompositorCtl) -> Result<String> {
+pub fn list(compositor: &dyn CompositorCtl) -> Result<String> {
     Ok(compositor
         .described_monitors(true)?
         .iter()
@@ -62,7 +38,7 @@ pub(crate) fn list(compositor: &dyn CompositorCtl) -> Result<String> {
         .join("\n"))
 }
 
-pub(crate) fn list_modes(compositor: &dyn CompositorCtl, name: &str) -> Result<String> {
+pub fn list_modes(compositor: &dyn CompositorCtl, name: &str) -> Result<String> {
     Ok(compositor
         .described_monitors(true)?
         .iter()
@@ -77,11 +53,11 @@ pub(crate) fn list_modes(compositor: &dyn CompositorCtl, name: &str) -> Result<S
         .unwrap_or_default())
 }
 
-pub(crate) fn extend(compositor: &dyn CompositorCtl, direction: Direction) -> Result<()> {
+pub fn extend(compositor: &dyn CompositorCtl, direction: Direction) -> Result<()> {
     store::locked(|| extend_core(compositor, direction))
 }
 
-pub(crate) fn place(
+pub fn place(
     compositor: &dyn CompositorCtl,
     name: &str,
     side: Side,
@@ -96,7 +72,7 @@ pub(crate) fn place(
     })
 }
 
-pub(crate) fn mirror(compositor: &dyn CompositorCtl) -> Result<()> {
+pub fn mirror(compositor: &dyn CompositorCtl) -> Result<()> {
     store::locked(|| {
         let (monitors, mut layout) = read(compositor)?;
         let anchor = anchor_description(&monitors, &layout)?;
@@ -105,7 +81,7 @@ pub(crate) fn mirror(compositor: &dyn CompositorCtl) -> Result<()> {
     })
 }
 
-pub(crate) fn only(compositor: &dyn CompositorCtl, keep: &str) -> Result<()> {
+pub fn only(compositor: &dyn CompositorCtl, keep: &str) -> Result<()> {
     store::locked(|| {
         let (monitors, mut layout) = read(compositor)?;
         let keep_desc = describe(&monitors, keep)?;
@@ -116,15 +92,15 @@ pub(crate) fn only(compositor: &dyn CompositorCtl, keep: &str) -> Result<()> {
     })
 }
 
-pub(crate) fn enable_monitor(compositor: &dyn CompositorCtl, name: &str) -> Result<()> {
+pub fn enable_monitor(compositor: &dyn CompositorCtl, name: &str) -> Result<()> {
     store::locked(|| enable_core(compositor, name))
 }
 
-pub(crate) fn disable_monitor(compositor: &dyn CompositorCtl, name: &str) -> Result<()> {
+pub fn disable_monitor(compositor: &dyn CompositorCtl, name: &str) -> Result<()> {
     store::locked(|| disable_core(compositor, name))
 }
 
-pub(crate) fn toggle_monitor(compositor: &dyn CompositorCtl, name: &str) -> Result<()> {
+pub fn toggle_monitor(compositor: &dyn CompositorCtl, name: &str) -> Result<()> {
     store::locked(|| {
         let monitors = compositor.described_monitors(true)?;
         let off = monitors
@@ -139,7 +115,7 @@ pub(crate) fn toggle_monitor(compositor: &dyn CompositorCtl, name: &str) -> Resu
     })
 }
 
-pub(crate) fn set_mode(compositor: &dyn CompositorCtl, name: &str, mode: &str) -> Result<()> {
+pub fn set_mode(compositor: &dyn CompositorCtl, name: &str, mode: &str) -> Result<()> {
     store::locked(|| {
         let (monitors, mut layout) = read(compositor)?;
         let desc = describe(&monitors, name)?;
@@ -168,7 +144,7 @@ fn resolve_mode(monitors: &[Monitor], name: &str, mode: &str) -> Result<Mode> {
     Ok(Mode::Fixed(*resolution))
 }
 
-pub(crate) fn set_scale(compositor: &dyn CompositorCtl, name: &str, scale: &str) -> Result<()> {
+pub fn set_scale(compositor: &dyn CompositorCtl, name: &str, scale: &str) -> Result<()> {
     let scale: Scale = scale.parse()?;
     store::locked(|| {
         let (monitors, mut layout) = read(compositor)?;
@@ -177,7 +153,7 @@ pub(crate) fn set_scale(compositor: &dyn CompositorCtl, name: &str, scale: &str)
     })
 }
 
-pub(crate) fn set_primary(compositor: &dyn CompositorCtl, name: &str) -> Result<()> {
+pub fn set_primary(compositor: &dyn CompositorCtl, name: &str) -> Result<()> {
     store::locked(|| {
         let (monitors, mut layout) = read(compositor)?;
         layout.anchor = Some(describe(&monitors, name)?);
@@ -185,7 +161,7 @@ pub(crate) fn set_primary(compositor: &dyn CompositorCtl, name: &str) -> Result<
     })
 }
 
-pub(crate) fn anchor(compositor: &dyn CompositorCtl) -> Result<Option<String>> {
+pub fn anchor(compositor: &dyn CompositorCtl) -> Result<Option<String>> {
     let monitors = compositor.described_monitors(true)?;
     let Some(layout) = store::load(&monitors) else {
         return Ok(None);
@@ -195,7 +171,7 @@ pub(crate) fn anchor(compositor: &dyn CompositorCtl) -> Result<Option<String>> {
         .and_then(|desc| name_of(&monitors, &desc).map(str::to_string)))
 }
 
-pub(crate) fn save(compositor: &dyn CompositorCtl) -> Result<()> {
+pub fn save(compositor: &dyn CompositorCtl) -> Result<()> {
     store::locked(|| {
         let (monitors, layout) = read(compositor)?;
         store::render(&compositor.render_rules(&layout, &monitors))?;
@@ -203,7 +179,7 @@ pub(crate) fn save(compositor: &dyn CompositorCtl) -> Result<()> {
     })
 }
 
-pub(crate) fn apply(compositor: &dyn CompositorCtl) -> Result<()> {
+pub fn apply(compositor: &dyn CompositorCtl) -> Result<()> {
     store::locked(|| {
         let monitors = settle(compositor)?;
         match store::load(&monitors) {
@@ -213,7 +189,7 @@ pub(crate) fn apply(compositor: &dyn CompositorCtl) -> Result<()> {
     })
 }
 
-pub(crate) fn reset(compositor: &dyn CompositorCtl) -> Result<()> {
+pub fn reset(compositor: &dyn CompositorCtl) -> Result<()> {
     store::locked(|| {
         store::reset(&compositor.described_monitors(true)?);
         compositor.reload()
@@ -221,7 +197,7 @@ pub(crate) fn reset(compositor: &dyn CompositorCtl) -> Result<()> {
 }
 
 /// Entry point for the monitor.added/removed and hyprland.start hooks.
-pub(crate) fn auto(compositor: &dyn CompositorCtl, notify: &dyn NotifierCtl) -> Result<()> {
+pub fn auto(compositor: &dyn CompositorCtl, notify: &dyn NotifierCtl) -> Result<()> {
     store::locked(|| {
         let monitors = settle(compositor)?;
 
@@ -245,7 +221,7 @@ pub(crate) fn auto(compositor: &dyn CompositorCtl, notify: &dyn NotifierCtl) -> 
             let _ = notify.send(
                 "Screen connected",
                 &format!("{name} extended to the right — MOD+P for display options"),
-                "video-display",
+                Icon::VideoDisplay.as_str(),
                 Some(8000),
             );
         }
@@ -284,152 +260,11 @@ fn disable_core(compositor: &dyn CompositorCtl, name: &str) -> Result<()> {
     confirm_off(&settled, |n| n == name)
 }
 
-/// One snapshot per command, reconciled with the stored profile before anything is decided.
-fn read(compositor: &dyn CompositorCtl) -> Result<(Vec<Monitor>, Layout)> {
-    let monitors = compositor.described_monitors(true)?;
-    let mut layout = store::load(&monitors).unwrap_or_default();
-    layout.sync(&monitors);
-    Ok((monitors, layout))
-}
-
-fn commit(compositor: &dyn CompositorCtl, monitors: &[Monitor], layout: Layout) -> Result<()> {
-    commit_settled(compositor, monitors, layout).map(|_| ())
-}
-
-/// Writing the rules is what applies them. The profile is saved once, afterwards, from the settled
-/// snapshot — so symbolic requests never reach disk and a crash leaves the previous profile intact.
-fn commit_settled(
-    compositor: &dyn CompositorCtl,
-    monitors: &[Monitor],
-    mut layout: Layout,
-) -> Result<Vec<Monitor>> {
-    store::render(&compositor.render_rules(&layout, monitors))?;
-    compositor.reload()?;
-
-    let settled = settle(compositor)?;
-    layout.sync(&settled);
-    store::save(&settled, &layout)?;
-    Ok(settled)
-}
-
-fn restore(compositor: &dyn CompositorCtl, monitors: &[Monitor], mut stored: Layout) -> Result<()> {
-    if stored.matches(monitors) {
-        return Ok(());
-    }
-    store::render(&compositor.render_rules(&stored, monitors))?;
-    compositor.reload()?;
-
-    let settled = settle(compositor)?;
-    stored.sync(&settled);
-    store::save(&settled, &stored)
-}
-
-/// Rules land asynchronously, so a reading is only trusted once two consecutive ones agree.
-fn settle(compositor: &dyn CompositorCtl) -> Result<Vec<Monitor>> {
-    let mut previous = compositor.described_monitors(true)?;
-    for _ in 0..SETTLE_TRIES {
-        thread::sleep(SETTLE_INTERVAL);
-        let current = compositor.described_monitors(true)?;
-        if Layout::observe(&current) == Layout::observe(&previous) {
-            return Ok(current);
-        }
-        previous = current;
-    }
-    bail!(AppError::LayoutDidNotSettle)
-}
-
-/// Disabling a monitor does not move its workspaces off it (hyprwm/Hyprland#5052), leaving
-/// `MOD+<n>` pointing at a screen with no output. Called once the layout already says which screens
-/// are going off, and before the rules that switch them off are written.
-fn evacuate_workspaces(
-    compositor: &dyn CompositorCtl,
-    monitors: &[Monitor],
-    layout: &Layout,
-) -> Result<()> {
-    let staying: Vec<&str> = layout
-        .screens
-        .iter()
-        .filter(|(_, screen)| !screen.is_off())
-        .filter_map(|(desc, _)| name_of(monitors, desc))
-        .collect();
-
-    let Some(target) = layout
-        .anchor
-        .as_deref()
-        .and_then(|desc| name_of(monitors, desc))
-        .filter(|name| staying.contains(name))
-        .or_else(|| staying.first().copied())
-    else {
-        return Ok(());
-    };
-
-    let leaving: Vec<&str> = layout
-        .screens
-        .iter()
-        .filter(|(_, screen)| screen.is_off())
-        .filter_map(|(desc, _)| name_of(monitors, desc))
-        .collect();
-
-    for workspace in compositor.workspaces()? {
-        if !workspace.is_special() && leaving.contains(&workspace.monitor.as_str()) {
-            compositor.move_workspace_to_monitor(&workspace.name, target)?;
-        }
-    }
-    Ok(())
-}
-
-fn confirm_off(settled: &[Monitor], should_be_off: impl Fn(&str) -> bool) -> Result<()> {
-    for monitor in settled {
-        if should_be_off(&monitor.name) && !monitor.disabled {
-            bail!(AppError::DidNotSwitchOff {
-                name: monitor.name.clone()
-            });
-        }
-    }
-    Ok(())
-}
-
-fn describe(monitors: &[Monitor], name: &str) -> Result<String> {
-    monitors
-        .iter()
-        .find(|m| m.name == name)
-        .map(|m| m.description().to_string())
-        .ok_or_else(|| {
-            AppError::UnknownMonitor {
-                name: name.to_string(),
-            }
-            .into()
-        })
-}
-
-fn name_of<'a>(monitors: &'a [Monitor], description: &str) -> Option<&'a str> {
-    monitors
-        .iter()
-        .find(|m| m.description() == description)
-        .map(|m| m.name.as_str())
-}
-
-/// Wayland has no primary display, so the anchor is only what `extend` and `mirror` build around.
-fn anchor_description(monitors: &[Monitor], layout: &Layout) -> Result<String> {
-    if let Some(desc) = layout.anchor.as_deref() {
-        if layout.screens.contains_key(desc) {
-            return Ok(desc.to_string());
-        }
-    }
-    if let Some(monitor) = monitors.iter().find(|m| m.focused) {
-        return Ok(monitor.description().to_string());
-    }
-    match monitors.iter().find(|m| !m.disabled) {
-        Some(monitor) => Ok(monitor.description().to_string()),
-        None => bail!("no enabled screen to build the layout around"),
-    }
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
     use crate::backend::compositorctl as backend;
-    use crate::display::layout::fixtures::{laptop, switched_off, ultrawide, BOE, LG};
+    use myarchy_core::layout::fixtures::{laptop, switched_off, ultrawide, BOE, LG};
 
     fn rules_for(monitors: &[Monitor], apply: impl FnOnce(&mut Layout)) -> String {
         let mut layout = Layout::observe(monitors);

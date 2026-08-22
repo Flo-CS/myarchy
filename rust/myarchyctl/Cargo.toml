@@ -12,7 +12,9 @@ anyhow = "1"
 clap = { version = "4", features = ["derive"] }
 clap_complete = { version = "4", features = ["unstable-dynamic"] }
 idle-inhibitor = { path = "../idle-inhibitor", default-features = false }
-serde = { version = "1", features = ["derive"] }
+myarchy-core = { path = "../myarchy-core", features = ["clap"] }
+myarchy-sys = { path = "../myarchy-sys" }
 serde_json = "1"
-sha2 = "0.11"
-fd-lock = "4"
+
+[dev-dependencies]
+myarchy-core = { path = "../myarchy-core", features = ["clap", "fixtures"] }

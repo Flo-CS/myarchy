@@ -1,0 +1,13 @@
+[package]
+name = "myarchy-core"
+version = "0.1.0"
+edition = "2021"
+
+[features]
+clap = ["dep:clap"]
+fixtures = []
+
+[dependencies]
+anyhow = "1"
+clap = { version = "4", features = ["derive"], optional = true }
+serde = { version = "1", features = ["derive"] }
