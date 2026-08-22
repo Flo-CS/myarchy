@@ -3,6 +3,7 @@ pub mod compositor;
 pub mod cursor;
 pub mod engine;
 pub mod error;
+pub mod idle;
 pub mod layout;
 pub mod nightlight;
 pub mod notify;

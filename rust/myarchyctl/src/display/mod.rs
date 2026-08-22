@@ -8,7 +8,7 @@ use myarchy_core::error::AppError;
 use myarchy_core::layout::{Direction, Layout, Mode, Scale, Side};
 use myarchy_core::notify::{Icon, NotifierCtl};
 use myarchy_core::resolution::{Resolution, Size};
-use myarchy_sys::store;
+use myarchy_host::store::display as store;
 
 use apply::{
     anchor_description, commit, commit_settled, confirm_off, describe, evacuate_workspaces,

@@ -1,6 +1,6 @@
 [workspace]
 resolver = "2"
-members = ["myarchy-core", "myarchy-sys", "myarchyctl", "idle-inhibitor"]
+members = ["myarchy-core", "myarchy-host", "myarchyctl", "idle-inhibitor"]
 
 [profile.release]
 opt-level = "s"

@@ -605,11 +605,12 @@ dependencies = [
 ]
 
 [[package]]
-name = "myarchy-sys"
+name = "myarchy-host"
 version = "0.1.0"
 dependencies = [
  "anyhow",
  "fd-lock",
+ "idle-inhibitor",
  "myarchy-core",
  "serde",
  "serde_json",
@@ -623,10 +624,8 @@ dependencies = [
  "anyhow",
  "clap",
  "clap_complete",
- "idle-inhibitor",
  "myarchy-core",
- "myarchy-sys",
- "serde_json",
+ "myarchy-host",
 ]
 
 [[package]]

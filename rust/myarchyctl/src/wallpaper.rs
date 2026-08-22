@@ -5,8 +5,8 @@ use clap::Subcommand;
 use clap_complete::engine::{ArgValueCompleter, CompletionCandidate};
 use myarchy_core::error::AppError;
 use myarchy_core::wallpaper::WallpaperCtl;
-use myarchy_sys::state::wallpaper as state;
-use myarchy_sys::theme;
+use myarchy_host::store::wallpaper as state;
+use myarchy_host::theme;
 
 use crate::backend;
 use crate::cli::candidates;

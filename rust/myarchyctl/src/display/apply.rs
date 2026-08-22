@@ -5,7 +5,7 @@ use anyhow::{bail, Result};
 use myarchy_core::compositor::{CompositorCtl, Monitor};
 use myarchy_core::error::AppError;
 use myarchy_core::layout::Layout;
-use myarchy_sys::store;
+use myarchy_host::store::display as store;
 
 const SETTLE_TRIES: u32 = 30;
 const SETTLE_INTERVAL: Duration = Duration::from_millis(100);
