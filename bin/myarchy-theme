@@ -34,8 +34,8 @@ list_themes() {
 set_theme() {
 	render_theme "$1"
 
-	myarchyctl wallpaper apply-preferred
-	myarchyctl cursor apply-preferred
+	myarchyctl --notify wallpaper apply-preferred
+	myarchyctl --notify cursor apply-preferred
 
 	myarchy-refresh all
 }

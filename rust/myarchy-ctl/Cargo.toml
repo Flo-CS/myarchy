@@ -1,0 +1,14 @@
+[package]
+name = "myarchy-ctl"
+version.workspace = true
+edition.workspace = true
+
+[[bin]]
+name = "myarchyctl"
+path = "src/main.rs"
+
+[dependencies]
+anyhow.workspace = true
+clap.workspace = true
+clap_complete.workspace = true
+myarchy-core = { workspace = true, features = ["clap"] }

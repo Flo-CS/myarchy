@@ -517,16 +517,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "idle-inhibitor"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "serde",
- "serde_json",
- "zbus",
-]
-
-[[package]]
 name = "indexmap"
 version = "2.14.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -601,31 +591,31 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "clap",
- "serde",
-]
-
-[[package]]
-name = "myarchy-host"
-version = "0.1.0"
-dependencies = [
- "anyhow",
  "fd-lock",
- "idle-inhibitor",
- "myarchy-core",
+ "myarchy-idle-inhibitor",
  "serde",
  "serde_json",
  "sha2",
 ]
 
 [[package]]
-name = "myarchyctl"
+name = "myarchy-ctl"
 version = "0.1.0"
 dependencies = [
  "anyhow",
  "clap",
  "clap_complete",
  "myarchy-core",
- "myarchy-host",
+]
+
+[[package]]
+name = "myarchy-idle-inhibitor"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "serde",
+ "serde_json",
+ "zbus",
 ]
 
 [[package]]

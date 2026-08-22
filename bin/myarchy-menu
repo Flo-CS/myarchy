@@ -105,21 +105,21 @@ show() {
 		opt prompt "Size"
 		local size
 		for size in 16 24 32 48 64; do
-			row "$size" "run myarchyctl cursor set ${menu#size=} $size"
+			row "$size" "run myarchyctl --notify cursor set ${menu#size=} $size"
 		done
 		;;
 	display)
 		opt prompt "Display"
 		local name desc mode state
 		row "Extend" "show extend"
-		row "Duplicate" "run myarchyctl display mirror"
+		row "Duplicate" "run myarchyctl --notify display mirror"
 		while IFS=$'\t' read -r name desc mode state; do
-			row "Only $name" "run myarchyctl display only $name"
+			row "Only $name" "run myarchyctl --notify display only $name"
 		done < <(myarchyctl display list)
 		row "Monitors" "show monitors"
 		row "Brightness" "show brightness"
 		row "Night Light" "show nightlight"
-		row "Reset" "run myarchyctl display reset"
+		row "Reset" "run myarchyctl --notify display reset"
 		;;
 	# Applied straight away, then the menu redraws, so you see each step
 	brightness)
@@ -130,10 +130,10 @@ show() {
 		done < <(myarchyctl brightness monitors)
 		;;
 	brightness=*)
-		opt prompt "Brightness ${menu#brightness=} ($(myarchyctl brightness get "${menu#brightness=}")%)"
+		opt prompt "Brightness ${menu#brightness=} ($(myarchyctl brightness get "${menu#brightness=}" --dirty)%)"
 		local percent
 		for percent in 10 25 50 75 100; do
-			row "$percent%" "apply myarchyctl brightness set ${menu#brightness=} $percent"
+			row "$percent%" "apply myarchyctl --notify brightness set ${menu#brightness=} $percent --dirty"
 		done
 		;;
 	nightlight)
@@ -141,18 +141,18 @@ show() {
 		current=$(myarchyctl nightlight get)
 		[[ $current != off ]] && current="${current}%"
 		opt prompt "Night Light ($current)"
-		row "Off" "apply myarchyctl nightlight off"
+		row "Off" "apply myarchyctl --notify nightlight off"
 		local percent
 		for percent in 10 25 50 75 100; do
-			row "$percent%" "apply myarchyctl nightlight set $percent"
+			row "$percent%" "apply myarchyctl --notify nightlight set $percent"
 		done
 		;;
 	extend)
 		opt prompt "Extend"
-		row "Right" "run myarchyctl display extend right"
-		row "Left" "run myarchyctl display extend left"
-		row "Above" "run myarchyctl display extend above"
-		row "Below" "run myarchyctl display extend below"
+		row "Right" "run myarchyctl --notify display extend right"
+		row "Left" "run myarchyctl --notify display extend left"
+		row "Above" "run myarchyctl --notify display extend above"
+		row "Below" "run myarchyctl --notify display extend below"
 		;;
 	monitors)
 		opt prompt "Monitors"
@@ -167,8 +167,8 @@ show() {
 	monitor=*)
 		opt prompt "${menu#monitor=}"
 		row "Position" "show place=${menu#monitor=}"
-		row "Toggle" "run myarchyctl display toggle ${menu#monitor=}"
-		row "Set As Anchor" "run myarchyctl display primary ${menu#monitor=}"
+		row "Toggle" "run myarchyctl --notify display toggle ${menu#monitor=}"
+		row "Set As Anchor" "run myarchyctl --notify display primary ${menu#monitor=}"
 		row "Resolution" "show mode=${menu#monitor=}"
 		row "Scale" "show scale=${menu#monitor=}"
 		;;
@@ -180,7 +180,7 @@ show() {
 		opt prompt "$target $side"
 		while IFS=$'\t' read -r name desc mode state; do
 			[[ $name == "$target" ]] && continue
-			row "$name  $desc" "run myarchyctl display place $target $side $name"
+			row "$name  $desc" "run myarchyctl --notify display place $target $side $name"
 		done < <(myarchyctl display list)
 		;;
 	place=*)
@@ -194,14 +194,14 @@ show() {
 		opt prompt "Resolution"
 		local mode
 		while read -r mode; do
-			row "$mode" "run myarchyctl display set-mode ${menu#mode=} $mode"
+			row "$mode" "run myarchyctl --notify display set-mode ${menu#mode=} $mode"
 		done < <(myarchyctl display list-modes "${menu#mode=}")
 		;;
 	scale=*)
 		opt prompt "Scale (or type one)"
 		local scale
 		for scale in auto 0.5 0.75 0.8 0.9 1 1.1 1.2 1.25 1.3 1.4 1.5 1.6 1.667 1.75 1.8 2 2.5 3; do
-			row "$scale" "run myarchyctl display set-scale ${menu#scale=} $scale"
+			row "$scale" "run myarchyctl --notify display set-scale ${menu#scale=} $scale"
 		done
 		;;
 	# The GPU toggle needs sudo, and a polkit dialog would land under rofi's
@@ -289,9 +289,9 @@ typed() {
 	local current rest
 	read -r current rest <<<"${ROFI_DATA:-main}"
 	if [[ $current == size=* && $1 =~ ^[0-9]+$ ]]; then
-		run myarchyctl cursor set "${current#size=}" "$1"
+		run myarchyctl --notify cursor set "${current#size=}" "$1"
 	elif [[ $current == scale=* && $1 =~ ^[0-9]+(\.[0-9]+)?$ ]]; then
-		run myarchyctl display set-scale "${current#scale=}" "$1"
+		run myarchyctl --notify display set-scale "${current#scale=}" "$1"
 	else
 		reshow
 	fi
@@ -313,7 +313,7 @@ picker_wallpaper() {
 			listview { lines: 6; }
 			element { padding: 4px 16px; }
 			element-icon { size: 72px; }')
-	[[ -n $selected ]] && myarchyctl wallpaper set "$selected"
+	[[ -n $selected ]] && myarchyctl --notify wallpaper set "$selected"
 }
 
 picker_reboot_to() {

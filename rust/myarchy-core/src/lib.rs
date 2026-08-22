@@ -1,11 +1,3 @@
-pub mod brightness;
-pub mod compositor;
-pub mod cursor;
-pub mod engine;
-pub mod error;
-pub mod idle;
-pub mod layout;
-pub mod nightlight;
-pub mod notify;
-pub mod resolution;
-pub mod wallpaper;
+pub mod app;
+pub mod core;
+pub mod host;

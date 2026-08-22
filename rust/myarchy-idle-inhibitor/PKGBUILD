@@ -1,0 +1,32 @@
+# Maintainer: Florian
+pkgname=myarchy-idle-inhibitor
+pkgver=0.1.0
+pkgrel=1
+pkgdesc="myarchy idle inhibitor daemon, using D-Bus screensaver inhibit"
+arch=('x86_64')
+url=""
+license=('custom')
+depends=('dbus' 'gcc-libs')
+makedepends=('cargo')
+source=()
+sha256sums=()
+
+prepare() {
+    cd "$startdir"
+    export RUSTUP_TOOLCHAIN=stable
+    cargo fetch --locked --target "$(rustc -vV | sed -n 's/host: //p')"
+}
+
+build() {
+    cd "$startdir"
+    export RUSTUP_TOOLCHAIN=stable
+    export CARGO_TARGET_DIR=target
+    cargo build --frozen --release
+}
+
+package() {
+    cd "$startdir"
+    install -Dm755 target/release/myarchy-idle-inhibitord "$pkgdir/usr/bin/myarchy-idle-inhibitord"
+    install -Dm644 contrib/myarchy-idle-inhibitor.service \
+        "$pkgdir/usr/lib/systemd/user/myarchy-idle-inhibitor.service"
+}

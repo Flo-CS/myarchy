@@ -88,7 +88,7 @@
    "custom/idle-inhibitor": {
       "exec": "~/.config/waybar/scripts/idle-inhibitor.sh",
       "return-type": "json",
-      "on-click": "sh -c 'if myarchyctl idle status >/dev/null 2>&1; then myarchyctl idle disable; else myarchyctl idle enable; fi'"
+      "on-click": "sh -c 'if myarchyctl idle status >/dev/null 2>&1; then myarchyctl --notify idle disable; else myarchyctl --notify idle enable; fi'"
   },
   "hyprland/workspaces": {
     "format": "{icon}",

@@ -15,14 +15,14 @@ if saved_monitors then
 end
 
 hl.on("hyprland.start", function()
-	hl.exec_cmd("myarchyctl cursor apply-preferred")
-	hl.exec_cmd("myarchyctl display auto")
+	hl.exec_cmd("myarchyctl --notify cursor apply-preferred")
+	hl.exec_cmd("myarchyctl --notify display auto")
 end)
 
 -- A dock fires one event per output, so coalesce the burst into one apply.
 local function on_monitors_changed()
 	hl.timer(function()
-		hl.exec_cmd("myarchyctl display auto")
+		hl.exec_cmd("myarchyctl --notify display auto")
 	end, { timeout = 300, type = "oneshot" })
 end
 

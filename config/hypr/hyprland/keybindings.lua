@@ -183,7 +183,7 @@ local function brightness_bind(key, delta, desc)
 	hl.bind(
 		key,
 		hl.dsp.exec_cmd(
-			[[myarchyctl brightness step ]] .. delta .. [[ "$(hyprctl monitors -j | jq -r '.[] | select(.focused == true).name')"]]
+			[[myarchyctl --osd --notify brightness step ]] .. delta .. [[ "$(hyprctl monitors -j | jq -r '.[] | select(.focused == true).name')"]]
 		),
 		{
 			locked = true,
